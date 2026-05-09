@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* ─── Tailwind v4 custom theme tokens ──────────────────────────────────────── */
+@theme {
+  --font-sans:    'Outfit', system-ui, sans-serif;
+  --font-body:    'Poppins', system-ui, sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
+
+  /* Brand color tokens — usable as bg-brand-green, text-brand-dark, etc. */
+  --color-brand-bg:       #eef4d1;
+  --color-brand-bg-alt:   #e6edca;
+  --color-brand-green:    #0b4722;
+  --color-brand-burgundy: #6c0b20;
+  --color-brand-pink:     #e7a3c9;
+  --color-brand-red:      #e34334;
+  --color-brand-blue:     #015395;
+  --color-brand-dark:     #341631;
+  --color-brand-card:     #ffffff;
+}
+
+/* ─── Base reset & global styles ─────────────────────────────────────────────  */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    background-color: #eef4d1;
+    color: #341631;
+    font-family: 'Poppins', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', system-ui, sans-serif;
+    color: #341631;
+  }
+
+  ::selection {
+    background: #0b4722;
+    color: #eef4d1;
+  }
+
+  ::-webkit-scrollbar       { width: 4px; }
+  ::-webkit-scrollbar-track { background: #eef4d1; }
+  ::-webkit-scrollbar-thumb { background: #0b4722; border-radius: 2px; }
+
+  input, textarea, select { font-family: 'Poppins', system-ui, sans-serif; }
+}
+
+/* ─── Utilities ──────────────────────────────────────────────────────────────  */
+@layer utilities {
+  /* Text gradients */
+  .text-gradient-green {
+    background: linear-gradient(135deg, #0b4722, #1a7a3f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-burgundy {
+    background: linear-gradient(135deg, #6c0b20, #a01030);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass effect for dark overlays */
+  .glass-dark {
+    background: rgba(52,22,49,0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(238,244,209,0.12);
+  }
+  .glass-light {
+    background: rgba(238,244,209,0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(52,22,49,0.12);
+  }
+
+  /* Card styles */
+  .card {
+    background: #ffffff;
+    border: 1px solid rgba(52,22,49,0.10);
+    border-radius: 1.5rem;
+  }
+  .card-hover {
+    transition: transform 0.28s ease, box-shadow 0.28s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(52,22,49,0.12);
+  }
+
+  /* Hide scrollbar */
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* Section spacing */
+  .section { padding: 5rem 1rem; }
+  @media (min-width: 640px) { .section { padding: 6rem 1.5rem; } }
+}

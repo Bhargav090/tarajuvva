@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Package, Scissors, LogOut, Edit2, Save, X, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -17,9 +17,13 @@ const TABS = [
 ];
 
 export default function Profile() {
-  const { user, logout, updateUser } = useAuth();
+  const { section } = useParams();
+  const location = useLocation();
+  const { user, loading: authLoading, logout, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab]       = useState('profile');
+  const [tab, setTab]       = useState(() =>
+    section && TABS.some((t) => t.id === section) ? section : 'profile'
+  );
   const [editing, setEditing] = useState(false);
   const [form, setForm]     = useState({ name: '', phone: '', address: '' });
   const [saving, setSaving]  = useState(false);
@@ -28,9 +32,18 @@ export default function Profile() {
   const [loadingData, setLoadingData] = useState(false);
 
   useEffect(() => {
-    if (!user) { navigate('/login'); return; }
+    if (section && TABS.some((t) => t.id === section)) setTab(section);
+    else if (!section) setTab('profile');
+  }, [section]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate('/login', { replace: true, state: { from: location.pathname + location.search } });
+      return;
+    }
     setForm({ name: user.name || '', phone: user.phone || '', address: user.address || '' });
-  }, [user]);
+  }, [user, authLoading, navigate, location.pathname, location.search]);
 
   useEffect(() => {
     if (tab === 'orders' && orders.length === 0)   fetchOrders();
@@ -60,6 +73,13 @@ export default function Profile() {
     finally { setSaving(false); }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#eef4d1] flex items-center justify-center pt-24">
+        <Spinner size={32} />
+      </div>
+    );
+  }
   if (!user) return null;
 
   return (
@@ -90,7 +110,11 @@ export default function Profile() {
         <div className="flex gap-2 mb-8 overflow-x-auto no-scrollbar">
           {TABS.map(t => (
             <button
-              key={t.id} onClick={() => setTab(t.id)}
+              key={t.id}
+              onClick={() => {
+                setTab(t.id);
+                navigate(t.id === 'profile' ? '/profile' : `/profile/${t.id}`, { replace: true });
+              }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold font-[Outfit] whitespace-nowrap transition-all ${
                 tab === t.id
                   ? 'bg-[#0b4722] text-[#eef4d1]'

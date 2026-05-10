@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
@@ -76,7 +77,13 @@ const TABS = [
 export default function Admin() {
   const { token, logout, isLoaded } = useAdminAuth();
   const [loggedIn, setLoggedIn] = useState(!!token);
-  const [tab, setTab]    = useState('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const tab = TABS.some((t) => t.id === tabParam) ? tabParam : 'overview';
+  const setTab = (id) => {
+    if (id === 'overview') setSearchParams({}, { replace: true });
+    else setSearchParams({ tab: id }, { replace: true });
+  };
   const [sidebar, setSidebar] = useState(false);
 
   if (!isLoaded) return <div className="min-h-screen bg-[#341631] flex items-center justify-center"><Spinner color="#eef4d1" size={32} /></div>;

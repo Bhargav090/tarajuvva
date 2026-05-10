@@ -1,13 +1,15 @@
 require('dotenv').config();
+const { initializeDatabase } = require('./src/db/database');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const compression = require('compression');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 // Security & performance middleware
 app.use(helmet({ crossOriginResourcePolicy: false }));
@@ -20,8 +22,14 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Ensure uploads directory exists (required for multer disk storage)
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadsDir));
 
 // Routes
 app.use('/api/auth',      require('./src/routes/auth'));
@@ -47,9 +55,21 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: err.message || 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🧵 Tarajuvva API Server`);
-  console.log(`✅ Running on http://localhost:${PORT}`);
-  console.log(`📊 Admin: username=${process.env.ADMIN_USERNAME}`);
-  console.log(`🌐 Frontend: ${process.env.FRONTEND_URL}\n`);
+async function start() {
+  await initializeDatabase();
+  app.listen(PORT, () => {
+    console.log(`\n🧵 Tarajuvva API Server`);
+    console.log(`✅ Running on http://localhost:${PORT}`);
+    console.log(`📊 Admin: username=${process.env.ADMIN_USERNAME}`);
+    console.log(`🌐 Frontend: ${process.env.FRONTEND_URL}`);
+    const dbLoc = process.env.MYSQL_SOCKET_PATH?.trim()
+      ? `socket:${process.env.MYSQL_SOCKET_PATH}`
+      : `${process.env.MYSQL_HOST || '127.0.0.1'}:${process.env.MYSQL_PORT || 3306}`;
+    console.log(`🗄️  MySQL: ${dbLoc}/${process.env.MYSQL_DATABASE || 'tarajuvva'}\n`);
+  });
+}
+
+start().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });

@@ -1,0 +1,20 @@
+# Optional: MySQL 8 for local development. From backend/: docker compose up -d
+#
+# Host port defaults to 3307 so it does not clash with MySQL already bound to 3306.
+# In backend/.env use: MYSQL_PORT=3307, MYSQL_PASSWORD=<same as MYSQL_ROOT_PASSWORD below>
+# (MYSQL_PORT in .env is only for the Node app; container still listens on 3306 inside the network.)
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-tarajuvva_local}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-tarajuvva}
+    ports:
+      - "${MYSQL_PUBLISH_PORT:-3307}:3306"
+    volumes:
+      - tarajuvva_mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+volumes:
+  tarajuvva_mysql_data:

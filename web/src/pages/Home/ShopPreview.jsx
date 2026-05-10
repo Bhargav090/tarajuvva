@@ -7,7 +7,8 @@ import { useProducts } from '../../hooks/useProducts';
 import Button from '../../components/ui/Button';
 
 export default function ShopPreview() {
-  const { products, loading } = useProducts({ featured: true, limit: 4 });
+  // Latest products (not only featured — avoids empty home after DB migrate / no featured flags)
+  const { products, loading } = useProducts({ limit: 4 });
 
   return (
     <section className="section bg-[#e6edca]">

@@ -1,111 +1,189 @@
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
+const mysql = require('mysql2/promise');
 
-const DB_PATH = path.join(__dirname, '../../data/tarajuvva.db');
+let pool;
 
-const dataDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-function initializeDatabase() {
-  db.exec(`
-    -- Users table (email/password + Google SSO)
-    CREATE TABLE IF NOT EXISTS users (
-      id          TEXT PRIMARY KEY,
-      name        TEXT NOT NULL,
-      email       TEXT UNIQUE NOT NULL,
-      password_hash TEXT,
-      google_id   TEXT UNIQUE,
-      avatar      TEXT,
-      phone       TEXT,
-      address     TEXT,
-      role        TEXT DEFAULT 'user',
-      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Products
-    CREATE TABLE IF NOT EXISTS products (
-      id             TEXT PRIMARY KEY,
-      name           TEXT NOT NULL,
-      price          REAL NOT NULL,
-      original_price REAL,
-      category       TEXT NOT NULL,
-      description    TEXT,
-      ways_to_wear   TEXT,
-      images         TEXT NOT NULL DEFAULT '[]',
-      tags           TEXT DEFAULT '[]',
-      stock          INTEGER DEFAULT 100,
-      featured       INTEGER DEFAULT 0,
-      created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Orders (linked to user, also allows guest checkout)
-    CREATE TABLE IF NOT EXISTS orders (
-      id             TEXT PRIMARY KEY,
-      user_id        TEXT REFERENCES users(id) ON DELETE SET NULL,
-      user_name      TEXT NOT NULL,
-      user_email     TEXT,
-      user_phone     TEXT NOT NULL,
-      address        TEXT NOT NULL,
-      items          TEXT NOT NULL,
-      total          REAL NOT NULL,
-      status         TEXT DEFAULT 'received',
-      payment_method TEXT DEFAULT 'cod',
-      notes          TEXT,
-      created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Reimagine requests (linked to user)
-    CREATE TABLE IF NOT EXISTS reimagine_requests (
-      id                   TEXT PRIMARY KEY,
-      user_id              TEXT REFERENCES users(id) ON DELETE SET NULL,
-      user_name            TEXT NOT NULL,
-      user_phone           TEXT NOT NULL,
-      user_email           TEXT,
-      address              TEXT,
-      garment_type         TEXT NOT NULL,
-      transformation       TEXT NOT NULL,
-      notes                TEXT,
-      images               TEXT DEFAULT '[]',
-      status               TEXT DEFAULT 'pending_review',
-      is_custom            INTEGER DEFAULT 0,
-      consultation_paid    INTEGER DEFAULT 0,
-      admin_notes          TEXT,
-      created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at           DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Waitlist
-    CREATE TABLE IF NOT EXISTS waitlist (
-      id         TEXT PRIMARY KEY,
-      type       TEXT NOT NULL,
-      user_id    TEXT REFERENCES users(id) ON DELETE SET NULL,
-      name       TEXT NOT NULL,
-      email      TEXT NOT NULL,
-      phone      TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Admin accounts (separate from users)
-    CREATE TABLE IF NOT EXISTS admins (
-      id            TEXT PRIMARY KEY,
-      username      TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  const productCount = db.prepare('SELECT COUNT(*) as count FROM products').get();
-  if (productCount.count === 0) seedProducts();
+function validateDbName(name) {
+  if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+    throw new Error('MYSQL_DATABASE must contain only letters, numbers, and underscores');
+  }
+  return name;
 }
 
-function seedProducts() {
+function baseConnectionConfig() {
+  const user = process.env.MYSQL_USER || 'root';
+  const password = process.env.MYSQL_PASSWORD ?? '';
+  const socketPath = process.env.MYSQL_SOCKET_PATH?.trim();
+  if (socketPath) {
+    return { socketPath, user, password };
+  }
+  return {
+    host: process.env.MYSQL_HOST || '127.0.0.1',
+    port: Number(process.env.MYSQL_PORT || 3306),
+    user,
+    password,
+  };
+}
+
+async function ensureDatabaseExists() {
+  const database = validateDbName(process.env.MYSQL_DATABASE || 'tarajuvva');
+  const cfg = baseConnectionConfig();
+  let conn;
+  try {
+    conn = await mysql.createConnection(cfg);
+    await conn.query(
+      `CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    );
+  } catch (e) {
+    if (e.code === 'ER_ACCESS_DENIED_ERROR') {
+      const viaSocket = !!cfg.socketPath;
+      const hint = viaSocket
+        ? 'Check MYSQL_USER, MYSQL_PASSWORD, and MYSQL_SOCKET_PATH.'
+        : [
+            'Password/user rejected for this MySQL server.',
+            '• Docker (backend/docker-compose.yml): use MYSQL_PORT=3307 and MYSQL_PASSWORD equal to MYSQL_ROOT_PASSWORD (default tarajuvva_local). Start with: docker compose up -d',
+            '• Native MySQL on 3306: set MYSQL_PASSWORD to that server’s root password (not the Docker default).',
+            'Verify: mysql -h 127.0.0.1 -P <port> -u root -p',
+          ].join('\n');
+      e.message = `${e.sqlMessage || e.message}\n\n${hint}`;
+    }
+    throw e;
+  } finally {
+    if (conn) await conn.end().catch(() => {});
+  }
+}
+
+async function get(sql, params = []) {
+  const [rows] = await pool.execute(sql, params);
+  return rows[0] ?? null;
+}
+
+async function all(sql, params = []) {
+  const [rows] = await pool.execute(sql, params);
+  return rows;
+}
+
+async function run(sql, params = []) {
+  const [result] = await pool.execute(sql, params);
+  return result;
+}
+
+async function initializeDatabase() {
+  await ensureDatabaseExists();
+  const database = validateDbName(process.env.MYSQL_DATABASE || 'tarajuvva');
+  pool = mysql.createPool({
+    ...baseConnectionConfig(),
+    database,
+    waitForConnections: true,
+    connectionLimit: Number(process.env.MYSQL_CONNECTION_LIMIT || 10),
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
+  });
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS users (
+      id VARCHAR(36) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      password_hash VARCHAR(255),
+      google_id VARCHAR(255),
+      avatar TEXT,
+      phone VARCHAR(64),
+      address TEXT,
+      role VARCHAR(32) DEFAULT 'user',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_users_email (email),
+      UNIQUE KEY uq_users_google_id (google_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS products (
+      id VARCHAR(36) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      price DOUBLE NOT NULL,
+      original_price DOUBLE,
+      category VARCHAR(128) NOT NULL,
+      description TEXT,
+      ways_to_wear TEXT,
+      images TEXT NOT NULL,
+      tags TEXT,
+      stock INT DEFAULT 100,
+      featured TINYINT(1) DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id VARCHAR(36) PRIMARY KEY,
+      user_id VARCHAR(36),
+      user_name VARCHAR(255) NOT NULL,
+      user_email VARCHAR(255),
+      user_phone VARCHAR(64) NOT NULL,
+      address TEXT NOT NULL,
+      items TEXT NOT NULL,
+      total DOUBLE NOT NULL,
+      status VARCHAR(32) DEFAULT 'received',
+      payment_method VARCHAR(32) DEFAULT 'cod',
+      notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS reimagine_requests (
+      id VARCHAR(36) PRIMARY KEY,
+      user_id VARCHAR(36),
+      user_name VARCHAR(255) NOT NULL,
+      user_phone VARCHAR(64) NOT NULL,
+      user_email VARCHAR(255),
+      address TEXT,
+      garment_type VARCHAR(128) NOT NULL,
+      transformation VARCHAR(255) NOT NULL,
+      notes TEXT,
+      images TEXT,
+      status VARCHAR(32) DEFAULT 'pending_review',
+      is_custom TINYINT(1) DEFAULT 0,
+      consultation_paid TINYINT(1) DEFAULT 0,
+      admin_notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_reimagine_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS waitlist (
+      id VARCHAR(36) PRIMARY KEY,
+      type VARCHAR(32) NOT NULL,
+      user_id VARCHAR(36),
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(64),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT fk_waitlist_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS admins (
+      id VARCHAR(36) PRIMARY KEY,
+      username VARCHAR(255) NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_admins_username (username)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  const row = await get('SELECT COUNT(*) AS count FROM products');
+  const productCount = Number(row.count);
+  if (productCount === 0) await seedProducts();
+}
+
+async function seedProducts() {
   const products = [
     {
       id: 'p1', name: 'Indigo Block Print Kurta', price: 1299, original_price: 1799,
@@ -157,10 +235,35 @@ function seedProducts() {
     }
   ];
 
-  const insert = db.prepare(`INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,featured) VALUES (@id,@name,@price,@original_price,@category,@description,@ways_to_wear,@images,@tags,@stock,@featured)`);
-  db.transaction(prods => prods.forEach(p => insert.run(p)))(products);
-  console.log('✅ Products seeded');
+  const insertSql = `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?)`;
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    for (const p of products) {
+      await conn.execute(insertSql, [
+        p.id, p.name, p.price, p.original_price, p.category, p.description,
+        p.ways_to_wear, p.images, p.tags, p.stock, p.featured
+      ]);
+    }
+    await conn.commit();
+    console.log('✅ Products seeded');
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
 }
 
-initializeDatabase();
-module.exports = db;
+function getPool() {
+  if (!pool) throw new Error('Database not initialized; call initializeDatabase() first');
+  return pool;
+}
+
+module.exports = {
+  initializeDatabase,
+  getPool,
+  get,
+  all,
+  run,
+};

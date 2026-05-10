@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const db = require('../db/database');
+const { get, run, all } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
 
 // Join waitlist (repair or donate)
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { type, name, email, phone } = req.body;
 
   if (!type || !name || !email) {
@@ -17,13 +17,13 @@ router.post('/', (req, res) => {
   }
 
   // Check for duplicate
-  const existing = db.prepare('SELECT id FROM waitlist WHERE email = ? AND type = ?').get(email, type);
+  const existing = await get('SELECT id FROM waitlist WHERE email = ? AND type = ?', [email, type]);
   if (existing) {
     return res.json({ success: true, message: "You're already on the list. We'll notify you when this goes live." });
   }
 
   const id = uuidv4();
-  db.prepare('INSERT INTO waitlist (id, type, name, email, phone) VALUES (?, ?, ?, ?, ?)').run(id, type, name, email, phone || null);
+  await run('INSERT INTO waitlist (id, type, name, email, phone) VALUES (?, ?, ?, ?, ?)', [id, type, name, email, phone || null]);
 
   res.status(201).json({
     success: true,
@@ -32,7 +32,7 @@ router.post('/', (req, res) => {
 });
 
 // Get waitlist (admin)
-router.get('/', authenticateAdmin, (req, res) => {
+router.get('/', authenticateAdmin, async (req, res) => {
   const { type } = req.query;
   let query = 'SELECT * FROM waitlist WHERE 1=1';
   const params = [];
@@ -40,7 +40,7 @@ router.get('/', authenticateAdmin, (req, res) => {
   if (type) { query += ' AND type = ?'; params.push(type); }
   query += ' ORDER BY created_at DESC';
 
-  const entries = db.prepare(query).all(...params);
+  const entries = await all(query, params);
   res.json({ success: true, entries });
 });
 

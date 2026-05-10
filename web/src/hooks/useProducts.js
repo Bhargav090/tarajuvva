@@ -13,8 +13,19 @@ export function useProducts({ featured, limit, category } = {}) {
     if (category) params.set('category', category);
 
     api.get(`/shop/products?${params}`)
-      .then(r => setProducts(r.data.products || []))
-      .catch(() => {})
+      .then((r) => {
+        const list = r.data?.products;
+        if (!Array.isArray(list)) {
+          console.error('[useProducts] Unexpected response shape', r.data);
+          setProducts([]);
+          return;
+        }
+        setProducts(list);
+      })
+      .catch((err) => {
+        console.error('[useProducts]', err.response?.status, err.response?.data || err.message);
+        setProducts([]);
+      })
       .finally(() => setLoading(false));
   }, [featured, limit, category]);
 

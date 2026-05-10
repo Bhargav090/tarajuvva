@@ -3,7 +3,7 @@ const router  = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const multer  = require('multer');
 const path    = require('path');
-const db = require('../db/database');
+const { run, all } = require('../db/database');
 const { authenticateAdmin, optionalAuth } = require('../middleware/auth');
 
 const storage = multer.diskStorage({
@@ -24,7 +24,7 @@ router.get('/transformations/:garment', (req, res) => {
   res.json({ success: true, transformations: t });
 });
 
-router.post('/requests', optionalAuth, upload.array('images', 5), (req, res) => {
+router.post('/requests', optionalAuth, upload.array('images', 5), async (req, res) => {
   const { user_name, user_phone, user_email, address, garment_type, transformation, notes, is_custom } = req.body;
   if (!user_name || !user_phone || !garment_type || !transformation)
     return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -33,8 +33,10 @@ router.post('/requests', optionalAuth, upload.array('images', 5), (req, res) => 
   const id      = uuidv4();
   const user_id = req.user?.id || null;
 
-  db.prepare(`INSERT INTO reimagine_requests (id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,notes,images,is_custom) VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
-    .run(id, user_id, user_name, user_phone, user_email||null, address||null, garment_type, transformation, notes||null, JSON.stringify(images), is_custom?1:0);
+  await run(
+    `INSERT INTO reimagine_requests (id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,notes,images,is_custom) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    [id, user_id, user_name, user_phone, user_email || null, address || null, garment_type, transformation, notes || null, JSON.stringify(images), is_custom ? 1 : 0]
+  );
 
   res.status(201).json({
     success: true,
@@ -43,20 +45,21 @@ router.post('/requests', optionalAuth, upload.array('images', 5), (req, res) => 
   });
 });
 
-router.get('/requests', authenticateAdmin, (req, res) => {
+router.get('/requests', authenticateAdmin, async (req, res) => {
   const { status } = req.query;
   let q = 'SELECT * FROM reimagine_requests WHERE 1=1';
   const params = [];
   if (status) { q += ' AND status=?'; params.push(status); }
   q += ' ORDER BY created_at DESC';
-  res.json({ success: true, requests: db.prepare(q).all(...params).map(r => ({ ...r, images: JSON.parse(r.images||'[]') })) });
+  const rows = await all(q, params);
+  res.json({ success: true, requests: rows.map(r => ({ ...r, images: JSON.parse(r.images || '[]') })) });
 });
 
-router.patch('/requests/:id/status', authenticateAdmin, (req, res) => {
+router.patch('/requests/:id/status', authenticateAdmin, async (req, res) => {
   const { status, admin_notes } = req.body;
   const valid = ['pending_review','accepted','in_progress','completed','rejected'];
   if (!valid.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status' });
-  db.prepare('UPDATE reimagine_requests SET status=?,admin_notes=?,updated_at=CURRENT_TIMESTAMP WHERE id=?').run(status, admin_notes||null, req.params.id);
+  await run('UPDATE reimagine_requests SET status=?,admin_notes=?,updated_at=CURRENT_TIMESTAMP WHERE id=?', [status, admin_notes || null, req.params.id]);
   res.json({ success: true });
 });
 

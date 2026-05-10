@@ -27,6 +27,14 @@ export default function Login() {
     try {
       const { data } = await api.post('/auth/login', form);
       if (data.success) {
+        // Admin login returns { admin } instead of { user }
+        if (data.admin) {
+          localStorage.setItem('admin_token', data.token);
+          toast.success(`Welcome back, ${data.admin.username}! 👋`);
+          navigate('/admin', { replace: true });
+          return;
+        }
+
         login(data.token, data.user);
         toast.success(`Welcome back, ${data.user.name}! 👋`);
         navigate(from, { replace: true });

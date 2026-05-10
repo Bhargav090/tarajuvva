@@ -4,7 +4,7 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { OAuth2Client } = require('google-auth-library');
-const db = require('../db/database');
+const { get, run } = require('../db/database');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -19,14 +19,14 @@ router.post('/register', async (req, res) => {
   if (!name || !email || !password) return res.status(400).json({ success: false, message: 'All fields required' });
   if (password.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
 
-  const exists = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  const exists = await get('SELECT id FROM users WHERE email = ?', [email]);
   if (exists) return res.status(409).json({ success: false, message: 'Email already registered' });
 
   const hash = await bcrypt.hash(password, 10);
   const id = uuidv4();
-  db.prepare('INSERT INTO users (id, name, email, password_hash) VALUES (?, ?, ?, ?)').run(id, name, email, hash);
+  await run('INSERT INTO users (id, name, email, password_hash) VALUES (?, ?, ?, ?)', [id, name, email, hash]);
 
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+  const user = await get('SELECT * FROM users WHERE id = ?', [id]);
   res.status(201).json({ success: true, token: signToken(user), user: safeUser(user) });
 });
 
@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
     return res.json({ success: true, token, admin: { username: process.env.ADMIN_USERNAME, role: 'admin' } });
   }
 
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(loginEmail);
+  const user = await get('SELECT * FROM users WHERE email = ?', [loginEmail]);
   if (!user) return res.status(401).json({ success: false, message: 'Invalid email or password' });
   if (!user.password_hash) return res.status(401).json({ success: false, message: 'This account uses Google Sign-In' });
 
@@ -64,19 +64,19 @@ router.post('/google', async (req, res) => {
     const payload = ticket.getPayload();
     const { sub: googleId, email, name, picture } = payload;
 
-    let user = db.prepare('SELECT * FROM users WHERE google_id = ? OR email = ?').get(googleId, email);
+    let user = await get('SELECT * FROM users WHERE google_id = ? OR email = ?', [googleId, email]);
 
     if (user) {
       // Update google_id if signing in with Google for the first time on existing email account
       if (!user.google_id) {
-        db.prepare('UPDATE users SET google_id = ?, avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(googleId, picture, user.id);
-        user = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+        await run('UPDATE users SET google_id = ?, avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [googleId, picture, user.id]);
+        user = await get('SELECT * FROM users WHERE id = ?', [user.id]);
       }
     } else {
       // New user via Google
       const id = uuidv4();
-      db.prepare('INSERT INTO users (id, name, email, google_id, avatar) VALUES (?, ?, ?, ?, ?)').run(id, name, email, googleId, picture);
-      user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+      await run('INSERT INTO users (id, name, email, google_id, avatar) VALUES (?, ?, ?, ?, ?)', [id, name, email, googleId, picture]);
+      user = await get('SELECT * FROM users WHERE id = ?', [id]);
     }
 
     res.json({ success: true, token: signToken(user), user: safeUser(user) });
@@ -87,14 +87,14 @@ router.post('/google', async (req, res) => {
 });
 
 // ── VERIFY TOKEN ──────────────────────────────────────────────────────────────
-router.get('/verify', (req, res) => {
+router.get('/verify', async (req, res) => {
   const token = req.headers['authorization']?.split(' ')[1];
   if (!token) return res.status(401).json({ success: false });
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // Admin token
     if (decoded.role === 'admin') return res.json({ success: true, admin: decoded });
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+    const user = await get('SELECT * FROM users WHERE id = ?', [decoded.id]);
     if (!user) return res.status(404).json({ success: false });
     res.json({ success: true, user: safeUser(user) });
   } catch {

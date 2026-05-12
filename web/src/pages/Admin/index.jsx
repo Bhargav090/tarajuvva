@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Key,
+  LogOut, TrendingUp, Package, Key, Tag,
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -22,6 +22,7 @@ import StatusSelect from '../../components/ui/StatusSelect';
 import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
 import { ORDER_STATUSES, REIMAGINE_STATUSES } from '../../utils/constants';
+import ProductConfiguratorTab from './ProductConfiguratorTab';
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, color, sub }) {
@@ -44,6 +45,7 @@ const TABS = [
   { id: 'orders',    label: 'Orders',             icon: ShoppingBag    },
   { id: 'reimagine', label: 'Reimagine',          icon: Scissors       },
   { id: 'waitlist',  label: 'Waitlist',           icon: Users          },
+  { id: 'products',  label: 'Products',           icon: Tag            },
 ];
 
 function AdminChangePasswordModal({ open, onClose }) {
@@ -199,6 +201,7 @@ export default function Admin() {
           {tab === 'orders' && <OrdersTab />}
           {tab === 'reimagine' && <ReimagineTab />}
           {tab === 'waitlist' && <WaitlistTab />}
+          {tab === 'products' && <ProductConfiguratorTab />}
         </div>
       </div>
     </div>

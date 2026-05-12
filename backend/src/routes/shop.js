@@ -1,8 +1,27 @@
 const express = require('express');
 const router  = express.Router();
+const multer  = require('multer');
+const path    = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin, optionalAuth } = require('../middleware/auth');
+
+const productImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
+    cb(null, `prod-${uuidv4()}${ext}`);
+  },
+});
+const productImageUpload = multer({
+  storage: productImageStorage,
+  limits: { fileSize: 10 * 1024 * 1024, files: 12 },
+  fileFilter: (req, file, cb) => {
+    const ok = /^image\/(jpeg|png|gif|webp)$/i.test(file.mimetype);
+    if (ok) cb(null, true);
+    else cb(new Error('Only JPEG, PNG, GIF, or WebP images are allowed'));
+  },
+});
 
 const parseProduct = (p) => ({
   ...p,
@@ -28,6 +47,22 @@ router.get('/products', async (req, res) => {
   res.json({ success: true, products: rows.map(parseProduct) });
 });
 
+router.post(
+  '/products/upload-images',
+  authenticateAdmin,
+  (req, res, next) => {
+    productImageUpload.array('images', 12)(req, res, (err) => {
+      if (err) return res.status(400).json({ success: false, message: err.message || 'Upload failed' });
+      next();
+    });
+  },
+  (req, res) => {
+    const urls = (req.files || []).map((f) => `/uploads/${f.filename}`);
+    if (urls.length === 0) return res.status(400).json({ success: false, message: 'No image files received' });
+    res.json({ success: true, urls });
+  }
+);
+
 router.get('/products/:id', async (req, res) => {
   const p = await get('SELECT * FROM products WHERE id = ?', [req.params.id]);
   if (!p) return res.status(404).json({ success: false, message: 'Not found' });
@@ -36,19 +71,37 @@ router.get('/products/:id', async (req, res) => {
 
 router.post('/products', authenticateAdmin, async (req, res) => {
   const { name, price, original_price, category, description, ways_to_wear, images, tags, stock, featured } = req.body;
+  if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: 'Name is required' });
+  const priceNum = Number(price);
+  if (Number.isNaN(priceNum) || priceNum < 0) return res.status(400).json({ success: false, message: 'Valid price is required' });
+  if (!category || !String(category).trim()) return res.status(400).json({ success: false, message: 'Category is required' });
+  const imgList = Array.isArray(images) ? images.map((u) => String(u).trim()).filter(Boolean) : [];
+  if (imgList.length === 0) return res.status(400).json({ success: false, message: 'At least one image URL is required' });
+  const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
+  const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
+  const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
   const id = uuidv4();
   await run(
     `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-    [id, name, price, original_price || null, category, description || null, JSON.stringify(ways_to_wear || []), JSON.stringify(images || []), JSON.stringify(tags || []), stock || 100, featured ? 1 : 0]
+    [id, String(name).trim(), priceNum, original_price == null || original_price === '' ? null : Number(original_price), String(category).trim(), description ? String(description).trim() : null, JSON.stringify(ways), JSON.stringify(imgList), JSON.stringify(tagList), stockNum, featured ? 1 : 0]
   );
   res.status(201).json({ success: true, id });
 });
 
 router.put('/products/:id', authenticateAdmin, async (req, res) => {
   const { name, price, original_price, category, description, ways_to_wear, images, tags, stock, featured } = req.body;
+  if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: 'Name is required' });
+  const priceNum = Number(price);
+  if (Number.isNaN(priceNum) || priceNum < 0) return res.status(400).json({ success: false, message: 'Valid price is required' });
+  if (!category || !String(category).trim()) return res.status(400).json({ success: false, message: 'Category is required' });
+  const imgList = Array.isArray(images) ? images.map((u) => String(u).trim()).filter(Boolean) : [];
+  if (imgList.length === 0) return res.status(400).json({ success: false, message: 'At least one image URL is required' });
+  const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
+  const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
+  const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
   await run(
     `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,stock=?,featured=? WHERE id=?`,
-    [name, price, original_price || null, category, description || null, JSON.stringify(ways_to_wear || []), JSON.stringify(images || []), JSON.stringify(tags || []), stock || 100, featured ? 1 : 0, req.params.id]
+    [String(name).trim(), priceNum, original_price == null || original_price === '' ? null : Number(original_price), String(category).trim(), description ? String(description).trim() : null, JSON.stringify(ways), JSON.stringify(imgList), JSON.stringify(tagList), stockNum, featured ? 1 : 0, req.params.id]
   );
   res.json({ success: true });
 });

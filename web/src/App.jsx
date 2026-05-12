@@ -20,7 +20,8 @@ import Login      from './pages/Auth/Login';
 import Register   from './pages/Auth/Register';
 import Profile    from './pages/Profile';
 
-const TICKER_H = 32; // px
+/** Must match the fixed ticker row height in `Ticker` (px). */
+const TICKER_BAR_PX = 40;
 
 function Layout({ children }) {
   const { pathname } = useLocation();
@@ -30,19 +31,18 @@ function Layout({ children }) {
   if (isAdmin || isAuth) return <>{children}</>;
 
   return (
-    <>
-      {/* Ticker strip */}
-      <div style={{ height: TICKER_H }}>
-        <Ticker />
-      </div>
-      {/* Sticky header sits below ticker */}
-      <div style={{ '--ticker-h': `${TICKER_H}px` }}>
-        <Header />
-      </div>
+    <div
+      className="[--nav-h:3.5rem] sm:[--nav-h:4rem]"
+      style={{ '--ticker-h': `${TICKER_BAR_PX}px` }}
+    >
+      <Ticker barHeightPx={TICKER_BAR_PX} />
+      <Header />
+      {/* Reserve space for fixed ticker + fixed nav so page content is not covered */}
+      <div aria-hidden className="shrink-0 h-[calc(var(--ticker-h)+var(--nav-h))]" />
       <CartDrawer />
       <main>{children}</main>
       <Footer />
-    </>
+    </div>
   );
 }
 

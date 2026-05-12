@@ -39,7 +39,7 @@ export default function Header() {
             ? 'bg-[#eef4d1]/95 backdrop-blur-md shadow-sm border-b border-[#341631]/8'
             : 'bg-[#eef4d1]'
         }`}
-        style={{ top: 'var(--ticker-h, 32px)' }}
+        style={{ top: 'var(--ticker-h, 40px)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
@@ -155,14 +155,14 @@ export default function Header() {
         {open && (
           <>
             <motion.div
-              className="fixed inset-0 bg-black/30 z-40 md:hidden"
+              className="fixed inset-0 bg-black/30 z-[56] md:hidden"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setOpen(false)}
             />
             <motion.div
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 340, damping: 32 }}
-              className="fixed right-0 top-0 h-full w-4/5 max-w-xs z-50 bg-[#eef4d1] flex flex-col md:hidden"
+              className="fixed right-0 top-0 h-full w-4/5 max-w-xs z-[57] bg-[#eef4d1] flex flex-col md:hidden"
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-[#341631]/10">
                 <span className="font-black text-lg text-[#341631] font-[Outfit]">Menu</span>

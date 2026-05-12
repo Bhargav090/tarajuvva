@@ -6,7 +6,7 @@ import { AccentPill } from './Badge';
 export default function PageBanner({ badge, badgeColor, title, subtitle, children, darkBg = false }) {
   return (
     <section
-      className="px-4 pt-28 pb-16 sm:pt-32 sm:pb-20"
+      className="px-4 pt-6 pb-10 sm:pt-8 sm:pb-12"
       style={{ background: darkBg ? '#0b4722' : '#eef4d1' }}
     >
       <div className="max-w-5xl mx-auto">
@@ -16,14 +16,14 @@ export default function PageBanner({ badge, badgeColor, title, subtitle, childre
           </div>
         )}
         <h1
-          className="font-[Outfit] font-black leading-[1.05] text-4xl sm:text-5xl lg:text-7xl tracking-tight"
+          className="font-display font-black leading-[1.05] text-4xl sm:text-5xl lg:text-7xl tracking-tight"
           style={{ color: darkBg ? '#eef4d1' : '#341631' }}
         >
           {title}
         </h1>
         {subtitle && (
           <p
-            className="mt-5 text-lg sm:text-xl font-[Poppins] leading-relaxed max-w-2xl"
+            className="mt-5 text-lg sm:text-xl font-display leading-relaxed max-w-2xl"
             style={{ color: darkBg ? 'rgba(238,244,209,0.7)' : 'rgba(52,22,49,0.6)' }}
           >
             {subtitle}

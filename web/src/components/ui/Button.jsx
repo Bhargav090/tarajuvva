@@ -84,7 +84,7 @@ export default function Button({
           style={{ width: is, height: is }} />
       )}
       {!loading && Icon && iconPosition === 'left' && <Icon size={is} className="flex-shrink-0" />}
-      {children && <span className="font-[Outfit]">{children}</span>}
+      {children && <span className="font-display">{children}</span>}
       {!loading && Icon && iconPosition === 'right' && <Icon size={is} className="flex-shrink-0" />}
     </motion.button>
   );

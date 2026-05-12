@@ -1,54 +1,27 @@
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { useSearchParams, Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Clock, Star,
+  LogOut, TrendingUp, Package, Key,
 } from 'lucide-react';
-import { useAdminAuth, useAdminStats, useAdminOrders, useAdminReimagine, useAdminWaitlist } from '../../hooks/useAdmin';
+import {
+  useAdminAuth,
+  useAdminStats,
+  useAdminOrders,
+  useAdminReimagine,
+  useAdminWaitlist,
+  changeAdminPassword,
+} from '../../hooks/useAdmin';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Input } from '../../components/ui/FormField';
 import { Badge } from '../../components/ui/Badge';
 import StatusSelect from '../../components/ui/StatusSelect';
 import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
 import { ORDER_STATUSES, REIMAGINE_STATUSES } from '../../utils/constants';
-
-// ── Login ──────────────────────────────────────────────────────────────────────
-function AdminLogin({ onLogin }) {
-  const [form, setForm] = useState({ username: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { login } = useAdminAuth();
-
-  const onSubmit = async e => {
-    e.preventDefault(); setError('');
-    setLoading(true);
-    const err = await login(form.username, form.password);
-    if (err) { setError(err); setLoading(false); }
-    else onLogin();
-  };
-
-  return (
-    <div className="min-h-screen bg-[#341631] flex items-center justify-center px-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm bg-[#eef4d1] rounded-3xl p-8">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-[#0b4722] flex items-center justify-center mx-auto mb-4">
-            <span className="text-[#eef4d1] font-black text-xl font-[Outfit]">T</span>
-          </div>
-          <h1 className="text-2xl font-black text-[#341631] font-[Outfit]">Admin Panel</h1>
-          <p className="text-[#341631]/50 text-sm font-[Poppins] mt-1">Sign in to continue</p>
-        </div>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <Input label="Username" name="username" value={form.username} onChange={e => setForm(p => ({...p, username: e.target.value}))} required />
-          <Input label="Password" name="password" type="password" value={form.password} onChange={e => setForm(p => ({...p, password: e.target.value}))} required />
-          {error && <p className="text-[#e34334] text-xs font-medium font-[Poppins] text-center">{error}</p>}
-          <Button type="submit" variant="primary" fullWidth size="lg" loading={loading}>Sign In</Button>
-        </form>
-      </motion.div>
-    </div>
-  );
-}
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, color, sub }) {
@@ -58,10 +31,10 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
         <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: color + '18' }}>
           <Icon size={20} style={{ color }} />
         </div>
-        {sub && <span className="text-xs text-[#0b4722] font-semibold font-[Outfit]">{sub}</span>}
+        {sub && <span className="text-xs text-[#0b4722] font-semibold font-display">{sub}</span>}
       </div>
-      <p className="text-2xl font-black text-[#341631] font-[Outfit]">{value ?? '—'}</p>
-      <p className="text-xs text-[#341631]/45 font-[Poppins] mt-1">{label}</p>
+      <p className="text-2xl font-black text-[#341631] font-display">{value ?? '—'}</p>
+      <p className="text-xs text-[#341631]/45 font-body mt-1">{label}</p>
     </div>
   );
 }
@@ -73,10 +46,74 @@ const TABS = [
   { id: 'waitlist',  label: 'Waitlist',           icon: Users          },
 ];
 
+function AdminChangePasswordModal({ open, onClose }) {
+  const [currentPassword, setCurrent] = useState('');
+  const [newPassword, setNew] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setCurrent('');
+      setNew('');
+      setConfirmPw('');
+      setErr('');
+    }
+  }, [open]);
+
+  if (!open || typeof document === 'undefined') return null;
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setErr('');
+    if (newPassword !== confirmPw) {
+      setErr('New passwords do not match');
+      return;
+    }
+    setLoading(true);
+    try {
+      await changeAdminPassword(currentPassword, newPassword);
+      toast.success('Password updated');
+      onClose();
+    } catch (err) {
+      setErr(err.response?.data?.message || 'Update failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <form
+        onSubmit={onSubmit}
+        className="relative z-[1] w-full max-w-md rounded-2xl border border-[#341631]/10 bg-[#eef4d1] p-6 shadow-xl"
+      >
+        <h2 className="text-lg font-black text-[#341631] font-display mb-1">Change password</h2>
+        <p className="text-xs text-[#341631]/50 font-body mb-4">Use a strong password you have not used elsewhere.</p>
+        <div className="space-y-3">
+          <Input label="Current password" name="cur" type="password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrent(e.target.value)} required />
+          <Input label="New password" name="new" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNew(e.target.value)} required />
+          <Input label="Confirm new password" name="cnew" type="password" autoComplete="new-password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} required />
+        </div>
+        {err && <p className="mt-3 text-xs text-[#e34334] font-body text-center">{err}</p>}
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="primary" loading={loading}>Update password</Button>
+        </div>
+      </form>
+    </div>,
+    document.body
+  );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Admin() {
   const { token, logout, isLoaded } = useAdminAuth();
-  const [loggedIn, setLoggedIn] = useState(!!token);
+  const navigate = useNavigate();
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const tab = TABS.some((t) => t.id === tabParam) ? tabParam : 'overview';
@@ -87,9 +124,10 @@ export default function Admin() {
   const [sidebar, setSidebar] = useState(false);
 
   if (!isLoaded) return <div className="min-h-screen bg-[#341631] flex items-center justify-center"><Spinner color="#eef4d1" size={32} /></div>;
-  if (!loggedIn) return <AdminLogin onLogin={() => setLoggedIn(true)} />;
+  if (!token) return <Navigate to="/login" replace state={{ from: '/admin' }} />;
 
   return (
+    <>
     <div className="min-h-screen bg-[#eef4d1] flex">
       {/* Sidebar Overlay (mobile) */}
       <AnimatePresence>
@@ -109,11 +147,11 @@ export default function Admin() {
             <div className="px-6 py-6 border-b border-[#eef4d1]/10">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-[#0b4722] flex items-center justify-center">
-                  <span className="text-[#eef4d1] font-black text-sm font-[Outfit]">T</span>
+                  <span className="text-[#eef4d1] font-black text-sm font-display">T</span>
                 </div>
                 <div>
-                  <p className="text-[#eef4d1] font-black text-sm font-[Outfit]">Tarajuvva</p>
-                  <p className="text-[#eef4d1]/40 text-xs font-[Poppins]">Admin Panel</p>
+                  <p className="text-[#eef4d1] font-black text-sm font-display">Tarajuvva</p>
+                  <p className="text-[#eef4d1]/40 text-xs font-body">Admin Panel</p>
                 </div>
               </div>
             </div>
@@ -121,7 +159,7 @@ export default function Admin() {
             <nav className="flex-1 px-3 py-4 space-y-1">
               {TABS.map(t => (
                 <button key={t.id} onClick={() => { setTab(t.id); setSidebar(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-[Outfit] transition-all ${
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-display transition-all ${
                     tab === t.id
                       ? 'bg-[#eef4d1] text-[#341631]'
                       : 'text-[#eef4d1]/60 hover:text-[#eef4d1] hover:bg-[#eef4d1]/8'
@@ -132,9 +170,13 @@ export default function Admin() {
               ))}
             </nav>
 
-            <div className="px-3 py-4 border-t border-[#eef4d1]/10">
-              <button onClick={() => { logout(); setLoggedIn(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-[Outfit] text-[#e34334]/70 hover:text-[#e34334] hover:bg-[#e34334]/8 transition-all">
+            <div className="px-3 py-4 border-t border-[#eef4d1]/10 space-y-1">
+              <button type="button" onClick={() => setPwOpen(true)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-display text-[#eef4d1]/70 hover:text-[#eef4d1] hover:bg-[#eef4d1]/8 transition-all">
+                <Key size={16} /> Change password
+              </button>
+              <button type="button" onClick={() => setLogoutOpen(true)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-display text-[#e34334]/70 hover:text-[#e34334] hover:bg-[#e34334]/8 transition-all">
                 <LogOut size={16} /> Sign Out
               </button>
             </div>
@@ -149,7 +191,7 @@ export default function Admin() {
           <button onClick={() => setSidebar(true)} className="p-2 rounded-xl hover:bg-[#eef4d1]">
             <Menu size={20} className="text-[#341631]" />
           </button>
-          <p className="font-black text-[#341631] font-[Outfit]">Admin Panel</p>
+          <p className="font-black text-[#341631] font-display">Admin Panel</p>
         </div>
 
         <div className="p-5 sm:p-8">
@@ -160,6 +202,21 @@ export default function Admin() {
         </div>
       </div>
     </div>
+    <ConfirmDialog
+      open={logoutOpen}
+      onClose={() => setLogoutOpen(false)}
+      title="Sign out?"
+      message="You will need to sign in again to access the admin panel."
+      confirmLabel="Sign out"
+      cancelLabel="Stay signed in"
+      confirmVariant="red"
+      onConfirm={() => {
+        logout();
+        navigate('/login', { replace: true });
+      }}
+    />
+    <AdminChangePasswordModal open={pwOpen} onClose={() => setPwOpen(false)} />
+    </>
   );
 }
 
@@ -168,7 +225,7 @@ function OverviewTab() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size={32} /></div>;
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-[Outfit] mb-8">Overview</h1>
+      <h1 className="text-2xl font-black text-[#341631] font-display mb-8">Overview</h1>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#0b4722" sub={`${stats?.orders?.pending ?? 0} pending`} />
         <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#6c0b20" />
@@ -188,28 +245,28 @@ function OrdersTab() {
   if (loading) return <TableSkeleton rows={6} cols={5} />;
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-[Outfit] mb-6">Orders ({orders.length})</h1>
+      <h1 className="text-2xl font-black text-[#341631] font-display mb-6">Orders ({orders.length})</h1>
       <div className="space-y-3">
         {orders.map(o => (
           <div key={o.id} className="bg-white rounded-2xl p-5 border border-[#341631]/8">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
               <div>
-                <p className="text-xs text-[#341631]/40 font-[Poppins]">#{o.id.slice(0,8).toUpperCase()}</p>
-                <p className="font-bold text-[#341631] font-[Outfit]">{o.user_name}</p>
-                <p className="text-xs text-[#341631]/50 font-[Poppins]">{o.user_phone}</p>
+                <p className="text-xs text-[#341631]/40 font-body">#{o.id.slice(0,8).toUpperCase()}</p>
+                <p className="font-bold text-[#341631] font-display">{o.user_name}</p>
+                <p className="text-xs text-[#341631]/50 font-body">{o.user_phone}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-black text-[#0b4722] font-[Outfit]">₹{o.total.toLocaleString('en-IN')}</span>
+                <span className="font-black text-[#0b4722] font-display">₹{o.total.toLocaleString('en-IN')}</span>
                 <StatusSelect value={o.status} options={ORDER_STATUSES} onUpdate={s => updateStatus(o.id, s)} />
               </div>
             </div>
-            <div className="text-xs text-[#341631]/45 font-[Poppins]">
+            <div className="text-xs text-[#341631]/45 font-body">
               {o.items.map((it, i) => `${it.name} ×${it.qty}`).join(', ')}
             </div>
-            <p className="text-xs text-[#341631]/35 font-[Poppins] mt-1">{o.address}</p>
+            <p className="text-xs text-[#341631]/35 font-body mt-1">{o.address}</p>
           </div>
         ))}
-        {orders.length === 0 && <p className="text-center text-[#341631]/40 font-[Poppins] py-12">No orders yet.</p>}
+        {orders.length === 0 && <p className="text-center text-[#341631]/40 font-body py-12">No orders yet.</p>}
       </div>
     </div>
   );
@@ -220,19 +277,19 @@ function ReimagineTab() {
   if (loading) return <TableSkeleton rows={6} cols={4} />;
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-[Outfit] mb-6">Reimagine Requests ({requests.length})</h1>
+      <h1 className="text-2xl font-black text-[#341631] font-display mb-6">Reimagine Requests ({requests.length})</h1>
       <div className="space-y-3">
         {requests.map(r => (
           <div key={r.id} className="bg-white rounded-2xl p-5 border border-[#341631]/8">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
               <div>
-                <p className="font-bold text-[#341631] font-[Outfit]">{r.user_name}</p>
-                <p className="text-sm text-[#6c0b20] font-[Outfit]">{r.garment_type} → {r.transformation}</p>
-                <p className="text-xs text-[#341631]/45 font-[Poppins]">{r.user_phone}</p>
+                <p className="font-bold text-[#341631] font-display">{r.user_name}</p>
+                <p className="text-sm text-[#6c0b20] font-display">{r.garment_type} → {r.transformation}</p>
+                <p className="text-xs text-[#341631]/45 font-body">{r.user_phone}</p>
               </div>
               <StatusSelect value={r.status} options={REIMAGINE_STATUSES} onUpdate={s => updateStatus(r.id, s)} />
             </div>
-            {r.notes && <p className="text-xs text-[#341631]/55 font-[Poppins] bg-[#eef4d1] rounded-lg p-2 mt-2">{r.notes}</p>}
+            {r.notes && <p className="text-xs text-[#341631]/55 font-body bg-[#eef4d1] rounded-lg p-2 mt-2">{r.notes}</p>}
             {r.images?.length > 0 && (
               <div className="flex gap-2 mt-3">
                 {r.images.map((img, i) => (
@@ -244,7 +301,7 @@ function ReimagineTab() {
             )}
           </div>
         ))}
-        {requests.length === 0 && <p className="text-center text-[#341631]/40 font-[Poppins] py-12">No reimagine requests yet.</p>}
+        {requests.length === 0 && <p className="text-center text-[#341631]/40 font-body py-12">No reimagine requests yet.</p>}
       </div>
     </div>
   );
@@ -256,25 +313,25 @@ function WaitlistTab() {
 
   const Section = ({ title, data, color }) => (
     <div>
-      <h2 className="text-lg font-bold text-[#341631] font-[Outfit] mb-4" style={{ color }}>{title} ({data.length})</h2>
+      <h2 className="text-lg font-bold text-[#341631] font-display mb-4" style={{ color }}>{title} ({data.length})</h2>
       <div className="space-y-2 mb-8">
         {data.map(w => (
           <div key={w.id} className="bg-white rounded-xl px-5 py-3 border border-[#341631]/8 flex items-center justify-between">
             <div>
-              <p className="font-semibold text-[#341631] font-[Outfit] text-sm">{w.name}</p>
-              <p className="text-xs text-[#341631]/45 font-[Poppins]">{w.email} · {w.phone || 'No phone'}</p>
+              <p className="font-semibold text-[#341631] font-display text-sm">{w.name}</p>
+              <p className="text-xs text-[#341631]/45 font-body">{w.email} · {w.phone || 'No phone'}</p>
             </div>
-            <p className="text-xs text-[#341631]/35 font-[Poppins]">{new Date(w.created_at).toLocaleDateString('en-IN')}</p>
+            <p className="text-xs text-[#341631]/35 font-body">{new Date(w.created_at).toLocaleDateString('en-IN')}</p>
           </div>
         ))}
-        {data.length === 0 && <p className="text-[#341631]/40 font-[Poppins] text-sm py-4 text-center">No entries yet.</p>}
+        {data.length === 0 && <p className="text-[#341631]/40 font-body text-sm py-4 text-center">No entries yet.</p>}
       </div>
     </div>
   );
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-[Outfit] mb-8">Waitlist</h1>
+      <h1 className="text-2xl font-black text-[#341631] font-display mb-8">Waitlist</h1>
       <Section title="🔧 Repair" data={repair} color="#e34334" />
       <Section title="💙 Donate" data={donate} color="#015395" />
     </div>

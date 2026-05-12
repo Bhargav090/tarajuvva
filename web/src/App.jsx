@@ -96,9 +96,9 @@ export default function App() {
               <Route path="/admin"             element={<Admin />} />
               <Route path="*" element={
                 <div className="min-h-screen bg-[#eef4d1] flex flex-col items-center justify-center gap-4">
-                  <p className="text-8xl font-black text-[#341631]/10 font-[Outfit]">404</p>
-                  <p className="text-xl font-bold text-[#341631] font-[Outfit]">Page not found</p>
-                  <a href="/" className="text-[#0b4722] font-semibold hover:underline font-[Outfit]">Go Home →</a>
+                  <p className="text-8xl font-black text-[#341631]/10 font-display">404</p>
+                  <p className="text-xl font-bold text-[#341631] font-display">Page not found</p>
+                  <a href="/" className="text-[#0b4722] font-semibold hover:underline font-display">Go Home →</a>
                 </div>
               } />
             </Routes>

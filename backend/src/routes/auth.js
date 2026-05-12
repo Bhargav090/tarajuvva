@@ -5,6 +5,7 @@ const jwt     = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { OAuth2Client } = require('google-auth-library');
 const { get, run } = require('../db/database');
+const { authenticateAdmin } = require('../middleware/auth');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -33,12 +34,38 @@ router.post('/register', async (req, res) => {
 // ── LOGIN (email/password) ────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { username, password, email } = req.body;
-  const loginEmail = email || username;
+  const loginEmail = (email || username || '').trim();
+  const envAdminUser = process.env.ADMIN_USERNAME?.trim();
 
-  // Admin shortcut
-  if (loginEmail === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-    const token = jwt.sign({ id: 'admin', username: process.env.ADMIN_USERNAME, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    return res.json({ success: true, token, admin: { username: process.env.ADMIN_USERNAME, role: 'admin' } });
+  // Admin — DB row (preferred) or legacy env match (creates row on first success)
+  const adminRow = await get('SELECT * FROM admins WHERE username = ?', [loginEmail]);
+  if (adminRow) {
+    const adminOk = await bcrypt.compare(password, adminRow.password_hash);
+    if (!adminOk) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+    const token = jwt.sign(
+      { id: adminRow.id, username: adminRow.username, role: 'admin' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    return res.json({ success: true, token, admin: { username: adminRow.username, role: 'admin' } });
+  }
+  if (envAdminUser && loginEmail === envAdminUser && password === process.env.ADMIN_PASSWORD) {
+    const id = uuidv4();
+    const hash = await bcrypt.hash(password, 10);
+    try {
+      await run('INSERT INTO admins (id, username, password_hash) VALUES (?, ?, ?)', [id, loginEmail, hash]);
+    } catch (e) {
+      if (e.errno !== 1062 && e.code !== 'ER_DUP_ENTRY') throw e;
+    }
+    const row = await get('SELECT * FROM admins WHERE username = ?', [loginEmail]);
+    const token = jwt.sign(
+      { id: row.id, username: row.username, role: 'admin' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    return res.json({ success: true, token, admin: { username: row.username, role: 'admin' } });
   }
 
   const user = await get('SELECT * FROM users WHERE email = ?', [loginEmail]);
@@ -86,6 +113,32 @@ router.post('/google', async (req, res) => {
     console.error('Google SSO error:', err.message);
     res.status(401).json({ success: false, message: 'Google verification failed' });
   }
+});
+
+// ── ADMIN CHANGE PASSWORD ─────────────────────────────────────────────────────
+router.put('/admin/password', authenticateAdmin, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Current and new password are required' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+  }
+  let row = await get('SELECT * FROM admins WHERE id = ?', [req.admin.id]);
+  if (!row && req.admin.username) {
+    row = await get('SELECT * FROM admins WHERE username = ?', [req.admin.username]);
+  }
+  if (!row) {
+    return res.status(400).json({
+      success: false,
+      message: 'Admin credentials are not stored in the database yet. Sign out and sign in once to sync, then try again.',
+    });
+  }
+  const ok = await bcrypt.compare(currentPassword, row.password_hash);
+  if (!ok) return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+  const hash = await bcrypt.hash(newPassword, 10);
+  await run('UPDATE admins SET password_hash = ? WHERE id = ?', [hash, row.id]);
+  res.json({ success: true, message: 'Password updated' });
 });
 
 // ── VERIFY TOKEN ──────────────────────────────────────────────────────────────

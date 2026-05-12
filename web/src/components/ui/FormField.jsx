@@ -4,7 +4,7 @@
  */
 
 const BASE = [
-  'w-full px-4 py-3 rounded-xl text-[#341631] placeholder:text-[#341631]/40 font-[Poppins] text-sm',
+  'w-full px-4 py-3 rounded-xl text-[#341631] placeholder:text-[#341631]/40 font-body text-sm',
   'bg-[#eef4d1] border border-[#341631]/15 outline-none',
   'transition-all duration-200',
   'focus:border-[#0b4722] focus:ring-2 focus:ring-[#0b4722]/12 focus:bg-white',
@@ -13,13 +13,13 @@ const BASE = [
 
 const Label = ({ label, required, htmlFor }) =>
   label ? (
-    <label htmlFor={htmlFor} className="block text-sm font-semibold text-[#341631] mb-1.5 font-[Outfit]">
+    <label htmlFor={htmlFor} className="block text-sm font-semibold text-[#341631] mb-1.5 font-display">
       {label}{required && <span className="text-[#e34334] ml-0.5">*</span>}
     </label>
   ) : null;
 
 const Error = ({ msg }) =>
-  msg ? <p className="mt-1.5 text-xs text-[#e34334] font-medium font-[Poppins]">{msg}</p> : null;
+  msg ? <p className="mt-1.5 text-xs text-[#e34334] font-medium font-body">{msg}</p> : null;
 
 export function Input({ label, error, required, id, accent, ...props }) {
   const fid = id || label?.toLowerCase().replace(/\s+/g, '-');

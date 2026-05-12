@@ -11,11 +11,11 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2.5 mb-5">
               <div className="w-9 h-9 rounded-lg bg-[#0b4722] flex items-center justify-center">
-                <span className="text-[#eef4d1] font-black text-base font-[Outfit]">T</span>
+                <span className="text-[#eef4d1] font-black text-base font-display">T</span>
               </div>
-              <span className="text-xl font-black tracking-tight font-[Outfit]">Tarajuvva</span>
+              <span className="text-xl font-black tracking-tight font-display">Tarajuvva</span>
             </div>
-            <p className="text-[#eef4d1]/60 text-sm leading-relaxed font-[Poppins] max-w-xs">
+            <p className="text-[#eef4d1]/60 text-sm leading-relaxed font-body max-w-xs">
               A circular fashion system built around your wardrobe. Wear more. Buy less. Fix what you already own.
             </p>
             <div className="flex gap-3 mt-6">
@@ -37,11 +37,11 @@ export default function Footer() {
 
           {/* Navigation */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-[Outfit]">Explore</h4>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-display">Explore</h4>
             <ul className="space-y-3">
               {NAV_LINKS.map(l => (
                 <li key={l.to}>
-                  <Link to={l.to} className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-[Poppins]">
+                  <Link to={l.to} className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-body">
                     {l.label}
                   </Link>
                 </li>
@@ -51,11 +51,11 @@ export default function Footer() {
 
           {/* Policies */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-[Outfit]">Policies</h4>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-display">Policies</h4>
             <ul className="space-y-3">
               {['Shipping Policy','Returns & Exchanges','Privacy Policy','Terms of Use'].map(l => (
                 <li key={l}>
-                  <a href="#" className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-[Poppins]">{l}</a>
+                  <a href="#" className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-body">{l}</a>
                 </li>
               ))}
             </ul>
@@ -63,16 +63,16 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-[Outfit]">Contact</h4>
+            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-display">Contact</h4>
             <ul className="space-y-3">
               <li>
-                <a href="mailto:hello@tarajuvva.com" className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-[Poppins]">
+                <a href="mailto:hello@tarajuvva.com" className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-body">
                   hello@tarajuvva.com
                 </a>
               </li>
-              <li className="text-sm text-[#eef4d1]/65 font-[Poppins]">Hyderabad, India 🇮🇳</li>
+              <li className="text-sm text-[#eef4d1]/65 font-body">Hyderabad, India 🇮🇳</li>
               <li>
-                <span className="inline-flex items-center gap-1.5 bg-[#0b4722]/50 rounded-full px-3 py-1 text-xs font-semibold text-[#eef4d1] font-[Outfit]">
+                <span className="inline-flex items-center gap-1.5 bg-[#0b4722]/50 rounded-full px-3 py-1 text-xs font-semibold text-[#eef4d1] font-display">
                   ✦ Response within 24 hours
                 </span>
               </li>
@@ -82,10 +82,10 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="pt-8 border-t border-[#eef4d1]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-[#eef4d1]/35 font-[Poppins]">
+          <p className="text-xs text-[#eef4d1]/35 font-body">
             © {new Date().getFullYear()} Tarajuvva. All rights reserved.
           </p>
-          <p className="text-xs text-[#eef4d1]/35 font-[Poppins]">
+          <p className="text-xs text-[#eef4d1]/35 font-body">
             Wear more. Waste less. 🌿
           </p>
         </div>

@@ -37,7 +37,7 @@ export default function TextileWaste() {
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-[#eef4d1]/50 font-[Poppins] text-base sm:text-lg mb-6"
+          className="text-[#eef4d1]/50 font-display text-base sm:text-lg mb-6"
         >
           Every year, India discards…
         </motion.p>
@@ -61,12 +61,12 @@ export default function TextileWaste() {
           transition={{ duration: 0.7, delay: 0.8 }}
         >
           <p
-            className="font-[Outfit] font-black text-[#eef4d1] leading-none"
+            className="font-display font-black text-[#eef4d1] leading-none"
             style={{ fontSize: 'clamp(4rem, 14vw, 10rem)' }}
           >
             7M
           </p>
-          <p className="text-[#e7a3c9] font-bold text-xl sm:text-2xl font-[Outfit] -mt-2 mb-3">
+          <p className="text-[#e7a3c9] font-bold text-xl sm:text-2xl font-display -mt-2 mb-3">
             tonnes of textile waste.
           </p>
         </motion.div>
@@ -76,7 +76,7 @@ export default function TextileWaste() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 1.4 }}
-          className="text-[#eef4d1]/60 font-[Poppins] text-base sm:text-lg mb-12"
+          className="text-[#eef4d1]/60 font-display text-base sm:text-lg mb-12"
         >
           Most of it didn't need to be thrown away.
         </motion.p>
@@ -99,7 +99,7 @@ export default function TextileWaste() {
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: c.color + '30' }}>
                   <Icon size={20} style={{ color: c.color }} />
                 </div>
-                <span className="font-bold text-sm font-[Outfit]" style={{ color: c.color }}>{c.label}</span>
+                <span className="font-bold text-sm font-display" style={{ color: c.color }}>{c.label}</span>
               </Link>
             );
           })}

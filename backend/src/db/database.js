@@ -67,6 +67,20 @@ async function run(sql, params = []) {
   return result;
 }
 
+/** Seed one admin from ADMIN_USERNAME / ADMIN_PASSWORD when `admins` is empty (bcrypt hash). */
+async function ensureDefaultAdmin() {
+  const countRow = await get('SELECT COUNT(*) AS c FROM admins');
+  if (Number(countRow?.c) > 0) return;
+  const username = process.env.ADMIN_USERNAME?.trim();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!username || password == null || password === '') return;
+  const bcrypt = require('bcryptjs');
+  const { v4: uuidv4 } = require('uuid');
+  const hash = await bcrypt.hash(password, 10);
+  const id = uuidv4();
+  await run('INSERT INTO admins (id, username, password_hash) VALUES (?, ?, ?)', [id, username, hash]);
+}
+
 async function initializeDatabase() {
   await ensureDatabaseExists();
   const database = validateDbName(process.env.MYSQL_DATABASE || 'tarajuvva');
@@ -177,6 +191,8 @@ async function initializeDatabase() {
       UNIQUE KEY uq_admins_username (username)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+
+  await ensureDefaultAdmin();
 
   const row = await get('SELECT COUNT(*) AS count FROM products');
   const productCount = Number(row.count);

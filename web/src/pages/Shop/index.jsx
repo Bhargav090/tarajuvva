@@ -35,7 +35,7 @@ export default function Shop() {
             {SHOP_CATEGORIES.map(c => (
               <button
                 key={c} onClick={() => setCategory(c)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold font-[Outfit] transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold font-display transition-all ${
                   category === c
                     ? 'bg-[#0b4722] text-[#eef4d1]'
                     : 'bg-white text-[#341631]/60 border border-[#341631]/12 hover:border-[#0b4722]/30 hover:text-[#0b4722]'
@@ -49,7 +49,7 @@ export default function Shop() {
           <div className="relative flex-shrink-0">
             <select
               value={sort} onChange={e => setSort(e.target.value)}
-              className="appearance-none bg-white border border-[#341631]/12 rounded-xl px-4 py-2 text-xs font-semibold text-[#341631] font-[Outfit] pr-8 outline-none cursor-pointer focus:border-[#0b4722]"
+              className="appearance-none bg-white border border-[#341631]/12 rounded-xl px-4 py-2 text-xs font-semibold text-[#341631] font-display pr-8 outline-none cursor-pointer focus:border-[#0b4722]"
             >
               {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -59,7 +59,7 @@ export default function Shop() {
 
         {/* Results count */}
         {!loading && (
-          <p className="text-xs text-[#341631]/45 font-[Poppins] mb-6">{sorted.length} products</p>
+          <p className="text-xs text-[#341631]/45 font-body mb-6">{sorted.length} products</p>
         )}
 
         {/* Grid */}

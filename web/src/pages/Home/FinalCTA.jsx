@@ -15,7 +15,7 @@ export default function FinalCTA() {
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-[#e7a3c9] text-sm font-bold uppercase tracking-widest font-[Outfit] mb-6"
+          className="text-[#e7a3c9] text-sm font-bold uppercase tracking-widest font-display mb-6"
         >
           — Start now
         </motion.p>
@@ -24,7 +24,7 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="font-[Outfit] font-black text-[#eef4d1] leading-tight"
+          className="font-display font-black text-[#eef4d1] leading-tight"
           style={{ fontSize: 'clamp(2.2rem, 6vw, 5rem)' }}
         >
           Start with what you
@@ -36,7 +36,7 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="mt-5 text-[#eef4d1]/55 font-[Poppins] text-base sm:text-lg max-w-xl mx-auto"
+          className="mt-5 text-[#eef4d1]/55 font-display text-base sm:text-lg max-w-xl mx-auto"
         >
           Your wardrobe is already full of possibilities. Let's unlock them.
         </motion.p>
@@ -56,7 +56,7 @@ export default function FinalCTA() {
             <Button
               size="xl"
               icon={ArrowRight} iconPosition="right"
-              className="!bg-[#eef4d1] !text-[#0b4722] hover:!bg-white font-bold"
+              className="!bg-[#eef4d1] !text-[#0b4722] hover:!bg-white font-bold font-display"
             >
               Shop Collection
             </Button>

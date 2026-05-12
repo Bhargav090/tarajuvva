@@ -1,0 +1,25 @@
+/* Roc Grotesk Variable — self-host OR Adobe Fonts
+ *
+ * ROOT CAUSE if headings look like "generic Google font":
+ *   There is NO file at public/fonts/RocGrotesk-Variable.woff2 yet, so the @font-face
+ *   request 404s and the browser uses the NEXT face in the stack (Outfit).
+ *
+ * Fix A — Self-host (Klim / your license):
+ *   Copy your variable .woff2 into:  web/public/fonts/RocGrotesk-Variable.woff2
+ *   If the font’s internal family name is NOT "Roc Grotesk Variable", change BOTH:
+ *   - the `font-family:` below, and
+ *   - `--font-display` / `--font-sans` / `body` / `h1–h6` in src/index.css
+ *
+ * Fix B — Adobe Fonts:
+ *   In web/.env set:  VITE_ADOBE_FONTS_KIT_ID=your_kit_id
+ *   (Vite injects https://use.typekit.net/<id>.css into index.html.)
+ *   Open the kit CSS, find @font-face → `font-family: "..."` and set index.css @theme
+ *   --font-display / --font-sans / body / headings to that EXACT name (often lowercase).
+ */
+@font-face {
+  font-family: 'Roc Grotesk Variable';
+  src: url('/fonts/RocGrotesk-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

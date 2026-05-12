@@ -28,10 +28,10 @@ export default function DropZone({ files, onAdd, onRemove, maxFiles = 5 }) {
             <Upload size={22} className="text-[#0b4722]" />
           </div>
           <div>
-            <p className="font-semibold text-[#341631] font-[Outfit] text-sm">
+            <p className="font-semibold text-[#341631] font-display text-sm">
               {isDragActive ? 'Drop your images here' : 'Upload garment photos'}
             </p>
-            <p className="text-[#341631]/45 text-xs mt-1 font-[Poppins]">
+            <p className="text-[#341631]/45 text-xs mt-1 font-body">
               Drag & drop or click — up to {maxFiles} images
             </p>
           </div>

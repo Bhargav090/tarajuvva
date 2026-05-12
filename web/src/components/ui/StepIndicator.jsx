@@ -11,7 +11,7 @@ export default function StepIndicator({ steps, current }) {
             {/* circle */}
             <div className="flex flex-col items-center">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 font-[Outfit]"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 font-display"
                 style={{
                   background: done ? '#0b4722' : active ? '#0b4722' : 'transparent',
                   border:     `2px solid ${done || active ? '#0b4722' : 'rgba(52,22,49,0.2)'}`,
@@ -21,7 +21,7 @@ export default function StepIndicator({ steps, current }) {
                 {done ? <Check size={15} strokeWidth={3} /> : i + 1}
               </div>
               <span
-                className="mt-1.5 text-[10px] font-semibold font-[Outfit] tracking-wide hidden sm:block"
+                className="mt-1.5 text-[10px] font-semibold font-display tracking-wide hidden sm:block"
                 style={{ color: active ? '#0b4722' : done ? '#0b4722' : 'rgba(52,22,49,0.35)' }}
               >
                 {step}

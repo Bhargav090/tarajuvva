@@ -23,8 +23,8 @@ export default function ProductPage() {
 
   if (!product) return (
     <div className="min-h-screen bg-[#eef4d1] flex flex-col items-center justify-center">
-      <p className="text-[#341631] font-[Outfit] font-bold text-xl mb-4">Product not found.</p>
-      <Link to="/shop" className="text-[#0b4722] font-semibold hover:underline font-[Outfit]">← Back to Shop</Link>
+      <p className="text-[#341631] font-display font-bold text-xl mb-4">Product not found.</p>
+      <Link to="/shop" className="text-[#0b4722] font-semibold hover:underline font-display">← Back to Shop</Link>
     </div>
   );
 
@@ -40,10 +40,10 @@ export default function ProductPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#eef4d1] pt-20">
+    <div className="min-h-screen bg-[#eef4d1] pt-2 sm:pt-4">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumb */}
-        <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#341631]/55 hover:text-[#0b4722] font-[Outfit] mb-8 transition-colors">
+        <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#341631]/55 hover:text-[#0b4722] font-display mb-8 transition-colors">
           <ArrowLeft size={15} /> Back to Shop
         </Link>
 
@@ -54,7 +54,7 @@ export default function ProductPage() {
               <img src={product.images[activeImg]} alt={product.name}
                 className="w-full h-full object-cover" />
               {discount && (
-                <span className="absolute top-4 left-4 bg-[#e34334] text-white text-sm font-black rounded-full px-3 py-1 font-[Outfit]">
+                <span className="absolute top-4 left-4 bg-[#e34334] text-white text-sm font-black rounded-full px-3 py-1 font-display">
                   -{discount}% OFF
                 </span>
               )}
@@ -75,34 +75,34 @@ export default function ProductPage() {
 
           {/* Details */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-            <span className="text-xs font-bold text-[#0b4722] uppercase tracking-widest font-[Outfit]">{product.category}</span>
-            <h1 className="text-3xl sm:text-4xl font-black text-[#341631] font-[Outfit] mt-2 mb-4 leading-tight">{product.name}</h1>
+            <span className="text-xs font-bold text-[#0b4722] uppercase tracking-widest font-display">{product.category}</span>
+            <h1 className="text-3xl sm:text-4xl font-black text-[#341631] font-display mt-2 mb-4 leading-tight">{product.name}</h1>
 
             {/* Price */}
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-3xl font-black text-[#0b4722] font-[Outfit]">₹{product.price.toLocaleString('en-IN')}</span>
+              <span className="text-3xl font-black text-[#0b4722] font-display">₹{product.price.toLocaleString('en-IN')}</span>
               {product.original_price && (
-                <span className="text-lg text-[#341631]/35 line-through font-[Poppins]">₹{product.original_price.toLocaleString('en-IN')}</span>
+                <span className="text-lg text-[#341631]/35 line-through font-body">₹{product.original_price.toLocaleString('en-IN')}</span>
               )}
               {discount && (
-                <span className="bg-[#e34334]/12 text-[#e34334] text-xs font-bold rounded-full px-2.5 py-1 font-[Outfit]">
+                <span className="bg-[#e34334]/12 text-[#e34334] text-xs font-bold rounded-full px-2.5 py-1 font-display">
                   Save {discount}%
                 </span>
               )}
             </div>
 
             {/* Description */}
-            <p className="text-[#341631]/65 font-[Poppins] text-base leading-relaxed mb-8">{product.description}</p>
+            <p className="text-[#341631]/65 font-body text-base leading-relaxed mb-8">{product.description}</p>
 
             {/* Ways to wear */}
             {product.ways_to_wear?.length > 0 && (
               <div className="bg-white rounded-2xl p-5 mb-8 border border-[#341631]/8">
-                <h3 className="text-sm font-bold text-[#341631] font-[Outfit] mb-4 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-[#341631] font-display mb-4 flex items-center gap-2">
                   <Sparkles size={15} className="text-[#0b4722]" /> {product.ways_to_wear.length} Ways to Wear
                 </h3>
                 <ul className="space-y-2.5">
                   {product.ways_to_wear.map((w, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-[#341631]/70 font-[Poppins]">
+                    <li key={i} className="flex items-start gap-3 text-sm text-[#341631]/70 font-body">
                       <CheckCircle size={14} className="text-[#0b4722] flex-shrink-0 mt-0.5" />
                       {w}
                     </li>
@@ -115,7 +115,7 @@ export default function ProductPage() {
             {product.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-8">
                 {product.tags.map(t => (
-                  <span key={t} className="flex items-center gap-1 bg-[#0b4722]/8 text-[#0b4722] text-xs font-semibold rounded-full px-3 py-1 font-[Outfit]">
+                  <span key={t} className="flex items-center gap-1 bg-[#0b4722]/8 text-[#0b4722] text-xs font-semibold rounded-full px-3 py-1 font-display">
                     <Tag size={10} /> {t}
                   </span>
                 ))}
@@ -124,7 +124,7 @@ export default function ProductPage() {
 
             {/* Stock */}
             {product.stock <= 10 && product.stock > 0 && (
-              <p className="text-[#e34334] text-xs font-bold font-[Outfit] mb-4">Only {product.stock} left in stock!</p>
+              <p className="text-[#e34334] text-xs font-bold font-display mb-4">Only {product.stock} left in stock!</p>
             )}
 
             {/* CTA */}
@@ -152,7 +152,7 @@ export default function ProductPage() {
               ].map(([e, l]) => (
                 <div key={l} className="text-center p-3 bg-white rounded-xl border border-[#341631]/8">
                   <span className="text-xl block mb-1">{e}</span>
-                  <span className="text-[10px] font-semibold text-[#341631]/55 font-[Outfit]">{l}</span>
+                  <span className="text-[10px] font-semibold text-[#341631]/55 font-display">{l}</span>
                 </div>
               ))}
             </div>

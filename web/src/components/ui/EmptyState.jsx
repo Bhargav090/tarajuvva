@@ -6,8 +6,8 @@ export default function EmptyState({ icon: Icon, title, desc, action }) {
           <Icon size={28} className="text-[#0b4722]" />
         </div>
       )}
-      <h3 className="text-xl font-bold text-[#341631] font-[Outfit] mb-2">{title}</h3>
-      {desc && <p className="text-[#341631]/55 font-[Poppins] text-sm max-w-sm">{desc}</p>}
+      <h3 className="text-xl font-bold text-[#341631] font-display mb-2">{title}</h3>
+      {desc && <p className="text-[#341631]/55 font-body text-sm max-w-sm">{desc}</p>}
       {action && <div className="mt-6">{action}</div>}
     </div>
   );

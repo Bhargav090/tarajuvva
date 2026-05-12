@@ -49,9 +49,9 @@ function NodeCard({ node, i }) {
         </div>
 
         {/* Text */}
-        <p className="text-[#341631]/55 text-sm font-[Poppins] mb-2 leading-relaxed">{node.label}</p>
+        <p className="text-[#341631]/55 text-sm font-display mb-2 leading-relaxed">{node.label}</p>
         <div className="flex items-center justify-between">
-          <span className="text-xl font-black font-[Outfit]" style={{ color: node.color }}>
+          <span className="text-xl font-black font-display" style={{ color: node.color }}>
             {node.action}
           </span>
           <ArrowRight
@@ -77,15 +77,15 @@ export default function LoopSection() {
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-[Outfit] mb-5 bg-[#0b4722]/10 text-[#0b4722] border border-[#0b4722]/20">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-5 bg-[#0b4722]/10 text-[#0b4722] border border-[#0b4722]/20">
               The Loop
             </span>
-            <h2 className="font-[Outfit] font-black text-4xl sm:text-5xl lg:text-6xl text-[#341631] leading-tight">
+            <h2 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-[#341631] leading-tight">
               Your clothes.
               <br />
               <span className="text-[#0b4722]">Every stage.</span>
             </h2>
-            <p className="mt-5 text-[#341631]/55 font-[Poppins] text-base sm:text-lg max-w-lg mx-auto">
+            <p className="mt-5 text-[#341631]/55 font-display text-base sm:text-lg max-w-lg mx-auto">
               What do you want to do with your clothes today?
             </p>
           </motion.div>
@@ -106,8 +106,8 @@ export default function LoopSection() {
           <div className="inline-flex items-center gap-3 bg-[#341631] text-[#eef4d1] rounded-2xl px-6 py-4 shadow-xl">
             <span className="text-2xl">🧵</span>
             <div>
-              <p className="text-sm font-black font-[Outfit]">It's all connected</p>
-              <p className="text-xs text-[#eef4d1]/55 font-[Poppins]">Buy → Reimagine → Repair → Donate → Repeat</p>
+              <p className="text-sm font-black font-display">It's all connected</p>
+              <p className="text-xs text-[#eef4d1]/55 font-display">Buy → Reimagine → Repair → Donate → Repeat</p>
             </div>
           </div>
         </motion.div>

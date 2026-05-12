@@ -18,7 +18,7 @@ export default function Philosophy() {
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="font-[Outfit] font-black text-[#341631] leading-tight"
+          className="font-display font-black text-[#341631] leading-tight"
           style={{ fontSize: 'clamp(1.8rem, 5vw, 4rem)' }}
         >
           "Most wardrobes don't have a
@@ -32,7 +32,7 @@ export default function Philosophy() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-8 text-[#341631]/50 font-[Poppins] text-base sm:text-lg leading-relaxed max-w-2xl mx-auto"
+          className="mt-8 text-[#341631]/50 font-display text-base sm:text-lg leading-relaxed max-w-2xl mx-auto"
         >
           The average wardrobe has 77 items. Most people regularly wear only 20% of them.
           We exist to close that gap — through better buying, creative reimagining, and honest repurposing.
@@ -51,8 +51,8 @@ export default function Philosophy() {
             { v: '60%', l: 'never worn again' },
           ].map(s => (
             <div key={s.l}>
-              <p className="text-2xl sm:text-3xl font-black text-[#0b4722] font-[Outfit]">{s.v}</p>
-              <p className="text-xs text-[#341631]/45 font-[Poppins] mt-1 leading-tight">{s.l}</p>
+              <p className="text-2xl sm:text-3xl font-black text-[#0b4722] font-display">{s.v}</p>
+              <p className="text-xs text-[#341631]/45 font-display mt-1 leading-tight">{s.l}</p>
             </div>
           ))}
         </motion.div>

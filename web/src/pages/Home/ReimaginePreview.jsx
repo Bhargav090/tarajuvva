@@ -16,11 +16,11 @@ export default function ReimaginePreview() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-[Outfit] mb-6"
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-6"
               style={{ background: '#6c0b2025', color: '#e7a3c9', border: '1px solid #6c0b2040' }}>
               Reimagine
             </span>
-            <h2 className="font-[Outfit] font-black text-[#eef4d1] leading-tight mb-5"
+            <h2 className="font-display font-black text-[#eef4d1] leading-tight mb-5"
               style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)' }}>
               You don't need new clothes.
               <br />
@@ -28,7 +28,7 @@ export default function ReimaginePreview() {
               <br />
               of what you have.
             </h2>
-            <p className="text-[#eef4d1]/55 font-[Poppins] text-base leading-relaxed mb-8">
+            <p className="text-[#eef4d1]/55 font-display text-base leading-relaxed mb-8">
               Send us your old garments and our artisans will transform them into something you'll want to wear every day.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -56,10 +56,10 @@ export default function ReimaginePreview() {
                 style={{ background: p.color + '20' }}
               >
                 <span className="text-3xl block mb-3">{p.emoji}</span>
-                <p className="text-[#eef4d1]/50 text-xs font-[Poppins] mb-1">{p.from}</p>
+                <p className="text-[#eef4d1]/50 text-xs font-display mb-1">{p.from}</p>
                 <div className="flex items-center gap-1">
                   <ArrowRight size={12} style={{ color: p.color }} />
-                  <p className="font-bold text-sm font-[Outfit]" style={{ color: '#eef4d1' }}>{p.to}</p>
+                  <p className="font-bold text-sm font-display" style={{ color: '#eef4d1' }}>{p.to}</p>
                 </div>
               </motion.div>
             ))}

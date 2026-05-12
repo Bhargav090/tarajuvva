@@ -6,8 +6,8 @@ export default function WaitlistForm({ config, form, onChange, onSubmit, loading
     return (
       <div className="text-center py-12 px-6 bg-white rounded-2xl border border-[#341631]/10">
         <div className="text-5xl mb-4">✅</div>
-        <h3 className="text-2xl font-black text-[#0b4722] font-[Outfit] mb-2">You're on the list!</h3>
-        <p className="text-[#341631]/60 font-[Poppins] text-sm">
+        <h3 className="text-2xl font-black text-[#0b4722] font-display mb-2">You're on the list!</h3>
+        <p className="text-[#341631]/60 font-body text-sm">
           We'll notify you as soon as {config.type} goes live.
         </p>
       </div>

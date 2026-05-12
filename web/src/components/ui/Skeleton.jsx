@@ -59,7 +59,7 @@ export function PageLoader() {
     <div className="flex items-center justify-center min-h-screen bg-[#eef4d1]">
       <div className="text-center">
         <Spinner size={36} />
-        <p className="mt-4 text-sm text-[#341631]/50 font-[Poppins]">Loading…</p>
+        <p className="mt-4 text-sm text-[#341631]/50 font-body">Loading…</p>
       </div>
     </div>
   );

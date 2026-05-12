@@ -27,9 +27,9 @@ export default function CartDrawer() {
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#eef4d1]/10">
               <div className="flex items-center gap-2.5">
                 <ShoppingBag size={18} className="text-[#e7a3c9]" />
-                <h2 className="text-lg font-black text-[#eef4d1] font-[Outfit]">Your Cart</h2>
+                <h2 className="text-lg font-black text-[#eef4d1] font-display">Your Cart</h2>
                 {items.length > 0 && (
-                  <span className="bg-[#e34334] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center font-[Outfit]">
+                  <span className="bg-[#e34334] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center font-display">
                     {items.length}
                   </span>
                 )}
@@ -44,8 +44,8 @@ export default function CartDrawer() {
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <ShoppingBag size={48} className="text-[#eef4d1]/20 mb-4" />
-                  <p className="text-[#eef4d1]/60 font-[Poppins] text-sm">Your cart is empty.</p>
-                  <button onClick={closeCart} className="mt-4 text-[#e7a3c9] text-sm font-semibold font-[Outfit] hover:text-[#eef4d1]">
+                  <p className="text-[#eef4d1]/60 font-body text-sm">Your cart is empty.</p>
+                  <button onClick={closeCart} className="mt-4 text-[#e7a3c9] text-sm font-semibold font-display hover:text-[#eef4d1]">
                     Continue shopping →
                   </button>
                 </div>
@@ -58,14 +58,14 @@ export default function CartDrawer() {
                       className="w-16 h-16 object-cover rounded-xl flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#eef4d1] font-semibold text-sm leading-tight font-[Outfit] truncate">{item.name}</p>
-                      <p className="text-[#e7a3c9] font-black text-sm mt-1 font-[Outfit]">₹{item.price.toLocaleString('en-IN')}</p>
+                      <p className="text-[#eef4d1] font-semibold text-sm leading-tight font-display truncate">{item.name}</p>
+                      <p className="text-[#e7a3c9] font-black text-sm mt-1 font-display">₹{item.price.toLocaleString('en-IN')}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <button onClick={() => updateQty(item.id, item.qty - 1)}
                           className="w-7 h-7 rounded-lg border border-[#eef4d1]/20 flex items-center justify-center text-[#eef4d1]/70 hover:border-[#eef4d1]/50 hover:text-[#eef4d1] transition-all">
                           <Minus size={12} />
                         </button>
-                        <span className="text-[#eef4d1] font-semibold text-sm w-5 text-center font-[Outfit]">{item.qty}</span>
+                        <span className="text-[#eef4d1] font-semibold text-sm w-5 text-center font-display">{item.qty}</span>
                         <button onClick={() => updateQty(item.id, item.qty + 1)}
                           className="w-7 h-7 rounded-lg border border-[#eef4d1]/20 flex items-center justify-center text-[#eef4d1]/70 hover:border-[#eef4d1]/50 hover:text-[#eef4d1] transition-all">
                           <Plus size={12} />
@@ -85,10 +85,10 @@ export default function CartDrawer() {
             {items.length > 0 && (
               <div className="px-6 py-5 border-t border-[#eef4d1]/10 space-y-3">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[#eef4d1]/60 text-sm font-[Poppins]">Subtotal</span>
-                  <span className="text-[#eef4d1] font-black text-xl font-[Outfit]">₹{total.toLocaleString('en-IN')}</span>
+                  <span className="text-[#eef4d1]/60 text-sm font-body">Subtotal</span>
+                  <span className="text-[#eef4d1] font-black text-xl font-display">₹{total.toLocaleString('en-IN')}</span>
                 </div>
-                <p className="text-[#eef4d1]/35 text-xs font-[Poppins]">Shipping calculated at checkout</p>
+                <p className="text-[#eef4d1]/35 text-xs font-body">Shipping calculated at checkout</p>
                 <Link to="/checkout" onClick={closeCart} className="block">
                   <Button variant="primary" size="lg" fullWidth icon={ArrowRight} iconPosition="right">
                     Checkout — ₹{total.toLocaleString('en-IN')}
@@ -96,7 +96,7 @@ export default function CartDrawer() {
                 </Link>
                 <button
                   onClick={clearCart}
-                  className="w-full text-center text-xs text-[#eef4d1]/35 hover:text-[#e34334] transition-colors font-[Poppins] py-1"
+                  className="w-full text-center text-xs text-[#eef4d1]/35 hover:text-[#e34334] transition-colors font-body py-1"
                 >
                   Clear cart
                 </button>

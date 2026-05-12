@@ -77,13 +77,13 @@ export default function Register() {
       >
         <Link to="/" className="flex items-center gap-2.5 mb-10">
           <div className="w-8 h-8 rounded-lg bg-[#0b4722] flex items-center justify-center">
-            <span className="text-[#eef4d1] font-black text-sm font-[Outfit]">T</span>
+            <span className="text-[#eef4d1] font-black text-sm font-display">T</span>
           </div>
-          <span className="text-xl font-black text-[#341631] font-[Outfit]">Tarajuvva</span>
+          <span className="text-xl font-black text-[#341631] font-display">Tarajuvva</span>
         </Link>
 
-        <h2 className="text-3xl font-black text-[#341631] font-[Outfit] mb-2">Create account</h2>
-        <p className="text-[#341631]/55 font-[Poppins] text-sm mb-8">
+        <h2 className="text-3xl font-black text-[#341631] font-display mb-2">Create account</h2>
+        <p className="text-[#341631]/55 font-body text-sm mb-8">
           Already have an account?{' '}
           <Link to="/login" className="text-[#0b4722] font-semibold hover:underline">Sign in</Link>
         </p>
@@ -92,14 +92,14 @@ export default function Register() {
         <div id="google-register-btn" className="mb-6 flex justify-center" />
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1 h-px bg-[#341631]/12" />
-          <span className="text-[#341631]/40 text-xs font-[Poppins]">or with email</span>
+          <span className="text-[#341631]/40 text-xs font-body">or with email</span>
           <div className="flex-1 h-px bg-[#341631]/12" />
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
           {fields.map(f => (
             <div key={f.name}>
-              <label className="block text-sm font-semibold text-[#341631] mb-1.5 font-[Outfit]">{f.label}</label>
+              <label className="block text-sm font-semibold text-[#341631] mb-1.5 font-display">{f.label}</label>
               <div className="relative">
                 <f.icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#341631]/35" />
                 <input
@@ -107,7 +107,7 @@ export default function Register() {
                   type={f.type === 'password' ? (showPw ? 'text' : 'password') : f.type}
                   value={form[f.name]} onChange={onChange} required
                   placeholder={f.placeholder}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-[Poppins] text-sm outline-none focus:border-[#0b4722] focus:ring-2 focus:ring-[#0b4722]/12"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-body text-sm outline-none focus:border-[#0b4722] focus:ring-2 focus:ring-[#0b4722]/12"
                 />
                 {f.type === 'password' && (
                   <button type="button" onClick={() => setShowPw(p => !p)}
@@ -124,7 +124,7 @@ export default function Register() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-[#341631]/40 font-[Poppins]">
+        <p className="mt-6 text-center text-xs text-[#341631]/40 font-body">
           By signing up you agree to our{' '}
           <a href="#" className="underline">Terms</a> &{' '}
           <a href="#" className="underline">Privacy Policy</a>

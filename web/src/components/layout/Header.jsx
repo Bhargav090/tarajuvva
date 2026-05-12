@@ -5,6 +5,7 @@ import { ShoppingBag, Menu, X, User, LogOut, ChevronDown, Package } from 'lucide
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { NAV_LINKS } from '../../utils/constants';
+import UserAvatar from '../ui/UserAvatar';
 
 export default function Header() {
   const { totalItems, openCart } = useCart();
@@ -88,7 +89,7 @@ export default function Header() {
                     className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#341631]/6 transition-colors"
                   >
                     {user.avatar ? (
-                      <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover" />
+                      <UserAvatar src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover" />
                     ) : (
                       <div className="w-7 h-7 rounded-full bg-[#0b4722] flex items-center justify-center text-[#eef4d1] text-xs font-bold font-[Outfit]">
                         {user.name?.[0]?.toUpperCase()}
@@ -188,7 +189,7 @@ export default function Header() {
                     <>
                       <div className="flex items-center gap-3 px-4 py-3 mb-2">
                         {user.avatar ? (
-                          <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover" />
+                          <UserAvatar src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover" />
                         ) : (
                           <div className="w-9 h-9 rounded-full bg-[#0b4722] flex items-center justify-center text-[#eef4d1] font-bold font-[Outfit]">
                             {user.name?.[0]?.toUpperCase()}

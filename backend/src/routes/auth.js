@@ -67,11 +67,13 @@ router.post('/google', async (req, res) => {
     let user = await get('SELECT * FROM users WHERE google_id = ? OR email = ?', [googleId, email]);
 
     if (user) {
-      // Update google_id if signing in with Google for the first time on existing email account
+      // Link Google to an existing email account, or refresh picture URL (Google CDN URLs can rotate)
       if (!user.google_id) {
-        await run('UPDATE users SET google_id = ?, avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [googleId, picture, user.id]);
-        user = await get('SELECT * FROM users WHERE id = ?', [user.id]);
+        await run('UPDATE users SET google_id = ?, avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [googleId, picture || user.avatar, user.id]);
+      } else if (picture) {
+        await run('UPDATE users SET avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [picture, user.id]);
       }
+      user = await get('SELECT * FROM users WHERE id = ?', [user.id]);
     } else {
       // New user via Google
       const id = uuidv4();

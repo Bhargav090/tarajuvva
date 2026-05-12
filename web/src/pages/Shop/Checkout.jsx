@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, CheckCircle } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
@@ -11,11 +10,12 @@ import Button from '../../components/ui/Button';
 export default function Checkout() {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
-  const navigate = useNavigate();
   const { form, onChange, onSubmit, loading, done } = useOrderSubmit({
     items, total,
     user,
-    onSuccess: () => setTimeout(() => { clearCart(); navigate('/'); }, 3000),
+    // Clear cart only — do not navigate away: a delayed navigate('/') was firing
+    // after users opened "My Orders" and pulled them back to the home page.
+    onSuccess: () => clearCart(),
   });
 
   if (items.length === 0 && !done) {

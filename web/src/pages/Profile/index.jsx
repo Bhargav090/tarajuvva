@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
+import UserAvatar from '../../components/ui/UserAvatar';
 import { Spinner } from '../../components/ui/Skeleton';
 import api from '../../utils/api';
 
@@ -88,7 +89,7 @@ export default function Profile() {
         {/* Header */}
         <div className="flex items-center gap-5 mb-10 p-6 bg-[#0b4722] rounded-3xl">
           {user.avatar ? (
-            <img src={user.avatar} alt={user.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-[#eef4d1]/20" />
+            <UserAvatar src={user.avatar} alt={user.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-[#eef4d1]/20" />
           ) : (
             <div className="w-16 h-16 rounded-2xl bg-[#eef4d1]/15 flex items-center justify-center text-2xl font-black text-[#eef4d1] font-[Outfit]">
               {user.name?.[0]?.toUpperCase()}

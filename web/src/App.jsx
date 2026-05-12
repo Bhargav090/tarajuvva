@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { useLayoutEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -21,6 +22,17 @@ import Register   from './pages/Auth/Register';
 import Profile    from './pages/Profile';
 
 const TICKER_H = 32; // px
+
+/** Reset window scroll on forward navigations (PUSH/REPLACE). POP keeps browser scroll restore. */
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+  const navType = useNavigationType();
+  useLayoutEffect(() => {
+    if (navType === 'POP') return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname, search, navType]);
+  return null;
+}
 
 function Layout({ children }) {
   const { pathname } = useLocation();
@@ -49,6 +61,7 @@ function Layout({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <CartProvider>
           <Toaster

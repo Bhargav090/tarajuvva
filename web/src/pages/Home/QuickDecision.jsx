@@ -12,10 +12,10 @@ export default function QuickDecision() {
         {/* Header */}
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-4"
-            style={{ background: '#a8c42218', color: '#a8c422', border: '1px solid #a8c42225' }}>
+            style={{ background: '#a8c74a18', color: '#a8c74a', border: '1px solid #a8c74a25' }}>
             Quick Start
           </span>
-          <h2 className="font-display font-black text-4xl sm:text-5xl text-[#341631] leading-tight">
+          <h2 className="font-display font-black text-4xl sm:text-5xl text-[#241621] leading-tight">
             What do you want
             <br className="hidden sm:block" /> to do today?
           </h2>
@@ -35,7 +35,7 @@ export default function QuickDecision() {
               >
                 <Link
                   to={card.to}
-                  className="group block p-5 sm:p-6 rounded-2xl bg-white border border-[#341631]/8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full"
+                  className="group block p-5 sm:p-6 rounded-2xl bg-white border border-[#241621]/8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full"
                 >
                   {/* Icon */}
                   <div
@@ -45,7 +45,7 @@ export default function QuickDecision() {
                     <Icon size={22} style={{ color: card.color }} />
                   </div>
                   {/* Label */}
-                  <p className="text-[#341631]/55 text-xs font-display mb-1 leading-snug">{card.label}</p>
+                  <p className="text-[#241621]/55 text-xs font-display mb-1 leading-snug">{card.label}</p>
                   {/* Action */}
                   <div className="flex items-center justify-between mt-2">
                     <span
@@ -60,7 +60,7 @@ export default function QuickDecision() {
                       className="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1 group-hover:translate-x-0 duration-200"
                     />
                   </div>
-                  <p className="mt-2 text-xs text-[#341631]/45 font-display leading-relaxed hidden sm:block">
+                  <p className="mt-2 text-xs text-[#241621]/45 font-display leading-relaxed hidden sm:block">
                     {card.desc}
                   </p>
                 </Link>

@@ -15,14 +15,14 @@ export default function SectionHeader({
           <AccentPill color={pillColor}>{pill}</AccentPill>
         </div>
       )}
-      <h2 className={`font-display font-black leading-[1.05] tracking-tight text-[#341631] ${titleClass || 'text-4xl sm:text-5xl lg:text-6xl'}`}>
+      <h2 className={`font-display font-black leading-[1.05] tracking-tight text-[#241621] ${titleClass || 'text-4xl sm:text-5xl lg:text-6xl'}`}>
         {title}
         {titleLight && (
-          <span className="block font-light text-[#341631]/50 mt-1">{titleLight}</span>
+          <span className="block font-light text-[#241621]/50 mt-1">{titleLight}</span>
         )}
       </h2>
       {subtitle && (
-        <p className="mt-5 text-base sm:text-lg text-[#341631]/60 font-display leading-relaxed max-w-2xl mx-auto">
+        <p className="mt-5 text-base sm:text-lg text-[#241621]/60 font-display leading-relaxed max-w-2xl mx-auto">
           {subtitle}
         </p>
       )}

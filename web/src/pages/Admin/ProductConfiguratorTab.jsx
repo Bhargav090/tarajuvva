@@ -151,13 +151,13 @@ export default function ProductConfiguratorTab() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-display mb-2">Product configurator</h1>
-      <p className="text-sm text-[#341631]/55 font-body mb-8 max-w-2xl">
+      <h1 className="text-2xl font-black text-[#241621] font-display mb-2">Product configurator</h1>
+      <p className="text-sm text-[#241621]/55 font-body mb-8 max-w-2xl">
         Fill in the fields below and publish to the <code className="text-xs bg-[#eef4d1] px-1 rounded">products</code> table.
         Upload images from your device (stored under <code className="text-xs bg-[#eef4d1] px-1 rounded">/uploads</code>). Ways to wear: one line each. Tags: comma-separated.
       </p>
 
-      <form onSubmit={onSubmit} className="bg-white rounded-2xl p-6 sm:p-8 border border-[#341631]/8 mb-10 space-y-5 max-w-3xl">
+      <form onSubmit={onSubmit} className="bg-white rounded-2xl p-6 sm:p-8 border border-[#241621]/8 mb-10 space-y-5 max-w-3xl">
         <div className="grid sm:grid-cols-2 gap-5">
           <Input label="Product name" name="name" value={form.name} onChange={onChange} required placeholder="e.g. Indigo Block Print Kurta" />
           <Select label="Category" name="category" value={form.category} onChange={onChange} required>
@@ -192,7 +192,7 @@ export default function ProductConfiguratorTab() {
         />
 
         <div>
-          <span className="block text-sm font-semibold text-[#341631] mb-1.5 font-display">
+          <span className="block text-sm font-semibold text-[#241621] mb-1.5 font-display">
             Product images <span className="text-[#e34334]">*</span>
           </span>
           <input
@@ -215,25 +215,25 @@ export default function ProductConfiguratorTab() {
               Upload images
             </Button>
             {imageUrls.length > 0 && (
-              <span className="text-xs text-[#341631]/50 font-body">{imageUrls.length} file(s) — first is the shop thumbnail</span>
+              <span className="text-xs text-[#241621]/50 font-body">{imageUrls.length} file(s) — first is the shop thumbnail</span>
             )}
           </div>
-          <p className="text-xs text-[#341631]/45 font-body mt-2">JPEG, PNG, WebP, or GIF · up to 10MB each · up to 12 images per batch.</p>
+          <p className="text-xs text-[#241621]/45 font-body mt-2">JPEG, PNG, WebP, or GIF · up to 10MB each · up to 12 images per batch.</p>
           {imageUrls.length > 0 && (
             <ul className="mt-4 flex flex-wrap gap-3">
               {imageUrls.map((url, i) => (
-                <li key={`${url}-${i}`} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#341631]/12 bg-[#eef4d1]/50">
+                <li key={`${url}-${i}`} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#241621]/12 bg-[#eef4d1]/50">
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => setImageUrls((prev) => prev.filter((_, j) => j !== i))}
-                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-[#341631]/85 text-[#eef4d1] flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
+                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-[#241621]/85 text-[#eef4d1] flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
                     aria-label={`Remove image ${i + 1}`}
                   >
                     <X size={14} />
                   </button>
                   {i === 0 && (
-                    <span className="absolute bottom-0 inset-x-0 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-[#341631] bg-[#a8c422]/90 font-display">
+                    <span className="absolute bottom-0 inset-x-0 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-[#241621] bg-[#a8c74a]/90 font-display">
                       Cover
                     </span>
                   )}
@@ -253,8 +253,8 @@ export default function ProductConfiguratorTab() {
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
         <label className="flex items-center gap-3 cursor-pointer select-none">
-          <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#a8c422] focus:ring-[#a8c422]" />
-          <span className="text-sm font-semibold text-[#341631] font-display">Featured product</span>
+          <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#241621]/30 text-[#a8c74a] focus:ring-[#a8c74a]" />
+          <span className="text-sm font-semibold text-[#241621] font-display">Featured product</span>
         </label>
         <div className="flex flex-wrap gap-3 pt-2">
           <Button type="submit" variant="primary" loading={submitting}>
@@ -266,20 +266,20 @@ export default function ProductConfiguratorTab() {
         </div>
       </form>
 
-      <h2 className="text-lg font-black text-[#341631] font-display mb-4">Current catalog ({products.length})</h2>
+      <h2 className="text-lg font-black text-[#241621] font-display mb-4">Current catalog ({products.length})</h2>
       {loadingList ? (
         <div className="flex justify-center py-12">
           <Spinner size={32} />
         </div>
       ) : products.length === 0 ? (
-        <p className="text-[#341631]/45 font-body text-sm">No products yet.</p>
+        <p className="text-[#241621]/45 font-body text-sm">No products yet.</p>
       ) : (
         <div className="space-y-2 max-w-3xl">
           {products.map((p) => (
-            <div key={p.id} className="bg-white rounded-xl px-4 py-3 border border-[#341631]/8 flex flex-wrap items-center gap-3 justify-between">
+            <div key={p.id} className="bg-white rounded-xl px-4 py-3 border border-[#241621]/8 flex flex-wrap items-center gap-3 justify-between">
               <div className="min-w-0">
-                <p className="font-semibold text-[#341631] font-display text-sm truncate">{p.name}</p>
-                <p className="text-xs text-[#341631]/45 font-body">
+                <p className="font-semibold text-[#241621] font-display text-sm truncate">{p.name}</p>
+                <p className="text-xs text-[#241621]/45 font-body">
                   {p.category} · ₹{Number(p.price).toLocaleString('en-IN')}
                   {p.stock != null && ` · Stock ${p.stock}`}
                   {p.featured ? ' · Featured' : ''}
@@ -290,7 +290,7 @@ export default function ProductConfiguratorTab() {
                   to={`/shop/${p.id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#a8c422] font-display hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#a8c74a] font-display hover:underline"
                 >
                   View <ExternalLink size={12} />
                 </Link>

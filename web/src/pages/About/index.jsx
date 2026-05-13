@@ -10,16 +10,16 @@ export default function About() {
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 pb-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-6 bg-[#a8c422]/10 text-[#a8c422] border border-[#a8c422]/20">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-6 bg-[#a8c74a]/10 text-[#a8c74a] border border-[#a8c74a]/20">
             Our Story
           </span>
-          <h1 className="font-display font-black text-[#341631] leading-tight mb-6"
+          <h1 className="font-display font-black text-[#241621] leading-tight mb-6"
             style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)' }}>
             Why Tarajuvva
             <br />
-            <span className="text-[#a8c422]">exists.</span>
+            <span className="text-[#a8c74a]">exists.</span>
           </h1>
-          <p className="text-[#341631]/65 font-body text-lg sm:text-xl leading-relaxed max-w-2xl">
+          <p className="text-[#241621]/65 font-body text-lg sm:text-xl leading-relaxed max-w-2xl">
             We started Tarajuvva because we were tired of the same conversation: "I have nothing to wear" from wardrobes
             stuffed with clothes. That contradiction needed fixing.
           </p>
@@ -27,7 +27,7 @@ export default function About() {
       </section>
 
       {/* Founder story */}
-      <section className="bg-[#341631] py-16 sm:py-20 px-4">
+      <section className="bg-[#241621] py-16 sm:py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -50,7 +50,7 @@ export default function About() {
               </div>
             </div>
             <div className="bg-[#eef4d1]/5 rounded-3xl p-8 border border-[#eef4d1]/10">
-              <blockquote className="text-2xl font-black text-[#e7a3c9] font-display leading-tight mb-4">
+              <blockquote className="text-2xl font-black text-[#e2a3c9] font-display leading-tight mb-4">
                 "A garment's story doesn't end when you're done with it."
               </blockquote>
               <p className="text-[#eef4d1]/55 font-body text-sm">— Tarajuvva Manifesto</p>
@@ -62,7 +62,7 @@ export default function About() {
       {/* Values */}
       <section className="section max-w-7xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-12">
-          <h2 className="text-4xl sm:text-5xl font-black text-[#341631] font-display">What we stand for</h2>
+          <h2 className="text-4xl sm:text-5xl font-black text-[#241621] font-display">What we stand for</h2>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {BRAND_VALUES.map((v, i) => (
@@ -72,11 +72,11 @@ export default function About() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
               viewport={{ once: true }}
-              className="bg-white rounded-2xl p-6 border border-[#341631]/8"
+              className="bg-white rounded-2xl p-6 border border-[#241621]/8"
             >
               <span className="text-3xl block mb-4">{v.emoji}</span>
-              <h3 className="text-lg font-black text-[#341631] font-display mb-2">{v.title}</h3>
-              <p className="text-sm text-[#341631]/55 font-body leading-relaxed">{v.desc}</p>
+              <h3 className="text-lg font-black text-[#241621] font-display mb-2">{v.title}</h3>
+              <p className="text-sm text-[#241621]/55 font-body leading-relaxed">{v.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -85,10 +85,10 @@ export default function About() {
       {/* Philosophy */}
       <section className="bg-[#e6edca] py-16 px-4">
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-4xl font-black text-[#341631] font-display mb-6">
+          <p className="text-4xl font-black text-[#241621] font-display mb-6">
             "Wear more. Buy less. Fix what you already own."
           </p>
-          <p className="text-[#341631]/55 font-body mb-8">
+          <p className="text-[#241621]/55 font-body mb-8">
             This isn't a slogan. It's the only business model that makes sense in a world drowning in textile waste.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">

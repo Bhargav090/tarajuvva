@@ -22,14 +22,14 @@ export default function Shop() {
     <div className="bg-[#eef4d1] min-h-screen">
       <PageBanner
         badge="Shop"
-        badgeColor="#a8c422"
+        badgeColor="#a8c74a"
         title="The Collection."
         subtitle="Thoughtfully made. Multiple ways to wear. Zero guilt."
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-8 sticky top-14 sm:top-16 bg-[#eef4d1]/95 backdrop-blur-md py-4 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-[#341631]/8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-8 sticky top-14 sm:top-16 bg-[#eef4d1]/95 backdrop-blur-md py-4 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-[#241621]/8">
           {/* Category pills */}
           <div className="flex flex-wrap gap-2">
             {SHOP_CATEGORIES.map(c => (
@@ -37,8 +37,8 @@ export default function Shop() {
                 key={c} onClick={() => setCategory(c)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold font-display transition-all ${
                   category === c
-                    ? 'bg-[#a8c422] text-[#341631]'
-                    : 'bg-white text-[#341631]/60 border border-[#341631]/12 hover:border-[#a8c422]/30 hover:text-[#a8c422]'
+                    ? 'bg-[#a8c74a] text-[#241621]'
+                    : 'bg-white text-[#241621]/60 border border-[#241621]/12 hover:border-[#a8c74a]/30 hover:text-[#a8c74a]'
                 }`}
               >
                 {c}
@@ -49,17 +49,17 @@ export default function Shop() {
           <div className="relative flex-shrink-0">
             <select
               value={sort} onChange={e => setSort(e.target.value)}
-              className="appearance-none bg-white border border-[#341631]/12 rounded-xl px-4 py-2 text-xs font-semibold text-[#341631] font-display pr-8 outline-none cursor-pointer focus:border-[#a8c422]"
+              className="appearance-none bg-white border border-[#241621]/12 rounded-xl px-4 py-2 text-xs font-semibold text-[#241621] font-display pr-8 outline-none cursor-pointer focus:border-[#a8c74a]"
             >
               {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
-            <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#341631]/40 pointer-events-none" />
+            <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#241621]/40 pointer-events-none" />
           </div>
         </div>
 
         {/* Results count */}
         {!loading && (
-          <p className="text-xs text-[#341631]/45 font-body mb-6">{sorted.length} products</p>
+          <p className="text-xs text-[#241621]/45 font-body mb-6">{sorted.length} products</p>
         )}
 
         {/* Grid */}

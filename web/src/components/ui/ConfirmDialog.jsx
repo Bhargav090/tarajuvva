@@ -37,17 +37,17 @@ export default function ConfirmDialog({
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
-            className="relative z-[1] w-full max-w-sm rounded-2xl border border-[#341631]/10 bg-white p-6 shadow-xl"
+            className="relative z-[1] w-full max-w-sm rounded-2xl border border-[#241621]/10 bg-white p-6 shadow-xl"
             initial={{ opacity: 0, scale: 0.96, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: -8 }}
             transition={{ duration: 0.2 }}
           >
-            <h2 id="confirm-dialog-title" className="text-lg font-black text-[#341631] font-display">
+            <h2 id="confirm-dialog-title" className="text-lg font-black text-[#241621] font-display">
               {title}
             </h2>
             {message && (
-              <p className="mt-2 text-sm text-[#341631]/65 font-body leading-relaxed">{message}</p>
+              <p className="mt-2 text-sm text-[#241621]/65 font-body leading-relaxed">{message}</p>
             )}
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="ghost" onClick={onClose}>

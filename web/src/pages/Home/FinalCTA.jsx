@@ -5,7 +5,7 @@ import Button from '../../components/ui/Button';
 
 export default function FinalCTA() {
   return (
-    <section className="py-24 sm:py-32 px-4 bg-[#a8c422] overflow-hidden relative">
+    <section className="py-24 sm:py-32 px-4 bg-[#a8c74a] overflow-hidden relative">
       {/* Decorative circles */}
       <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-[#eef4d1]/5 pointer-events-none" />
       <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-[#eef4d1]/5 pointer-events-none" />
@@ -15,7 +15,7 @@ export default function FinalCTA() {
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-[#e7a3c9] text-sm font-bold uppercase tracking-widest font-display mb-6"
+          className="text-[#e2a3c9] text-sm font-bold uppercase tracking-widest font-display mb-6"
         >
           — Start now
         </motion.p>
@@ -24,7 +24,7 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="font-display font-black text-[#341631] leading-tight"
+          className="font-display font-black text-[#241621] leading-tight"
           style={{ fontSize: 'clamp(2.2rem, 6vw, 5rem)' }}
         >
           Start with what you
@@ -36,7 +36,7 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="mt-5 text-[#341631]/70 font-display text-base sm:text-lg max-w-xl mx-auto"
+          className="mt-5 text-[#241621]/70 font-display text-base sm:text-lg max-w-xl mx-auto"
         >
           Your wardrobe is already full of possibilities. Let's unlock them.
         </motion.p>
@@ -56,7 +56,7 @@ export default function FinalCTA() {
             <Button
               size="xl"
               icon={ArrowRight} iconPosition="right"
-              className="!bg-[#eef4d1] !text-[#a8c422] hover:!bg-white font-bold font-display"
+              className="!bg-[#eef4d1] !text-[#a8c74a] hover:!bg-white font-bold font-display"
             >
               Shop Collection
             </Button>

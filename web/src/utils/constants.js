@@ -3,25 +3,25 @@
 // Change here → propagates everywhere
 // ─────────────────────────────────────────────────────────────────────────────
 export const BRAND = {
-  // Official palette (background → primary → secondary → tertiary → accent row)
+  // Official palette — bg → 1 primary → 2 secondary → 3 tertiary → accent row
   bg:        '#eef4d1',   // background
   bgCard:    '#ffffff',
   bgAlt:     '#e6edca',
-  primary:   '#a8c422',   // lime green – SHOP / primary
-  secondary: '#6c0b20',   // burgundy – REIMAGINE
-  tertiary:  '#e7a3c9',   // blush pink – accent
+  primary:   '#a8c74a',   // lime green – SHOP / primary
+  secondary: '#4c1b1b',   // burgundy – REIMAGINE
+  tertiary:  '#e2a3c9',   // blush pink – accent
   red:       '#e34334',   // warm red – REPAIR
-  blue:      '#015395',   // navy – DONATE
-  dark:      '#341631',   // plum – text / dark sections
-  green:     '#a8c422',   // alias → primary
-  burgundy:  '#6c0b20',   // alias → secondary
-  pink:      '#e7a3c9',   // alias → tertiary
+  blue:      '#1b4e81',   // navy – DONATE
+  dark:      '#241621',   // plum – text / dark sections
+  green:     '#a8c74a',   // alias → primary
+  burgundy:  '#4c1b1b',   // alias → secondary
+  pink:      '#e2a3c9',   // alias → tertiary
   // Text
-  text:      '#341631',   // main body text
-  textMuted: 'rgba(52,22,49,0.55)',
+  text:      '#241621',   // main body text
+  textMuted: 'rgba(36,22,33,0.55)',
   textLight: '#eef4d1',   // text on dark bg
   // Borders
-  border:    'rgba(52,22,49,0.12)',
+  border:    'rgba(36,22,33,0.12)',
   borderLight: 'rgba(238,244,209,0.18)',
 };
 

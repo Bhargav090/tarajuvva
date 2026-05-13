@@ -76,42 +76,42 @@ export default function Register() {
         className="w-full max-w-md"
       >
         <Link to="/" className="flex items-center gap-2.5 mb-10">
-          <div className="w-8 h-8 rounded-lg bg-[#a8c422] flex items-center justify-center">
-            <span className="text-[#341631] font-black text-sm font-display">T</span>
+          <div className="w-8 h-8 rounded-lg bg-[#a8c74a] flex items-center justify-center">
+            <span className="text-[#241621] font-black text-sm font-display">T</span>
           </div>
-          <span className="text-xl font-black text-[#341631] font-display">Tarajuvva</span>
+          <span className="text-xl font-black text-[#241621] font-display">Tarajuvva</span>
         </Link>
 
-        <h2 className="text-3xl font-black text-[#341631] font-display mb-2">Create account</h2>
-        <p className="text-[#341631]/55 font-body text-sm mb-8">
+        <h2 className="text-3xl font-black text-[#241621] font-display mb-2">Create account</h2>
+        <p className="text-[#241621]/55 font-body text-sm mb-8">
           Already have an account?{' '}
-          <Link to="/login" className="text-[#a8c422] font-semibold hover:underline">Sign in</Link>
+          <Link to="/login" className="text-[#a8c74a] font-semibold hover:underline">Sign in</Link>
         </p>
 
         {/* Google SSO */}
         <div id="google-register-btn" className="mb-6 flex justify-center" />
         <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 h-px bg-[#341631]/12" />
-          <span className="text-[#341631]/40 text-xs font-body">or with email</span>
-          <div className="flex-1 h-px bg-[#341631]/12" />
+          <div className="flex-1 h-px bg-[#241621]/12" />
+          <span className="text-[#241621]/40 text-xs font-body">or with email</span>
+          <div className="flex-1 h-px bg-[#241621]/12" />
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
           {fields.map(f => (
             <div key={f.name}>
-              <label className="block text-sm font-semibold text-[#341631] mb-1.5 font-display">{f.label}</label>
+              <label className="block text-sm font-semibold text-[#241621] mb-1.5 font-display">{f.label}</label>
               <div className="relative">
-                <f.icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#341631]/35" />
+                <f.icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#241621]/35" />
                 <input
                   name={f.name}
                   type={f.type === 'password' ? (showPw ? 'text' : 'password') : f.type}
                   value={form[f.name]} onChange={onChange} required
                   placeholder={f.placeholder}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-body text-sm outline-none focus:border-[#a8c422] focus:ring-2 focus:ring-[#a8c422]/12"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#241621]/12 rounded-xl text-[#241621] placeholder:text-[#241621]/35 font-body text-sm outline-none focus:border-[#a8c74a] focus:ring-2 focus:ring-[#a8c74a]/12"
                 />
                 {f.type === 'password' && (
                   <button type="button" onClick={() => setShowPw(p => !p)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#341631]/40 hover:text-[#341631]">
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#241621]/40 hover:text-[#241621]">
                     {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 )}
@@ -124,7 +124,7 @@ export default function Register() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-[#341631]/40 font-body">
+        <p className="mt-6 text-center text-xs text-[#241621]/40 font-body">
           By signing up you agree to our{' '}
           <a href="#" className="underline">Terms</a> &{' '}
           <a href="#" className="underline">Privacy Policy</a>

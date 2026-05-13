@@ -4,16 +4,16 @@
  */
 
 const BASE = [
-  'w-full px-4 py-3 rounded-xl text-[#341631] placeholder:text-[#341631]/40 font-body text-sm',
-  'bg-[#eef4d1] border border-[#341631]/15 outline-none',
+  'w-full px-4 py-3 rounded-xl text-[#241621] placeholder:text-[#241621]/40 font-body text-sm',
+  'bg-[#eef4d1] border border-[#241621]/15 outline-none',
   'transition-all duration-200',
-  'focus:border-[#a8c422] focus:ring-2 focus:ring-[#a8c422]/12 focus:bg-white',
+  'focus:border-[#a8c74a] focus:ring-2 focus:ring-[#a8c74a]/12 focus:bg-white',
   'disabled:opacity-50',
 ].join(' ');
 
 const Label = ({ label, required, htmlFor }) =>
   label ? (
-    <label htmlFor={htmlFor} className="block text-sm font-semibold text-[#341631] mb-1.5 font-display">
+    <label htmlFor={htmlFor} className="block text-sm font-semibold text-[#241621] mb-1.5 font-display">
       {label}{required && <span className="text-[#e34334] ml-0.5">*</span>}
     </label>
   ) : null;

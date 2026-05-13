@@ -1,8 +1,8 @@
-const pulse = 'animate-pulse rounded-xl bg-[#341631]/8';
+const pulse = 'animate-pulse rounded-xl bg-[#241621]/8';
 
 export function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-[#341631]/8">
+    <div className="bg-white rounded-2xl overflow-hidden border border-[#241621]/8">
       <div className={`${pulse} h-72 rounded-none`} />
       <div className="p-4 space-y-3">
         <div className={`${pulse} h-4 w-2/3`} />
@@ -45,7 +45,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }) {
   );
 }
 
-export function Spinner({ size = 24, color = '#a8c422' }) {
+export function Spinner({ size = 24, color = '#a8c74a' }) {
   return (
     <div
       className="border-2 border-t-transparent rounded-full animate-spin"
@@ -59,7 +59,7 @@ export function PageLoader() {
     <div className="flex items-center justify-center min-h-screen bg-[#eef4d1]">
       <div className="text-center">
         <Spinner size={36} />
-        <p className="mt-4 text-sm text-[#341631]/50 font-body">Loading…</p>
+        <p className="mt-4 text-sm text-[#241621]/50 font-body">Loading…</p>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import Button from '../../components/ui/Button';
 
 export default function ReimaginePreview() {
   return (
-    <section className="section bg-[#341631]">
+    <section className="section bg-[#241621]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left text */}
@@ -17,14 +17,14 @@ export default function ReimaginePreview() {
             viewport={{ once: true }}
           >
             <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-6"
-              style={{ background: '#6c0b2025', color: '#e7a3c9', border: '1px solid #6c0b2040' }}>
+              style={{ background: '#4c1b1b25', color: '#e2a3c9', border: '1px solid #4c1b1b40' }}>
               Reimagine
             </span>
             <h2 className="font-display font-black text-[#eef4d1] leading-tight mb-5"
               style={{ fontSize: 'clamp(2rem, 4.5vw, 3.5rem)' }}>
               You don't need new clothes.
               <br />
-              <span style={{ color: '#e7a3c9' }}>You need new versions</span>
+              <span style={{ color: '#e2a3c9' }}>You need new versions</span>
               <br />
               of what you have.
             </h2>

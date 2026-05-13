@@ -17,7 +17,7 @@ export default function ProductCard({ product }) {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       viewport={{ once: true }}
-      className="group bg-white rounded-2xl overflow-hidden border border-[#341631]/8 shadow-sm card-hover"
+      className="group bg-white rounded-2xl overflow-hidden border border-[#241621]/8 shadow-sm card-hover"
     >
       {/* Image */}
       <Link to={`/shop/${product.id}`} className="block relative overflow-hidden aspect-[4/5]">
@@ -33,17 +33,17 @@ export default function ProductCard({ product }) {
           </span>
         )}
         {product.tags?.[0] && (
-          <span className="absolute top-3 right-3 bg-[#341631]/80 text-[#eef4d1] text-[10px] font-semibold rounded-full px-2 py-1 font-display backdrop-blur-sm">
+          <span className="absolute top-3 right-3 bg-[#241621]/80 text-[#eef4d1] text-[10px] font-semibold rounded-full px-2 py-1 font-display backdrop-blur-sm">
             {product.tags[0]}
           </span>
         )}
         {/* Ways to wear hover overlay */}
         {product.ways_to_wear?.length > 0 && (
-          <div className="absolute inset-0 bg-[#a8c422]/90 flex flex-col justify-center p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <p className="text-[#341631] text-xs font-bold uppercase tracking-wider mb-3 font-display">3 ways to wear</p>
+          <div className="absolute inset-0 bg-[#a8c74a]/90 flex flex-col justify-center p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <p className="text-[#241621] text-xs font-bold uppercase tracking-wider mb-3 font-display">3 ways to wear</p>
             {product.ways_to_wear.slice(0, 3).map((w, i) => (
-              <p key={i} className="text-[#341631]/85 text-xs font-body mb-1.5 flex items-start gap-1.5">
-                <span className="text-[#e7a3c9] mt-0.5 flex-shrink-0">✦</span> {w}
+              <p key={i} className="text-[#241621]/85 text-xs font-body mb-1.5 flex items-start gap-1.5">
+                <span className="text-[#e2a3c9] mt-0.5 flex-shrink-0">✦</span> {w}
               </p>
             ))}
           </div>
@@ -52,18 +52,18 @@ export default function ProductCard({ product }) {
 
       {/* Info */}
       <div className="p-4">
-        <span className="text-[10px] font-bold text-[#a8c422] uppercase tracking-widest font-display">
+        <span className="text-[10px] font-bold text-[#a8c74a] uppercase tracking-widest font-display">
           {product.category}
         </span>
         <Link to={`/shop/${product.id}`}>
-          <h3 className="text-[#341631] font-bold text-sm sm:text-base mt-1 leading-tight line-clamp-2 hover:text-[#a8c422] transition-colors font-display">
+          <h3 className="text-[#241621] font-bold text-sm sm:text-base mt-1 leading-tight line-clamp-2 hover:text-[#a8c74a] transition-colors font-display">
             {product.name}
           </h3>
         </Link>
         <div className="flex items-center gap-2 mt-2 mb-3">
-          <span className="text-lg font-black text-[#a8c422] font-display">₹{product.price.toLocaleString('en-IN')}</span>
+          <span className="text-lg font-black text-[#a8c74a] font-display">₹{product.price.toLocaleString('en-IN')}</span>
           {product.original_price && (
-            <span className="text-sm text-[#341631]/40 line-through font-body">
+            <span className="text-sm text-[#241621]/40 line-through font-body">
               ₹{product.original_price.toLocaleString('en-IN')}
             </span>
           )}

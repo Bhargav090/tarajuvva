@@ -20,17 +20,17 @@ function FallingGarment({ emoji, index }) {
 }
 
 const CTAS = [
-  { label: 'Buy Smarter',  to: '/shop',      icon: ShoppingBag, color: '#a8c422' },
-  { label: 'Reimagine',    to: '/reimagine', icon: Sparkles,    color: '#6c0b20' },
+  { label: 'Buy Smarter',  to: '/shop',      icon: ShoppingBag, color: '#a8c74a' },
+  { label: 'Reimagine',    to: '/reimagine', icon: Sparkles,    color: '#4c1b1b' },
   { label: 'Repair',       to: '/repair',    icon: Wrench,      color: '#e34334' },
-  { label: 'Donate',       to: '/donate',    icon: Heart,       color: '#015395' },
+  { label: 'Donate',       to: '/donate',    icon: Heart,       color: '#1b4e81' },
 ];
 
 export default function TextileWaste() {
   const { ref: inViewRef, inView } = useInView({ triggerOnce: true, threshold: 0.3 });
 
   return (
-    <section ref={inViewRef} className="section bg-[#341631] overflow-hidden">
+    <section ref={inViewRef} className="section bg-[#241621] overflow-hidden">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
         {/* Step 1 */}
         <motion.p
@@ -66,7 +66,7 @@ export default function TextileWaste() {
           >
             7M
           </p>
-          <p className="text-[#e7a3c9] font-bold text-xl sm:text-2xl font-display -mt-2 mb-3">
+          <p className="text-[#e2a3c9] font-bold text-xl sm:text-2xl font-display -mt-2 mb-3">
             tonnes of textile waste.
           </p>
         </motion.div>

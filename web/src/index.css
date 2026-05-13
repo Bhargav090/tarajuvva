@@ -9,12 +9,12 @@
   /* Brand color tokens — usable as bg-brand-green, text-brand-dark, etc. */
   --color-brand-bg:       #eef4d1;
   --color-brand-bg-alt:   #e6edca;
-  --color-brand-green:    #0b4722;
-  --color-brand-burgundy: #6c0b20;
-  --color-brand-pink:     #e7a3c9;
+  --color-brand-green:    #a8c74a;
+  --color-brand-burgundy: #4c1b1b;
+  --color-brand-pink:     #e2a3c9;
   --color-brand-red:      #e34334;
-  --color-brand-blue:     #015395;
-  --color-brand-dark:     #341631;
+  --color-brand-blue:     #1b4e81;
+  --color-brand-dark:     #241621;
   --color-brand-card:     #ffffff;
 }
 
@@ -26,7 +26,7 @@
 
   body {
     background-color: #eef4d1;
-    color: #341631;
+    color: #241621;
     font-family: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -35,17 +35,17 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
-    color: #341631;
+    color: #241621;
   }
 
   ::selection {
-    background: #0b4722;
+    background: #a8c74a;
     color: #eef4d1;
   }
 
   ::-webkit-scrollbar       { width: 4px; }
   ::-webkit-scrollbar-track { background: #eef4d1; }
-  ::-webkit-scrollbar-thumb { background: #0b4722; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb { background: #a8c74a; border-radius: 2px; }
 
   input, textarea, select { font-family: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif; }
 }
@@ -57,13 +57,13 @@
     font-family: Outfit, Poppins, system-ui, sans-serif;
   }
   .text-gradient-green {
-    background: linear-gradient(135deg, #0b4722, #1a7a3f);
+    background: linear-gradient(135deg, #a8c74a, #8aab38);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .text-gradient-burgundy {
-    background: linear-gradient(135deg, #6c0b20, #a01030);
+    background: linear-gradient(135deg, #4c1b1b, #3d1616);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -71,20 +71,20 @@
 
   /* Glass effect for dark overlays */
   .glass-dark {
-    background: rgba(52,22,49,0.85);
+    background: rgba(36,22,33,0.85);
     backdrop-filter: blur(16px);
     border: 1px solid rgba(238,244,209,0.12);
   }
   .glass-light {
     background: rgba(238,244,209,0.75);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(52,22,49,0.12);
+    border: 1px solid rgba(36,22,33,0.12);
   }
 
   /* Card styles */
   .card {
     background: #ffffff;
-    border: 1px solid rgba(52,22,49,0.10);
+    border: 1px solid rgba(36,22,33,0.10);
     border-radius: 1.5rem;
   }
   .card-hover {
@@ -92,7 +92,7 @@
   }
   .card-hover:hover {
     transform: translateY(-4px);
-    box-shadow: 0 16px 40px rgba(52,22,49,0.12);
+    box-shadow: 0 16px 40px rgba(36,22,33,0.12);
   }
 
   /* Hide scrollbar */

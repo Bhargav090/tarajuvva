@@ -6,8 +6,8 @@ import { STATUS_COLORS } from '../../utils/constants';
  */
 
 export function AccentPill({ children, color, className = '' }) {
-  const bg  = color || '#a8c422';
-  const isDark = bg === '#a8c422' || bg === '#341631' || bg === '#6c0b20' || bg === '#015395';
+  const bg  = color || '#a8c74a';
+  const isDark = bg === '#a8c74a' || bg === '#241621' || bg === '#4c1b1b' || bg === '#1b4e81';
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display ${className}`}

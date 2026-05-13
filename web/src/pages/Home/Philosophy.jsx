@@ -9,30 +9,30 @@ export default function Philosophy() {
       <div className="max-w-4xl mx-auto text-center">
         {/* Decorative lines */}
         <div className="flex items-center justify-center gap-3 mb-10">
-          <div className="h-px flex-1 max-w-[80px] bg-[#341631]/15" />
+          <div className="h-px flex-1 max-w-[80px] bg-[#241621]/15" />
           <span className="text-lg">🧵</span>
-          <div className="h-px flex-1 max-w-[80px] bg-[#341631]/15" />
+          <div className="h-px flex-1 max-w-[80px] bg-[#241621]/15" />
         </div>
 
         <motion.blockquote
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="font-display font-black text-[#341631] leading-tight"
+          className="font-display font-black text-[#241621] leading-tight"
           style={{ fontSize: 'clamp(1.8rem, 5vw, 4rem)' }}
         >
           "Most wardrobes don't have a
-          <span style={{ color: '#a8c422' }}> clothing problem.</span>
+          <span style={{ color: '#a8c74a' }}> clothing problem.</span>
           <br />
           They have a
-          <span style={{ color: '#6c0b20' }}> usage problem.</span>"
+          <span style={{ color: '#4c1b1b' }}> usage problem.</span>"
         </motion.blockquote>
 
         <motion.p
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-8 text-[#341631]/50 font-display text-base sm:text-lg leading-relaxed max-w-2xl mx-auto"
+          className="mt-8 text-[#241621]/50 font-display text-base sm:text-lg leading-relaxed max-w-2xl mx-auto"
         >
           The average wardrobe has 77 items. Most people regularly wear only 20% of them.
           We exist to close that gap — through better buying, creative reimagining, and honest repurposing.
@@ -51,8 +51,8 @@ export default function Philosophy() {
             { v: '60%', l: 'never worn again' },
           ].map(s => (
             <div key={s.l}>
-              <p className="text-2xl sm:text-3xl font-black text-[#a8c422] font-display">{s.v}</p>
-              <p className="text-xs text-[#341631]/45 font-display mt-1 leading-tight">{s.l}</p>
+              <p className="text-2xl sm:text-3xl font-black text-[#a8c74a] font-display">{s.v}</p>
+              <p className="text-xs text-[#241621]/45 font-display mt-1 leading-tight">{s.l}</p>
             </div>
           ))}
         </motion.div>

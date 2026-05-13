@@ -20,11 +20,11 @@ export default function Reimagine() {
   if (done) return (
     <div className="min-h-screen bg-[#eef4d1] flex items-center justify-center px-4">
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-        <div className="w-20 h-20 bg-[#6c0b20]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-          <CheckCircle size={40} className="text-[#6c0b20]" />
+        <div className="w-20 h-20 bg-[#4c1b1b]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <CheckCircle size={40} className="text-[#4c1b1b]" />
         </div>
-        <h2 className="text-3xl font-black text-[#341631] font-display mb-3">Request Sent!</h2>
-        <p className="text-[#341631]/60 font-body text-sm leading-relaxed">
+        <h2 className="text-3xl font-black text-[#241621] font-display mb-3">Request Sent!</h2>
+        <p className="text-[#241621]/60 font-body text-sm leading-relaxed">
           Thank you for reimagining with Tarajuvva. We'll review your request and get back within 24 hours.
         </p>
       </motion.div>
@@ -36,36 +36,36 @@ export default function Reimagine() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
         {/* Page header */}
         <div className="text-center mb-4 sm:mb-5">
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-3 bg-[#6c0b20]/10 text-[#6c0b20] border border-[#6c0b20]/20">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-3 bg-[#4c1b1b]/10 text-[#4c1b1b] border border-[#4c1b1b]/20">
             Reimagine
           </span>
-          <h1 className="text-4xl sm:text-5xl font-black text-[#341631] font-display leading-tight">
+          <h1 className="text-4xl sm:text-5xl font-black text-[#241621] font-display leading-tight">
             Bored of<br />
-            <span className="text-[#6c0b20]">your clothes?</span>
+            <span className="text-[#4c1b1b]">your clothes?</span>
           </h1>
-          <p className="mt-3 text-[#341631]/55 font-body">Transform them into something you'll love again.</p>
+          <p className="mt-3 text-[#241621]/55 font-body">Transform them into something you'll love again.</p>
         </div>
 
         <StepIndicator steps={REIMAGINE_STEPS} current={step} />
 
-        <div className="mt-4 sm:mt-5 bg-white rounded-3xl p-5 sm:p-6 border border-[#341631]/8">
+        <div className="mt-4 sm:mt-5 bg-white rounded-3xl p-5 sm:p-6 border border-[#241621]/8">
           <AnimatePresence mode="wait">
             {/* Step 0 — Garment */}
             {step === 0 && (
               <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#341631] font-display mb-6">Select your garment</h2>
+                <h2 className="text-xl font-black text-[#241621] font-display mb-6">Select your garment</h2>
                 <div className="grid grid-cols-2 gap-3">
                   {GARMENTS.map(g => (
                     <button
                       key={g.id} onClick={() => { setGarment(g.id); setStep(1); }}
                       className={`flex flex-col items-start gap-2 p-5 rounded-2xl border-2 text-left transition-all hover:-translate-y-0.5 ${
-                        garment === g.id ? 'border-[#6c0b20] bg-[#6c0b20]/5' : 'border-[#341631]/10 hover:border-[#6c0b20]/40'
+                        garment === g.id ? 'border-[#4c1b1b] bg-[#4c1b1b]/5' : 'border-[#241621]/10 hover:border-[#4c1b1b]/40'
                       }`}
                     >
                       <span className="text-3xl">{g.emoji}</span>
                       <div>
-                        <p className="font-bold text-[#341631] font-display">{g.label}</p>
-                        <p className="text-xs text-[#341631]/45 font-body">{g.desc}</p>
+                        <p className="font-bold text-[#241621] font-display">{g.label}</p>
+                        <p className="text-xs text-[#241621]/45 font-body">{g.desc}</p>
                       </div>
                     </button>
                   ))}
@@ -76,7 +76,7 @@ export default function Reimagine() {
             {/* Step 1 — Transformation */}
             {step === 1 && (
               <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#341631] font-display mb-6">
+                <h2 className="text-xl font-black text-[#241621] font-display mb-6">
                   How to transform your {GARMENTS.find(g => g.id === garment)?.label}?
                 </h2>
                 <div className="space-y-2">
@@ -84,11 +84,11 @@ export default function Reimagine() {
                     <button
                       key={t} onClick={() => { setTransformation(t); setStep(2); }}
                       className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
-                        transformation === t ? 'border-[#6c0b20] bg-[#6c0b20]/5' : 'border-[#341631]/10 hover:border-[#6c0b20]/40'
+                        transformation === t ? 'border-[#4c1b1b] bg-[#4c1b1b]/5' : 'border-[#241621]/10 hover:border-[#4c1b1b]/40'
                       }`}
                     >
-                      <span className="font-semibold text-[#341631] font-display">{t}</span>
-                      <ArrowRight size={16} className="text-[#341631]/30" />
+                      <span className="font-semibold text-[#241621] font-display">{t}</span>
+                      <ArrowRight size={16} className="text-[#241621]/30" />
                     </button>
                   ))}
                 </div>
@@ -99,15 +99,15 @@ export default function Reimagine() {
             {/* Step 2 — Summary */}
             {step === 2 && (
               <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#341631] font-display mb-6">Your transformation</h2>
-                <div className="bg-[#6c0b20]/5 rounded-2xl p-6 border border-[#6c0b20]/15 mb-8">
-                  <p className="text-[#341631]/55 text-sm font-body mb-2">You are converting:</p>
+                <h2 className="text-xl font-black text-[#241621] font-display mb-6">Your transformation</h2>
+                <div className="bg-[#4c1b1b]/5 rounded-2xl p-6 border border-[#4c1b1b]/15 mb-8">
+                  <p className="text-[#241621]/55 text-sm font-body mb-2">You are converting:</p>
                   <div className="flex items-center gap-4">
-                    <span className="text-2xl font-black text-[#341631] font-display">
+                    <span className="text-2xl font-black text-[#241621] font-display">
                       {GARMENTS.find(g => g.id === garment)?.label}
                     </span>
-                    <ArrowRight size={20} className="text-[#6c0b20]" />
-                    <span className="text-2xl font-black text-[#6c0b20] font-display">{transformation}</span>
+                    <ArrowRight size={20} className="text-[#4c1b1b]" />
+                    <span className="text-2xl font-black text-[#4c1b1b] font-display">{transformation}</span>
                   </div>
                 </div>
                 <div className="flex gap-3">
@@ -122,8 +122,8 @@ export default function Reimagine() {
             {/* Step 3 — Upload */}
             {step === 3 && (
               <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#341631] font-display mb-2">Upload photos</h2>
-                <p className="text-[#341631]/50 font-body text-sm mb-6">Show us the garment from multiple angles.</p>
+                <h2 className="text-xl font-black text-[#241621] font-display mb-2">Upload photos</h2>
+                <p className="text-[#241621]/50 font-body text-sm mb-6">Show us the garment from multiple angles.</p>
                 <DropZone files={files} onAdd={addFiles} onRemove={removeFile} />
                 <Textarea
                   label="Notes (optional)"
@@ -146,7 +146,7 @@ export default function Reimagine() {
             {/* Step 4 — Details */}
             {step === 4 && (
               <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#341631] font-display mb-6">Your details</h2>
+                <h2 className="text-xl font-black text-[#241621] font-display mb-6">Your details</h2>
                 <form onSubmit={onSubmit} className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <Input label="Full Name" name="user_name" value={details.user_name} onChange={e => setDetails(p => ({ ...p, user_name: e.target.value }))} required />

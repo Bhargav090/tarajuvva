@@ -27,15 +27,15 @@ import ProductConfiguratorTab from './ProductConfiguratorTab';
 // ── Stat card ─────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, color, sub }) {
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#341631]/8">
+    <div className="bg-white rounded-2xl p-5 border border-[#241621]/8">
       <div className="flex items-center justify-between mb-4">
         <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: color + '18' }}>
           <Icon size={20} style={{ color }} />
         </div>
-        {sub && <span className="text-xs text-[#a8c422] font-semibold font-display">{sub}</span>}
+        {sub && <span className="text-xs text-[#a8c74a] font-semibold font-display">{sub}</span>}
       </div>
-      <p className="text-2xl font-black text-[#341631] font-display">{value ?? '—'}</p>
-      <p className="text-xs text-[#341631]/45 font-body mt-1">{label}</p>
+      <p className="text-2xl font-black text-[#241621] font-display">{value ?? '—'}</p>
+      <p className="text-xs text-[#241621]/45 font-body mt-1">{label}</p>
     </div>
   );
 }
@@ -90,10 +90,10 @@ function AdminChangePasswordModal({ open, onClose }) {
       <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40" onClick={onClose} />
       <form
         onSubmit={onSubmit}
-        className="relative z-[1] w-full max-w-md rounded-2xl border border-[#341631]/10 bg-[#eef4d1] p-6 shadow-xl"
+        className="relative z-[1] w-full max-w-md rounded-2xl border border-[#241621]/10 bg-[#eef4d1] p-6 shadow-xl"
       >
-        <h2 className="text-lg font-black text-[#341631] font-display mb-1">Change password</h2>
-        <p className="text-xs text-[#341631]/50 font-body mb-4">Use a strong password you have not used elsewhere.</p>
+        <h2 className="text-lg font-black text-[#241621] font-display mb-1">Change password</h2>
+        <p className="text-xs text-[#241621]/50 font-body mb-4">Use a strong password you have not used elsewhere.</p>
         <div className="space-y-3">
           <Input label="Current password" name="cur" type="password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrent(e.target.value)} required />
           <Input label="New password" name="new" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNew(e.target.value)} required />
@@ -125,7 +125,7 @@ export default function Admin() {
   };
   const [sidebar, setSidebar] = useState(false);
 
-  if (!isLoaded) return <div className="min-h-screen bg-[#341631] flex items-center justify-center"><Spinner color="#eef4d1" size={32} /></div>;
+  if (!isLoaded) return <div className="min-h-screen bg-[#241621] flex items-center justify-center"><Spinner color="#eef4d1" size={32} /></div>;
   if (!token) return <Navigate to="/login" replace state={{ from: '/admin' }} />;
 
   return (
@@ -144,12 +144,12 @@ export default function Admin() {
       <AnimatePresence>
         {(sidebar || true) && (
           <motion.aside
-            className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-[#341631] z-40 flex flex-col transition-transform duration-300 ${sidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+            className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-[#241621] z-40 flex flex-col transition-transform duration-300 ${sidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
           >
             <div className="px-6 py-6 border-b border-[#eef4d1]/10">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#a8c422] flex items-center justify-center">
-                  <span className="text-[#341631] font-black text-sm font-display">T</span>
+                <div className="w-9 h-9 rounded-lg bg-[#a8c74a] flex items-center justify-center">
+                  <span className="text-[#241621] font-black text-sm font-display">T</span>
                 </div>
                 <div>
                   <p className="text-[#eef4d1] font-black text-sm font-display">Tarajuvva</p>
@@ -163,7 +163,7 @@ export default function Admin() {
                 <button key={t.id} onClick={() => { setTab(t.id); setSidebar(false); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-display transition-all ${
                     tab === t.id
-                      ? 'bg-[#eef4d1] text-[#341631]'
+                      ? 'bg-[#eef4d1] text-[#241621]'
                       : 'text-[#eef4d1]/60 hover:text-[#eef4d1] hover:bg-[#eef4d1]/8'
                   }`}
                 >
@@ -189,11 +189,11 @@ export default function Admin() {
       {/* Main */}
       <div className="flex-1 min-w-0">
         {/* Mobile topbar */}
-        <div className="lg:hidden flex items-center gap-4 px-4 py-4 bg-white border-b border-[#341631]/8 sticky top-0 z-20">
+        <div className="lg:hidden flex items-center gap-4 px-4 py-4 bg-white border-b border-[#241621]/8 sticky top-0 z-20">
           <button onClick={() => setSidebar(true)} className="p-2 rounded-xl hover:bg-[#eef4d1]">
-            <Menu size={20} className="text-[#341631]" />
+            <Menu size={20} className="text-[#241621]" />
           </button>
-          <p className="font-black text-[#341631] font-display">Admin Panel</p>
+          <p className="font-black text-[#241621] font-display">Admin Panel</p>
         </div>
 
         <div className="p-5 sm:p-8">
@@ -228,16 +228,16 @@ function OverviewTab() {
   if (loading) return <div className="flex justify-center py-20"><Spinner size={32} /></div>;
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-display mb-8">Overview</h1>
+      <h1 className="text-2xl font-black text-[#241621] font-display mb-8">Overview</h1>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#a8c422" sub={`${stats?.orders?.pending ?? 0} pending`} />
-        <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#6c0b20" />
+        <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#a8c74a" sub={`${stats?.orders?.pending ?? 0} pending`} />
+        <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#4c1b1b" />
         <StatCard icon={Scissors} label="Reimagine Requests" value={stats?.reimagine?.total ?? 0} color="#e34334" sub={`${stats?.reimagine?.pending ?? 0} pending`} />
-        <StatCard icon={Package} label="Products" value={stats?.products ?? 0} color="#015395" />
+        <StatCard icon={Package} label="Products" value={stats?.products ?? 0} color="#1b4e81" />
       </div>
       <div className="mt-6 grid sm:grid-cols-2 gap-4">
         <StatCard icon={Users} label="Repair Waitlist" value={stats?.waitlist?.repair ?? 0} color="#e34334" />
-        <StatCard icon={Users} label="Donate Waitlist" value={stats?.waitlist?.donate ?? 0} color="#015395" />
+        <StatCard icon={Users} label="Donate Waitlist" value={stats?.waitlist?.donate ?? 0} color="#1b4e81" />
       </div>
     </div>
   );
@@ -248,28 +248,28 @@ function OrdersTab() {
   if (loading) return <TableSkeleton rows={6} cols={5} />;
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-display mb-6">Orders ({orders.length})</h1>
+      <h1 className="text-2xl font-black text-[#241621] font-display mb-6">Orders ({orders.length})</h1>
       <div className="space-y-3">
         {orders.map(o => (
-          <div key={o.id} className="bg-white rounded-2xl p-5 border border-[#341631]/8">
+          <div key={o.id} className="bg-white rounded-2xl p-5 border border-[#241621]/8">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
               <div>
-                <p className="text-xs text-[#341631]/40 font-body">#{o.id.slice(0,8).toUpperCase()}</p>
-                <p className="font-bold text-[#341631] font-display">{o.user_name}</p>
-                <p className="text-xs text-[#341631]/50 font-body">{o.user_phone}</p>
+                <p className="text-xs text-[#241621]/40 font-body">#{o.id.slice(0,8).toUpperCase()}</p>
+                <p className="font-bold text-[#241621] font-display">{o.user_name}</p>
+                <p className="text-xs text-[#241621]/50 font-body">{o.user_phone}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-black text-[#a8c422] font-display">₹{o.total.toLocaleString('en-IN')}</span>
+                <span className="font-black text-[#a8c74a] font-display">₹{o.total.toLocaleString('en-IN')}</span>
                 <StatusSelect value={o.status} options={ORDER_STATUSES} onUpdate={s => updateStatus(o.id, s)} />
               </div>
             </div>
-            <div className="text-xs text-[#341631]/45 font-body">
+            <div className="text-xs text-[#241621]/45 font-body">
               {o.items.map((it, i) => `${it.name} ×${it.qty}`).join(', ')}
             </div>
-            <p className="text-xs text-[#341631]/35 font-body mt-1">{o.address}</p>
+            <p className="text-xs text-[#241621]/35 font-body mt-1">{o.address}</p>
           </div>
         ))}
-        {orders.length === 0 && <p className="text-center text-[#341631]/40 font-body py-12">No orders yet.</p>}
+        {orders.length === 0 && <p className="text-center text-[#241621]/40 font-body py-12">No orders yet.</p>}
       </div>
     </div>
   );
@@ -280,19 +280,19 @@ function ReimagineTab() {
   if (loading) return <TableSkeleton rows={6} cols={4} />;
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-display mb-6">Reimagine Requests ({requests.length})</h1>
+      <h1 className="text-2xl font-black text-[#241621] font-display mb-6">Reimagine Requests ({requests.length})</h1>
       <div className="space-y-3">
         {requests.map(r => (
-          <div key={r.id} className="bg-white rounded-2xl p-5 border border-[#341631]/8">
+          <div key={r.id} className="bg-white rounded-2xl p-5 border border-[#241621]/8">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
               <div>
-                <p className="font-bold text-[#341631] font-display">{r.user_name}</p>
-                <p className="text-sm text-[#6c0b20] font-display">{r.garment_type} → {r.transformation}</p>
-                <p className="text-xs text-[#341631]/45 font-body">{r.user_phone}</p>
+                <p className="font-bold text-[#241621] font-display">{r.user_name}</p>
+                <p className="text-sm text-[#4c1b1b] font-display">{r.garment_type} → {r.transformation}</p>
+                <p className="text-xs text-[#241621]/45 font-body">{r.user_phone}</p>
               </div>
               <StatusSelect value={r.status} options={REIMAGINE_STATUSES} onUpdate={s => updateStatus(r.id, s)} />
             </div>
-            {r.notes && <p className="text-xs text-[#341631]/55 font-body bg-[#eef4d1] rounded-lg p-2 mt-2">{r.notes}</p>}
+            {r.notes && <p className="text-xs text-[#241621]/55 font-body bg-[#eef4d1] rounded-lg p-2 mt-2">{r.notes}</p>}
             {r.images?.length > 0 && (
               <div className="flex gap-2 mt-3">
                 {r.images.map((img, i) => (
@@ -304,7 +304,7 @@ function ReimagineTab() {
             )}
           </div>
         ))}
-        {requests.length === 0 && <p className="text-center text-[#341631]/40 font-body py-12">No reimagine requests yet.</p>}
+        {requests.length === 0 && <p className="text-center text-[#241621]/40 font-body py-12">No reimagine requests yet.</p>}
       </div>
     </div>
   );
@@ -316,27 +316,27 @@ function WaitlistTab() {
 
   const Section = ({ title, data, color }) => (
     <div>
-      <h2 className="text-lg font-bold text-[#341631] font-display mb-4" style={{ color }}>{title} ({data.length})</h2>
+      <h2 className="text-lg font-bold text-[#241621] font-display mb-4" style={{ color }}>{title} ({data.length})</h2>
       <div className="space-y-2 mb-8">
         {data.map(w => (
-          <div key={w.id} className="bg-white rounded-xl px-5 py-3 border border-[#341631]/8 flex items-center justify-between">
+          <div key={w.id} className="bg-white rounded-xl px-5 py-3 border border-[#241621]/8 flex items-center justify-between">
             <div>
-              <p className="font-semibold text-[#341631] font-display text-sm">{w.name}</p>
-              <p className="text-xs text-[#341631]/45 font-body">{w.email} · {w.phone || 'No phone'}</p>
+              <p className="font-semibold text-[#241621] font-display text-sm">{w.name}</p>
+              <p className="text-xs text-[#241621]/45 font-body">{w.email} · {w.phone || 'No phone'}</p>
             </div>
-            <p className="text-xs text-[#341631]/35 font-body">{new Date(w.created_at).toLocaleDateString('en-IN')}</p>
+            <p className="text-xs text-[#241621]/35 font-body">{new Date(w.created_at).toLocaleDateString('en-IN')}</p>
           </div>
         ))}
-        {data.length === 0 && <p className="text-[#341631]/40 font-body text-sm py-4 text-center">No entries yet.</p>}
+        {data.length === 0 && <p className="text-[#241621]/40 font-body text-sm py-4 text-center">No entries yet.</p>}
       </div>
     </div>
   );
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-display mb-8">Waitlist</h1>
+      <h1 className="text-2xl font-black text-[#241621] font-display mb-8">Waitlist</h1>
       <Section title="🔧 Repair" data={repair} color="#e34334" />
-      <Section title="💙 Donate" data={donate} color="#015395" />
+      <Section title="💙 Donate" data={donate} color="#1b4e81" />
     </div>
   );
 }

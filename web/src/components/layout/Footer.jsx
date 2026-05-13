@@ -4,14 +4,14 @@ import { NAV_LINKS } from '../../utils/constants';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#341631] text-[#eef4d1]">
+    <footer className="bg-[#241621] text-[#eef4d1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-9 h-9 rounded-lg bg-[#a8c422] flex items-center justify-center">
-                <span className="text-[#341631] font-black text-base font-display">T</span>
+              <div className="w-9 h-9 rounded-lg bg-[#a8c74a] flex items-center justify-center">
+                <span className="text-[#241621] font-black text-base font-display">T</span>
               </div>
               <span className="text-xl font-black tracking-tight font-display">Tarajuvva</span>
             </div>
@@ -72,7 +72,7 @@ export default function Footer() {
               </li>
               <li className="text-sm text-[#eef4d1]/65 font-body">Hyderabad, India 🇮🇳</li>
               <li>
-                <span className="inline-flex items-center gap-1.5 bg-[#a8c422]/50 rounded-full px-3 py-1 text-xs font-semibold text-[#341631] font-display">
+                <span className="inline-flex items-center gap-1.5 bg-[#a8c74a]/50 rounded-full px-3 py-1 text-xs font-semibold text-[#241621] font-display">
                   ✦ Response within 24 hours
                 </span>
               </li>

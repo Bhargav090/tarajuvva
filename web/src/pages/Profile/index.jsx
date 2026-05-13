@@ -90,21 +90,21 @@ export default function Profile() {
     <div className="min-h-screen bg-[#eef4d1] pt-4 pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="flex items-center gap-5 mb-10 p-6 bg-[#0b4722] rounded-3xl">
+        <div className="flex items-center gap-5 mb-10 p-6 bg-[#a8c74a] rounded-3xl">
           <UserAvatar
             src={user.avatar}
             name={user.name}
             className="w-16 h-16 rounded-2xl border-2 border-[#eef4d1]/20"
-            fallbackClassName="bg-[#eef4d1]/15 text-2xl font-black text-[#eef4d1]"
+            fallbackClassName="bg-[#241621]/10 text-2xl font-black text-[#241621]"
           />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-black text-[#eef4d1] font-display">{user.name}</h1>
-            <p className="text-[#eef4d1]/55 text-sm font-body">{user.email}</p>
-          </div>
+          <motion.div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-black text-[#241621] font-display">{user.name}</h1>
+            <p className="text-[#241621]/60 text-sm font-body">{user.email}</p>
+          </motion.div>
           <button
             type="button"
             onClick={() => setLogoutOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#eef4d1]/20 text-[#eef4d1]/70 hover:text-[#eef4d1] hover:border-[#eef4d1]/40 text-sm font-display transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#241621]/20 text-[#241621]/70 hover:text-[#241621] hover:border-[#241621]/40 text-sm font-display transition-all"
           >
             <LogOut size={14} /> Sign Out
           </button>
@@ -121,8 +121,8 @@ export default function Profile() {
               }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold font-display whitespace-nowrap transition-all ${
                 tab === t.id
-                  ? 'bg-[#0b4722] text-[#eef4d1]'
-                  : 'text-[#341631]/60 hover:text-[#341631] bg-white border border-[#341631]/8'
+                  ? 'bg-[#a8c74a] text-[#241621]'
+                  : 'text-[#241621]/60 hover:text-[#241621] bg-white border border-[#241621]/8'
               }`}
             >
               <t.icon size={15} /> {t.label}
@@ -132,9 +132,9 @@ export default function Profile() {
 
         {/* Content */}
         {tab === 'profile' && (
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#341631]/8">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#241621]/8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-[#341631] font-display">Personal Information</h2>
+              <h2 className="text-xl font-bold text-[#241621] font-display">Personal Information</h2>
               {!editing ? (
                 <Button variant="outline-green" size="sm" icon={Edit2} onClick={() => setEditing(true)}>Edit</Button>
               ) : (
@@ -161,8 +161,8 @@ export default function Profile() {
                   { l: 'Address',   v: user.address || '—' },
                 ].map(f => (
                   <div key={f.l}>
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#341631]/40 mb-1 font-display">{f.l}</p>
-                    <p className="text-[#341631] font-body text-sm">{f.v}</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-[#241621]/40 mb-1 font-display">{f.l}</p>
+                    <p className="text-[#241621] font-body text-sm">{f.v}</p>
                   </div>
                 ))
               )}
@@ -175,20 +175,20 @@ export default function Profile() {
             {loadingData ? (
               <div className="flex justify-center py-16"><Spinner size={32} /></div>
             ) : orders.length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 text-center border border-[#341631]/8">
-                <Package size={40} className="text-[#341631]/20 mx-auto mb-4" />
-                <p className="text-[#341631]/50 font-body">No orders yet.</p>
-                <Link to="/shop" className="mt-4 inline-block text-[#0b4722] font-semibold text-sm font-display hover:underline">
+              <div className="bg-white rounded-3xl p-12 text-center border border-[#241621]/8">
+                <Package size={40} className="text-[#241621]/20 mx-auto mb-4" />
+                <p className="text-[#241621]/50 font-body">No orders yet.</p>
+                <Link to="/shop" className="mt-4 inline-block text-[#a8c74a] font-semibold text-sm font-display hover:underline">
                   Start shopping →
                 </Link>
               </div>
             ) : orders.map(o => (
-              <div key={o.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#341631]/8">
+              <div key={o.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
-                    <p className="text-xs text-[#341631]/40 font-body mb-1">Order #{o.id.slice(0,8).toUpperCase()}</p>
-                    <p className="text-lg font-black text-[#0b4722] font-display">₹{o.total.toLocaleString('en-IN')}</p>
-                    <p className="text-xs text-[#341631]/45 font-body mt-0.5 flex items-center gap-1">
+                    <p className="text-xs text-[#241621]/40 font-body mb-1">Order #{o.id.slice(0,8).toUpperCase()}</p>
+                    <p className="text-lg font-black text-[#a8c74a] font-display">₹{o.total.toLocaleString('en-IN')}</p>
+                    <p className="text-xs text-[#241621]/45 font-body mt-0.5 flex items-center gap-1">
                       <Clock size={11} /> {new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
@@ -197,8 +197,8 @@ export default function Profile() {
                 <div className="space-y-1.5">
                   {o.items.map((item, i) => (
                     <div key={i} className="flex justify-between text-sm font-body">
-                      <span className="text-[#341631]/70">{item.name} × {item.qty}</span>
-                      <span className="text-[#341631] font-semibold">₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
+                      <span className="text-[#241621]/70">{item.name} × {item.qty}</span>
+                      <span className="text-[#241621] font-semibold">₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
                     </div>
                   ))}
                 </div>
@@ -212,22 +212,22 @@ export default function Profile() {
             {loadingData ? (
               <div className="flex justify-center py-16"><Spinner size={32} /></div>
             ) : reimagine.length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 text-center border border-[#341631]/8">
-                <Scissors size={40} className="text-[#341631]/20 mx-auto mb-4" />
-                <p className="text-[#341631]/50 font-body">No reimagine requests yet.</p>
-                <Link to="/reimagine" className="mt-4 inline-block text-[#6c0b20] font-semibold text-sm font-display hover:underline">
+              <div className="bg-white rounded-3xl p-12 text-center border border-[#241621]/8">
+                <Scissors size={40} className="text-[#241621]/20 mx-auto mb-4" />
+                <p className="text-[#241621]/50 font-body">No reimagine requests yet.</p>
+                <Link to="/reimagine" className="mt-4 inline-block text-[#4c1b1b] font-semibold text-sm font-display hover:underline">
                   Start Reimagining →
                 </Link>
               </div>
             ) : reimagine.map(r => (
-              <div key={r.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#341631]/8">
+              <div key={r.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs text-[#341631]/40 font-body mb-1">Request #{r.id.slice(0,8).toUpperCase()}</p>
-                    <p className="font-bold text-[#341631] font-display">
+                    <p className="text-xs text-[#241621]/40 font-body mb-1">Request #{r.id.slice(0,8).toUpperCase()}</p>
+                    <p className="font-bold text-[#241621] font-display">
                       {r.garment_type} → {r.transformation}
                     </p>
-                    <p className="text-xs text-[#341631]/45 font-body mt-0.5 flex items-center gap-1">
+                    <p className="text-xs text-[#241621]/45 font-body mt-0.5 flex items-center gap-1">
                       <Clock size={11} /> {new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
@@ -235,8 +235,8 @@ export default function Profile() {
                 </div>
                 {r.admin_notes && (
                   <div className="mt-4 p-3 bg-[#eef4d1] rounded-xl">
-                    <p className="text-xs font-bold text-[#341631]/50 mb-1 font-display">Note from team</p>
-                    <p className="text-sm text-[#341631] font-body">{r.admin_notes}</p>
+                    <p className="text-xs font-bold text-[#241621]/50 mb-1 font-display">Note from team</p>
+                    <p className="text-sm text-[#241621] font-body">{r.admin_notes}</p>
                   </div>
                 )}
               </div>

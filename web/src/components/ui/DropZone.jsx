@@ -18,20 +18,20 @@ export default function DropZone({ files, onAdd, onRemove, maxFiles = 5 }) {
         {...getRootProps()}
         className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 ${
           isDragActive
-            ? 'border-[#a8c422] bg-[#a8c422]/5'
-            : 'border-[#341631]/20 hover:border-[#a8c422]/50 hover:bg-[#a8c422]/3'
+            ? 'border-[#a8c74a] bg-[#a8c74a]/5'
+            : 'border-[#241621]/20 hover:border-[#a8c74a]/50 hover:bg-[#a8c74a]/3'
         }`}
       >
         <input {...getInputProps()} />
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#a8c422]/10 flex items-center justify-center">
-            <Upload size={22} className="text-[#a8c422]" />
+          <div className="w-12 h-12 rounded-xl bg-[#a8c74a]/10 flex items-center justify-center">
+            <Upload size={22} className="text-[#a8c74a]" />
           </div>
           <div>
-            <p className="font-semibold text-[#341631] font-display text-sm">
+            <p className="font-semibold text-[#241621] font-display text-sm">
               {isDragActive ? 'Drop your images here' : 'Upload garment photos'}
             </p>
-            <p className="text-[#341631]/45 text-xs mt-1 font-body">
+            <p className="text-[#241621]/45 text-xs mt-1 font-body">
               Drag & drop or click — up to {maxFiles} images
             </p>
           </div>

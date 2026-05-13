@@ -21,12 +21,12 @@ export default function CartDrawer() {
           <motion.div
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="fixed right-0 top-0 h-full w-full max-w-md z-[61] bg-[#341631] flex flex-col"
+            className="fixed right-0 top-0 h-full w-full max-w-md z-[61] bg-[#241621] flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#eef4d1]/10">
               <div className="flex items-center gap-2.5">
-                <ShoppingBag size={18} className="text-[#e7a3c9]" />
+                <ShoppingBag size={18} className="text-[#e2a3c9]" />
                 <h2 className="text-lg font-black text-[#eef4d1] font-display">Your Cart</h2>
                 {items.length > 0 && (
                   <span className="bg-[#e34334] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center font-display">
@@ -45,7 +45,7 @@ export default function CartDrawer() {
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <ShoppingBag size={48} className="text-[#eef4d1]/20 mb-4" />
                   <p className="text-[#eef4d1]/60 font-body text-sm">Your cart is empty.</p>
-                  <button onClick={closeCart} className="mt-4 text-[#e7a3c9] text-sm font-semibold font-display hover:text-[#eef4d1]">
+                  <button onClick={closeCart} className="mt-4 text-[#e2a3c9] text-sm font-semibold font-display hover:text-[#eef4d1]">
                     Continue shopping →
                   </button>
                 </div>
@@ -59,7 +59,7 @@ export default function CartDrawer() {
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-[#eef4d1] font-semibold text-sm leading-tight font-display truncate">{item.name}</p>
-                      <p className="text-[#e7a3c9] font-black text-sm mt-1 font-display">₹{item.price.toLocaleString('en-IN')}</p>
+                      <p className="text-[#e2a3c9] font-black text-sm mt-1 font-display">₹{item.price.toLocaleString('en-IN')}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <button onClick={() => updateQty(item.id, item.qty - 1)}
                           className="w-7 h-7 rounded-lg border border-[#eef4d1]/20 flex items-center justify-center text-[#eef4d1]/70 hover:border-[#eef4d1]/50 hover:text-[#eef4d1] transition-all">

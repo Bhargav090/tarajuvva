@@ -6,11 +6,11 @@ import { ShoppingBag, Sparkles, Wrench, Heart, ArrowRight } from 'lucide-react';
 const NODES = [
   {
     icon: ShoppingBag, emoji: '🛍', label: 'I want something new',
-    action: 'Shop', to: '/shop', color: '#a8c422', bg: '#a8c42215',
+    action: 'Shop', to: '/shop', color: '#a8c74a', bg: '#a8c74a15',
   },
   {
     icon: Sparkles, emoji: '✨', label: "I'm bored of my clothes",
-    action: 'Reimagine', to: '/reimagine', color: '#6c0b20', bg: '#6c0b2015',
+    action: 'Reimagine', to: '/reimagine', color: '#4c1b1b', bg: '#4c1b1b15',
   },
   {
     icon: Wrench, emoji: '🔧', label: 'Something is damaged',
@@ -18,7 +18,7 @@ const NODES = [
   },
   {
     icon: Heart, emoji: '💙', label: "I don't need this anymore",
-    action: 'Donate', to: '/donate', color: '#015395', bg: '#01539515',
+    action: 'Donate', to: '/donate', color: '#1b4e81', bg: '#1b4e8115',
   },
 ];
 
@@ -49,7 +49,7 @@ function NodeCard({ node, i }) {
         </div>
 
         {/* Text */}
-        <p className="text-[#341631]/55 text-sm font-display mb-2 leading-relaxed">{node.label}</p>
+        <p className="text-[#241621]/55 text-sm font-display mb-2 leading-relaxed">{node.label}</p>
         <div className="flex items-center justify-between">
           <span className="text-xl font-black font-display" style={{ color: node.color }}>
             {node.action}
@@ -77,15 +77,15 @@ export default function LoopSection() {
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-5 bg-[#a8c422]/10 text-[#a8c422] border border-[#a8c422]/20">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-5 bg-[#a8c74a]/10 text-[#a8c74a] border border-[#a8c74a]/20">
               The Loop
             </span>
-            <h2 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-[#341631] leading-tight">
+            <h2 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-[#241621] leading-tight">
               Your clothes.
               <br />
-              <span className="text-[#a8c422]">Every stage.</span>
+              <span className="text-[#a8c74a]">Every stage.</span>
             </h2>
-            <p className="mt-5 text-[#341631]/55 font-display text-base sm:text-lg max-w-lg mx-auto">
+            <p className="mt-5 text-[#241621]/55 font-display text-base sm:text-lg max-w-lg mx-auto">
               What do you want to do with your clothes today?
             </p>
           </motion.div>
@@ -103,7 +103,7 @@ export default function LoopSection() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="flex justify-center mt-10"
         >
-          <div className="inline-flex items-center gap-3 bg-[#341631] text-[#eef4d1] rounded-2xl px-6 py-4 shadow-xl">
+          <div className="inline-flex items-center gap-3 bg-[#241621] text-[#eef4d1] rounded-2xl px-6 py-4 shadow-xl">
             <span className="text-2xl">🧵</span>
             <div>
               <p className="text-sm font-black font-display">It's all connected</p>

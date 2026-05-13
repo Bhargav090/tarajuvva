@@ -40,7 +40,7 @@ export default function Header() {
 
   const navLinkClass = ({ isActive }) =>
     `text-sm font-semibold font-display transition-colors tracking-wide ${
-      isActive ? 'text-[#0b4722]' : 'text-[#341631]/70 hover:text-[#0b4722]'
+      isActive ? 'text-[#a8c74a]' : 'text-[#241621]/70 hover:text-[#a8c74a]'
     }`;
 
   return (
@@ -48,7 +48,7 @@ export default function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'bg-[#eef4d1]/95 backdrop-blur-md shadow-sm border-b border-[#341631]/8'
+            ? 'bg-[#eef4d1]/95 backdrop-blur-md shadow-sm border-b border-[#241621]/8'
             : 'bg-[#eef4d1]'
         }`}
         style={{ top: 'var(--ticker-h, 40px)' }}
@@ -57,10 +57,10 @@ export default function Header() {
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 group" onClick={() => setOpen(false)}>
-              <div className="w-8 h-8 rounded-lg bg-[#0b4722] flex items-center justify-center">
-                <span className="text-[#eef4d1] font-black text-sm font-display">T</span>
+              <div className="w-8 h-8 rounded-lg bg-[#a8c74a] flex items-center justify-center">
+                <span className="text-[#241621] font-black text-sm font-display">T</span>
               </div>
-              <span className="text-lg font-black text-[#341631] tracking-tight font-display group-hover:text-[#0b4722] transition-colors">
+              <span className="text-lg font-black text-[#241621] tracking-tight font-display group-hover:text-[#a8c74a] transition-colors">
                 Tarajuvva
               </span>
             </Link>
@@ -77,7 +77,7 @@ export default function Header() {
               {/* Cart */}
               <button
                 onClick={openCart}
-                className="relative p-2 rounded-xl text-[#341631] hover:bg-[#341631]/6 transition-colors"
+                className="relative p-2 rounded-xl text-[#241621] hover:bg-[#241621]/6 transition-colors"
                 aria-label="Cart"
               >
                 <ShoppingBag size={20} />
@@ -97,15 +97,15 @@ export default function Header() {
                 <div className="relative hidden md:block">
                   <button
                     onClick={() => setUserMenu(p => !p)}
-                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#341631]/6 transition-colors"
+                    className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#241621]/6 transition-colors"
                   >
                     <UserAvatar
                       src={user.avatar}
                       name={user.name}
                       className="w-7 h-7 rounded-full"
-                      fallbackClassName="bg-[#0b4722] text-[#eef4d1] text-xs font-bold"
+                      fallbackClassName="bg-[#a8c74a] text-[#241621] text-xs font-bold"
                     />
-                    <ChevronDown size={14} className="text-[#341631]/50" />
+                    <ChevronDown size={14} className="text-[#241621]/50" />
                   </button>
                   <AnimatePresence>
                     {userMenu && (
@@ -114,19 +114,19 @@ export default function Header() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -6, scale: 0.97 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-[#341631]/8 overflow-hidden"
+                        className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-[#241621]/8 overflow-hidden"
                         onMouseLeave={() => setUserMenu(false)}
                       >
-                        <div className="px-4 py-3 border-b border-[#341631]/8">
-                          <p className="text-sm font-bold text-[#341631] font-display truncate">{user.name}</p>
-                          <p className="text-xs text-[#341631]/50 font-body truncate">{user.email}</p>
+                        <div className="px-4 py-3 border-b border-[#241621]/8">
+                          <p className="text-sm font-bold text-[#241621] font-display truncate">{user.name}</p>
+                          <p className="text-xs text-[#241621]/50 font-body truncate">{user.email}</p>
                         </div>
                         <Link to="/profile" onClick={() => setUserMenu(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#341631] hover:bg-[#eef4d1] transition-colors font-body">
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-[#eef4d1] transition-colors font-body">
                           <User size={15} /> My Profile
                         </Link>
                         <Link to="/profile/orders" onClick={() => setUserMenu(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#341631] hover:bg-[#eef4d1] transition-colors font-body">
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-[#eef4d1] transition-colors font-body">
                           <Package size={15} /> My Orders
                         </Link>
                         <button
@@ -143,7 +143,7 @@ export default function Header() {
               ) : (
                 <Link
                   to="/login"
-                  className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#0b4722] border-2 border-[#0b4722] rounded-xl hover:bg-[#0b4722] hover:text-[#eef4d1] transition-all duration-200 font-display"
+                  className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-[#a8c74a] border-2 border-[#a8c74a] rounded-xl hover:bg-[#a8c74a] hover:text-[#241621] transition-all duration-200 font-display"
                 >
                   <User size={14} /> Sign In
                 </Link>
@@ -152,7 +152,7 @@ export default function Header() {
               {/* Mobile hamburger */}
               <button
                 onClick={() => setOpen(p => !p)}
-                className="md:hidden p-2 rounded-xl text-[#341631] hover:bg-[#341631]/6 transition-colors"
+                className="md:hidden p-2 rounded-xl text-[#241621] hover:bg-[#241621]/6 transition-colors"
                 aria-label="Menu"
               >
                 {open ? <X size={20} /> : <Menu size={20} />}
@@ -176,10 +176,10 @@ export default function Header() {
               transition={{ type: 'spring', stiffness: 340, damping: 32 }}
               className="fixed right-0 top-0 h-full w-4/5 max-w-xs z-[57] bg-[#eef4d1] flex flex-col md:hidden"
             >
-              <div className="flex items-center justify-between px-6 py-5 border-b border-[#341631]/10">
-                <span className="font-black text-lg text-[#341631] font-display">Menu</span>
-                <button onClick={() => setOpen(false)} className="p-2 rounded-xl hover:bg-[#341631]/6">
-                  <X size={20} className="text-[#341631]" />
+              <div className="flex items-center justify-between px-6 py-5 border-b border-[#241621]/10">
+                <span className="font-black text-lg text-[#241621] font-display">Menu</span>
+                <button onClick={() => setOpen(false)} className="p-2 rounded-xl hover:bg-[#241621]/6">
+                  <X size={20} className="text-[#241621]" />
                 </button>
               </div>
               <nav className="flex-1 overflow-y-auto px-6 py-6 space-y-1">
@@ -188,14 +188,14 @@ export default function Header() {
                     key={l.to} to={l.to} onClick={() => setOpen(false)}
                     className={({ isActive }) =>
                       `block px-4 py-3 rounded-xl text-base font-semibold font-display transition-colors ${
-                        isActive ? 'bg-[#0b4722] text-[#eef4d1]' : 'text-[#341631] hover:bg-[#341631]/6'
+                        isActive ? 'bg-[#a8c74a] text-[#241621]' : 'text-[#241621] hover:bg-[#241621]/6'
                       }`
                     }
                   >
                     {l.label}
                   </NavLink>
                 ))}
-                <div className="pt-4 border-t border-[#341631]/10 mt-4">
+                <div className="pt-4 border-t border-[#241621]/10 mt-4">
                   {user ? (
                     <>
                       <div className="flex items-center gap-3 px-4 py-3 mb-2">
@@ -203,19 +203,19 @@ export default function Header() {
                           src={user.avatar}
                           name={user.name}
                           className="w-9 h-9 rounded-full"
-                          fallbackClassName="bg-[#0b4722] text-[#eef4d1] font-bold text-sm"
+                          fallbackClassName="bg-[#a8c74a] text-[#241621] font-bold text-sm"
                         />
                         <div>
-                          <p className="font-bold text-sm text-[#341631] font-display">{user.name}</p>
-                          <p className="text-xs text-[#341631]/50 font-body">{user.email}</p>
+                          <p className="font-bold text-sm text-[#241621] font-display">{user.name}</p>
+                          <p className="text-xs text-[#241621]/50 font-body">{user.email}</p>
                         </div>
                       </div>
                       <NavLink to="/profile" onClick={() => setOpen(false)}
-                        className="block px-4 py-3 rounded-xl text-sm font-semibold font-display text-[#341631] hover:bg-[#341631]/6">
+                        className="block px-4 py-3 rounded-xl text-sm font-semibold font-display text-[#241621] hover:bg-[#241621]/6">
                         My Profile
                       </NavLink>
                       <NavLink to="/profile/orders" onClick={() => setOpen(false)}
-                        className="block px-4 py-3 rounded-xl text-sm font-semibold font-display text-[#341631] hover:bg-[#341631]/6">
+                        className="block px-4 py-3 rounded-xl text-sm font-semibold font-display text-[#241621] hover:bg-[#241621]/6">
                         My Orders
                       </NavLink>
                       <button type="button" onClick={() => setLogoutOpen(true)}
@@ -225,7 +225,7 @@ export default function Header() {
                     </>
                   ) : (
                     <Link to="/login" onClick={() => setOpen(false)}
-                      className="block px-4 py-3 rounded-xl text-sm font-bold font-display bg-[#0b4722] text-[#eef4d1] text-center">
+                      className="block px-4 py-3 rounded-xl text-sm font-bold font-display bg-[#a8c74a] text-[#241621] text-center">
                       Sign In / Register
                     </Link>
                   )}

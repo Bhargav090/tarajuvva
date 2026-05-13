@@ -1,25 +1,83 @@
-/* Roc Grotesk Variable — self-host OR Adobe Fonts
- *
- * ROOT CAUSE if headings look like "generic Google font":
- *   There is NO file at public/fonts/RocGrotesk-Variable.woff2 yet, so the @font-face
- *   request 404s and the browser uses the NEXT face in the stack (Outfit).
- *
- * Fix A — Self-host (Klim / your license):
- *   Copy your variable .woff2 into:  web/public/fonts/RocGrotesk-Variable.woff2
- *   If the font’s internal family name is NOT "Roc Grotesk Variable", change BOTH:
- *   - the `font-family:` below, and
- *   - `--font-display` / `--font-sans` / `body` / `h1–h6` in src/index.css
- *
- * Fix B — Adobe Fonts:
- *   In web/.env set:  VITE_ADOBE_FONTS_KIT_ID=your_kit_id
- *   (Vite injects https://use.typekit.net/<id>.css into index.html.)
- *   Open the kit CSS, find @font-face → `font-family: "..."` and set index.css @theme
- *   --font-display / --font-sans / body / headings to that EXACT name (often lowercase).
- */
+/* Roc Grotesk (assets) — primary typeface.
+ * unicode-range limits demo faces to glyphs they actually ship; anything else
+ * (₹, emoji, scripts outside Latin, etc.) uses Outfit/Poppins from the stack. */
 @font-face {
-  font-family: 'Roc Grotesk Variable';
-  src: url('/fonts/RocGrotesk-Variable.woff2') format('woff2');
-  font-weight: 100 900;
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-thin.otf') format('opentype');
+  font-weight: 100;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-extralight.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-extrabold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-heavy.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Roc Grotesk';
+  src: url('./assets/Demo_Fonts/Fontspring-DEMO-rocgrotesk-black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }

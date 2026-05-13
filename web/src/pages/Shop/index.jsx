@@ -22,7 +22,7 @@ export default function Shop() {
     <div className="bg-[#eef4d1] min-h-screen">
       <PageBanner
         badge="Shop"
-        badgeColor="#0b4722"
+        badgeColor="#a8c422"
         title="The Collection."
         subtitle="Thoughtfully made. Multiple ways to wear. Zero guilt."
       />
@@ -37,8 +37,8 @@ export default function Shop() {
                 key={c} onClick={() => setCategory(c)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold font-display transition-all ${
                   category === c
-                    ? 'bg-[#0b4722] text-[#eef4d1]'
-                    : 'bg-white text-[#341631]/60 border border-[#341631]/12 hover:border-[#0b4722]/30 hover:text-[#0b4722]'
+                    ? 'bg-[#a8c422] text-[#341631]'
+                    : 'bg-white text-[#341631]/60 border border-[#341631]/12 hover:border-[#a8c422]/30 hover:text-[#a8c422]'
                 }`}
               >
                 {c}
@@ -49,7 +49,7 @@ export default function Shop() {
           <div className="relative flex-shrink-0">
             <select
               value={sort} onChange={e => setSort(e.target.value)}
-              className="appearance-none bg-white border border-[#341631]/12 rounded-xl px-4 py-2 text-xs font-semibold text-[#341631] font-display pr-8 outline-none cursor-pointer focus:border-[#0b4722]"
+              className="appearance-none bg-white border border-[#341631]/12 rounded-xl px-4 py-2 text-xs font-semibold text-[#341631] font-display pr-8 outline-none cursor-pointer focus:border-[#a8c422]"
             >
               {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>

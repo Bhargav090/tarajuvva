@@ -7,7 +7,7 @@ const BASE = [
   'w-full px-4 py-3 rounded-xl text-[#341631] placeholder:text-[#341631]/40 font-body text-sm',
   'bg-[#eef4d1] border border-[#341631]/15 outline-none',
   'transition-all duration-200',
-  'focus:border-[#0b4722] focus:ring-2 focus:ring-[#0b4722]/12 focus:bg-white',
+  'focus:border-[#a8c422] focus:ring-2 focus:ring-[#a8c422]/12 focus:bg-white',
   'disabled:opacity-50',
 ].join(' ');
 

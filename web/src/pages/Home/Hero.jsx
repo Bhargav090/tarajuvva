@@ -11,16 +11,16 @@ const SLIDES = [
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen bg-[#0b4722] flex flex-col lg:flex-row overflow-hidden">
+    <section className="relative min-h-screen bg-[#a8c422] flex flex-col lg:flex-row overflow-hidden">
       {/* Left — Text */}
       <div className="relative z-10 flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-24 lg:py-0 lg:w-[55%] order-2 lg:order-1">
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-          className="inline-flex w-fit items-center gap-2 bg-[#eef4d1]/10 border border-[#eef4d1]/15 rounded-full px-4 py-2 mb-8"
+          className="inline-flex w-fit items-center gap-2 bg-[#341631]/8 border border-[#341631]/12 rounded-full px-4 py-2 mb-8"
         >
-          <Sparkles size={13} className="text-[#e7a3c9]" />
-          <span className="text-[#eef4d1]/80 text-xs font-semibold font-display uppercase tracking-widest">
+          <Sparkles size={13} className="text-[#6c0b20]" />
+          <span className="text-[#341631]/80 text-xs font-semibold font-display uppercase tracking-widest">
             Circular Fashion
           </span>
         </motion.div>
@@ -28,12 +28,12 @@ export default function Hero() {
         {/* Headline */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
-          className="font-display font-black leading-[1.0] tracking-tighter text-[#eef4d1]"
+          className="font-display font-black leading-[1.0] tracking-tighter text-[#341631]"
           style={{ fontSize: 'clamp(2.6rem, 6vw, 5.5rem)' }}
         >
           Wear more.
           <br />
-          <span style={{ color: '#e7a3c9' }}>Buy less.</span>
+          <span style={{ color: '#6c0b20' }}>Buy less.</span>
           <br />
           Fix what you
           <br />
@@ -42,7 +42,7 @@ export default function Hero() {
 
         <motion.p
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }}
-          className="mt-6 text-[#eef4d1]/65 font-display text-base sm:text-lg leading-relaxed max-w-lg"
+          className="mt-6 text-[#341631]/70 font-display text-base sm:text-lg leading-relaxed max-w-lg"
         >
           A circular fashion system built around your wardrobe. Shop thoughtfully, reimagine boldly, repair lovingly.
         </motion.p>
@@ -54,13 +54,13 @@ export default function Hero() {
         >
           <Link
             to="/shop"
-            className="inline-flex items-center gap-2.5 bg-[#eef4d1] text-[#0b4722] font-bold text-sm px-7 py-3.5 rounded-xl hover:bg-white transition-all hover:shadow-xl hover:shadow-[#eef4d1]/20 font-display"
+            className="inline-flex items-center gap-2.5 bg-[#341631] text-[#eef4d1] font-bold text-sm px-7 py-3.5 rounded-xl hover:bg-[#341631]/90 transition-all hover:shadow-xl font-display"
           >
             Shop Collection <ArrowRight size={16} />
           </Link>
           <Link
             to="/reimagine"
-            className="inline-flex items-center gap-2.5 border-2 border-[#e7a3c9] text-[#e7a3c9] font-bold text-sm px-7 py-3.5 rounded-xl hover:bg-[#e7a3c9] hover:text-[#341631] transition-all font-display"
+            className="inline-flex items-center gap-2.5 border-2 border-[#6c0b20] text-[#6c0b20] font-bold text-sm px-7 py-3.5 rounded-xl hover:bg-[#6c0b20] hover:text-[#eef4d1] transition-all font-display"
           >
             <Sparkles size={16} /> Reimagine Yours
           </Link>
@@ -73,8 +73,8 @@ export default function Hero() {
         >
           {HERO_STATS.map(s => (
             <div key={s.label}>
-              <p className="text-2xl font-black text-[#eef4d1] font-display">{s.value}</p>
-              <p className="text-[#eef4d1]/45 text-xs font-display mt-0.5 leading-tight">{s.label}</p>
+              <p className="text-2xl font-black text-[#341631] font-display">{s.value}</p>
+              <p className="text-[#341631]/55 text-xs font-display mt-0.5 leading-tight">{s.label}</p>
             </div>
           ))}
         </motion.div>
@@ -107,7 +107,7 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.75 }}
           className="absolute top-10 right-4 sm:right-10 lg:-right-4 bg-[#eef4d1] rounded-2xl px-4 py-3 shadow-xl"
         >
-          <p className="text-[#0b4722] font-black text-sm font-display">✦ 500+ Reimagined</p>
+          <p className="text-[#a8c422] font-black text-sm font-display">✦ 500+ Reimagined</p>
         </motion.div>
       </div>
     </section>

@@ -76,8 +76,8 @@ export default function Register() {
         className="w-full max-w-md"
       >
         <Link to="/" className="flex items-center gap-2.5 mb-10">
-          <div className="w-8 h-8 rounded-lg bg-[#0b4722] flex items-center justify-center">
-            <span className="text-[#eef4d1] font-black text-sm font-display">T</span>
+          <div className="w-8 h-8 rounded-lg bg-[#a8c422] flex items-center justify-center">
+            <span className="text-[#341631] font-black text-sm font-display">T</span>
           </div>
           <span className="text-xl font-black text-[#341631] font-display">Tarajuvva</span>
         </Link>
@@ -85,7 +85,7 @@ export default function Register() {
         <h2 className="text-3xl font-black text-[#341631] font-display mb-2">Create account</h2>
         <p className="text-[#341631]/55 font-body text-sm mb-8">
           Already have an account?{' '}
-          <Link to="/login" className="text-[#0b4722] font-semibold hover:underline">Sign in</Link>
+          <Link to="/login" className="text-[#a8c422] font-semibold hover:underline">Sign in</Link>
         </p>
 
         {/* Google SSO */}
@@ -107,7 +107,7 @@ export default function Register() {
                   type={f.type === 'password' ? (showPw ? 'text' : 'password') : f.type}
                   value={form[f.name]} onChange={onChange} required
                   placeholder={f.placeholder}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-body text-sm outline-none focus:border-[#0b4722] focus:ring-2 focus:ring-[#0b4722]/12"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-body text-sm outline-none focus:border-[#a8c422] focus:ring-2 focus:ring-[#a8c422]/12"
                 />
                 {f.type === 'password' && (
                   <button type="button" onClick={() => setShowPw(p => !p)}

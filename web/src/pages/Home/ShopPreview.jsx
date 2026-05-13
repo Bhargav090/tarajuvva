@@ -15,7 +15,7 @@ export default function ShopPreview() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <SectionHeader
           pill="Shop"
-          pillColor="#0b4722"
+          pillColor="#a8c422"
           title="Clothes that don't sit"
           titleLight="in your wardrobe."
           subtitle="Each piece has a story, a purpose, and multiple ways to wear it."

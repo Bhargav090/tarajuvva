@@ -3,16 +3,19 @@
 // Change here → propagates everywhere
 // ─────────────────────────────────────────────────────────────────────────────
 export const BRAND = {
-  // Primary palette
-  bg:        '#eef4d1',   // sage cream – main background
-  bgCard:    '#ffffff',   // card surface
-  bgAlt:     '#e6edca',   // slightly deeper sage for alt sections
-  green:     '#0b4722',   // forest green – SHOP / primary brand
-  burgundy:  '#6c0b20',   // dark burgundy – REIMAGINE
-  pink:      '#e7a3c9',   // blush pink – accent
+  // Official palette (background → primary → secondary → tertiary → accent row)
+  bg:        '#eef4d1',   // background
+  bgCard:    '#ffffff',
+  bgAlt:     '#e6edca',
+  primary:   '#a8c422',   // lime green – SHOP / primary
+  secondary: '#6c0b20',   // burgundy – REIMAGINE
+  tertiary:  '#e7a3c9',   // blush pink – accent
   red:       '#e34334',   // warm red – REPAIR
-  blue:      '#015395',   // navy blue – DONATE
-  dark:      '#341631',   // dark plum – text / dark sections
+  blue:      '#015395',   // navy – DONATE
+  dark:      '#341631',   // plum – text / dark sections
+  green:     '#a8c422',   // alias → primary
+  burgundy:  '#6c0b20',   // alias → secondary
+  pink:      '#e7a3c9',   // alias → tertiary
   // Text
   text:      '#341631',   // main body text
   textMuted: 'rgba(52,22,49,0.55)',

@@ -76,28 +76,28 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-[#eef4d1] flex">
       {/* Left visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0b4722] flex-col justify-center px-16 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[#a8c422] flex-col justify-center px-16 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 70%, #eef4d1 0%, transparent 60%)' }} />
         <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }}>
           <Link to="/" className="flex items-center gap-3 mb-16">
             <div className="w-10 h-10 rounded-xl bg-[#eef4d1] flex items-center justify-center">
-              <span className="text-[#0b4722] font-black text-lg font-display">T</span>
+              <span className="text-[#a8c422] font-black text-lg font-display">T</span>
             </div>
-            <span className="text-[#eef4d1] font-black text-xl font-display">Tarajuvva</span>
+            <span className="text-[#341631] font-black text-xl font-display">Tarajuvva</span>
           </Link>
-          <h1 className="font-display font-black text-[#eef4d1] leading-tight mb-6" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}>
+          <h1 className="font-display font-black text-[#341631] leading-tight mb-6" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}>
             Your wardrobe,
             <br />
-            <span className="text-[#e7a3c9]">reimagined.</span>
+            <span className="text-[#6c0b20]">reimagined.</span>
           </h1>
-          <p className="text-[#eef4d1]/60 font-body text-lg">
+          <p className="text-[#341631]/70 font-body text-lg">
             Sign in to track your orders, manage reimagine requests, and shop your next favourite piece.
           </p>
           <div className="mt-12 space-y-4">
             {['Track all your orders in one place','Manage reimagine requests easily','Save your address for faster checkout'].map(f => (
               <div key={f} className="flex items-center gap-3">
                 <span className="w-5 h-5 rounded-full bg-[#e7a3c9]/20 border border-[#e7a3c9]/40 flex items-center justify-center text-[#e7a3c9] text-xs font-bold">✓</span>
-                <span className="text-[#eef4d1]/70 text-sm font-body">{f}</span>
+                <span className="text-[#341631]/75 text-sm font-body">{f}</span>
               </div>
             ))}
           </div>
@@ -112,8 +112,8 @@ export default function Login() {
         >
           {/* Mobile logo */}
           <Link to="/" className="flex items-center gap-2.5 mb-10 lg:hidden">
-            <div className="w-8 h-8 rounded-lg bg-[#0b4722] flex items-center justify-center">
-              <span className="text-[#eef4d1] font-black text-sm font-display">T</span>
+            <div className="w-8 h-8 rounded-lg bg-[#a8c422] flex items-center justify-center">
+              <span className="text-[#341631] font-black text-sm font-display">T</span>
             </div>
             <span className="text-xl font-black text-[#341631] font-display">Tarajuvva</span>
           </Link>
@@ -121,7 +121,7 @@ export default function Login() {
           <h2 className="text-3xl font-black text-[#341631] font-display mb-2">Welcome back</h2>
           <p className="text-[#341631]/55 font-body text-sm mb-8">
             Don't have an account?{' '}
-            <Link to="/register" className="text-[#0b4722] font-semibold hover:underline">Sign up free</Link>
+            <Link to="/register" className="text-[#a8c422] font-semibold hover:underline">Sign up free</Link>
           </p>
 
           {/* Google SSO */}
@@ -141,7 +141,7 @@ export default function Login() {
                 <input
                   name="email" type="email" value={form.email} onChange={onChange} required
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-body text-sm outline-none focus:border-[#0b4722] focus:ring-2 focus:ring-[#0b4722]/12"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-body text-sm outline-none focus:border-[#a8c422] focus:ring-2 focus:ring-[#a8c422]/12"
                 />
               </div>
             </div>
@@ -152,7 +152,7 @@ export default function Login() {
                 <input
                   name="password" type={showPw ? 'text' : 'password'} value={form.password} onChange={onChange} required
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-12 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-body text-sm outline-none focus:border-[#0b4722] focus:ring-2 focus:ring-[#0b4722]/12"
+                  className="w-full pl-10 pr-12 py-3 bg-white border border-[#341631]/12 rounded-xl text-[#341631] placeholder:text-[#341631]/35 font-body text-sm outline-none focus:border-[#a8c422] focus:ring-2 focus:ring-[#a8c422]/12"
                 />
                 <button type="button" onClick={() => setShowPw(p => !p)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-[#341631]/40 hover:text-[#341631]">

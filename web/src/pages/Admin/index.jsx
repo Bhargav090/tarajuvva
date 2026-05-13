@@ -32,7 +32,7 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
         <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: color + '18' }}>
           <Icon size={20} style={{ color }} />
         </div>
-        {sub && <span className="text-xs text-[#0b4722] font-semibold font-display">{sub}</span>}
+        {sub && <span className="text-xs text-[#a8c422] font-semibold font-display">{sub}</span>}
       </div>
       <p className="text-2xl font-black text-[#341631] font-display">{value ?? '—'}</p>
       <p className="text-xs text-[#341631]/45 font-body mt-1">{label}</p>
@@ -148,8 +148,8 @@ export default function Admin() {
           >
             <div className="px-6 py-6 border-b border-[#eef4d1]/10">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#0b4722] flex items-center justify-center">
-                  <span className="text-[#eef4d1] font-black text-sm font-display">T</span>
+                <div className="w-9 h-9 rounded-lg bg-[#a8c422] flex items-center justify-center">
+                  <span className="text-[#341631] font-black text-sm font-display">T</span>
                 </div>
                 <div>
                   <p className="text-[#eef4d1] font-black text-sm font-display">Tarajuvva</p>
@@ -230,7 +230,7 @@ function OverviewTab() {
     <div>
       <h1 className="text-2xl font-black text-[#341631] font-display mb-8">Overview</h1>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#0b4722" sub={`${stats?.orders?.pending ?? 0} pending`} />
+        <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#a8c422" sub={`${stats?.orders?.pending ?? 0} pending`} />
         <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#6c0b20" />
         <StatCard icon={Scissors} label="Reimagine Requests" value={stats?.reimagine?.total ?? 0} color="#e34334" sub={`${stats?.reimagine?.pending ?? 0} pending`} />
         <StatCard icon={Package} label="Products" value={stats?.products ?? 0} color="#015395" />
@@ -259,7 +259,7 @@ function OrdersTab() {
                 <p className="text-xs text-[#341631]/50 font-body">{o.user_phone}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-black text-[#0b4722] font-display">₹{o.total.toLocaleString('en-IN')}</span>
+                <span className="font-black text-[#a8c422] font-display">₹{o.total.toLocaleString('en-IN')}</span>
                 <StatusSelect value={o.status} options={ORDER_STATUSES} onUpdate={s => updateStatus(o.id, s)} />
               </div>
             </div>

@@ -35,8 +35,8 @@ export default function Checkout() {
           initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
           className="text-center max-w-md"
         >
-          <div className="w-20 h-20 bg-[#0b4722]/12 rounded-3xl flex items-center justify-center mx-auto mb-6">
-            <CheckCircle size={40} className="text-[#0b4722]" />
+          <div className="w-20 h-20 bg-[#a8c422]/12 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={40} className="text-[#a8c422]" />
           </div>
           <h2 className="text-3xl font-black text-[#341631] font-display mb-3">Order Placed!</h2>
           <p className="text-[#341631]/60 font-body text-sm leading-relaxed">
@@ -54,7 +54,7 @@ export default function Checkout() {
   return (
     <div className="min-h-screen bg-[#eef4d1] pt-2 sm:pt-4">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#341631]/55 hover:text-[#0b4722] font-display mb-8 transition-colors">
+        <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#341631]/55 hover:text-[#a8c422] font-display mb-8 transition-colors">
           <ArrowLeft size={15} /> Back to Shop
         </Link>
         <h1 className="text-3xl font-black text-[#341631] font-display mb-8">Checkout</h1>
@@ -91,7 +91,7 @@ export default function Checkout() {
                     <p className="text-sm font-semibold text-[#341631] font-display truncate">{item.name}</p>
                     <p className="text-xs text-[#341631]/45 font-body">Qty {item.qty}</p>
                   </div>
-                  <span className="text-sm font-bold text-[#0b4722] font-display">₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
+                  <span className="text-sm font-bold text-[#a8c422] font-display">₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
                 </div>
               ))}
             </div>
@@ -100,7 +100,7 @@ export default function Checkout() {
                 <span>Subtotal</span><span>₹{total.toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between text-sm text-[#341631]/60 font-body">
-                <span>Shipping</span><span className="text-[#0b4722] font-semibold">Free</span>
+                <span>Shipping</span><span className="text-[#a8c422] font-semibold">Free</span>
               </div>
               <div className="flex justify-between text-lg font-black text-[#341631] font-display pt-2 border-t border-[#341631]/8">
                 <span>Total</span><span>₹{total.toLocaleString('en-IN')}</span>

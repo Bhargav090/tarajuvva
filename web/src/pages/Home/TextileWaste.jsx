@@ -20,7 +20,7 @@ function FallingGarment({ emoji, index }) {
 }
 
 const CTAS = [
-  { label: 'Buy Smarter',  to: '/shop',      icon: ShoppingBag, color: '#0b4722' },
+  { label: 'Buy Smarter',  to: '/shop',      icon: ShoppingBag, color: '#a8c422' },
   { label: 'Reimagine',    to: '/reimagine', icon: Sparkles,    color: '#6c0b20' },
   { label: 'Repair',       to: '/repair',    icon: Wrench,      color: '#e34334' },
   { label: 'Donate',       to: '/donate',    icon: Heart,       color: '#015395' },

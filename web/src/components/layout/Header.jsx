@@ -99,13 +99,12 @@ export default function Header() {
                     onClick={() => setUserMenu(p => !p)}
                     className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[#341631]/6 transition-colors"
                   >
-                    {user.avatar ? (
-                      <UserAvatar src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-[#0b4722] flex items-center justify-center text-[#eef4d1] text-xs font-bold font-display">
-                        {user.name?.[0]?.toUpperCase()}
-                      </div>
-                    )}
+                    <UserAvatar
+                      src={user.avatar}
+                      name={user.name}
+                      className="w-7 h-7 rounded-full"
+                      fallbackClassName="bg-[#0b4722] text-[#eef4d1] text-xs font-bold"
+                    />
                     <ChevronDown size={14} className="text-[#341631]/50" />
                   </button>
                   <AnimatePresence>
@@ -200,13 +199,12 @@ export default function Header() {
                   {user ? (
                     <>
                       <div className="flex items-center gap-3 px-4 py-3 mb-2">
-                        {user.avatar ? (
-                          <UserAvatar src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-[#0b4722] flex items-center justify-center text-[#eef4d1] font-bold font-display">
-                            {user.name?.[0]?.toUpperCase()}
-                          </div>
-                        )}
+                        <UserAvatar
+                          src={user.avatar}
+                          name={user.name}
+                          className="w-9 h-9 rounded-full"
+                          fallbackClassName="bg-[#0b4722] text-[#eef4d1] font-bold text-sm"
+                        />
                         <div>
                           <p className="font-bold text-sm text-[#341631] font-display">{user.name}</p>
                           <p className="text-xs text-[#341631]/50 font-body">{user.email}</p>

@@ -18,14 +18,14 @@ export default function DropZone({ files, onAdd, onRemove, maxFiles = 5 }) {
         {...getRootProps()}
         className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 ${
           isDragActive
-            ? 'border-[#0b4722] bg-[#0b4722]/5'
-            : 'border-[#341631]/20 hover:border-[#0b4722]/50 hover:bg-[#0b4722]/3'
+            ? 'border-[#a8c422] bg-[#a8c422]/5'
+            : 'border-[#341631]/20 hover:border-[#a8c422]/50 hover:bg-[#a8c422]/3'
         }`}
       >
         <input {...getInputProps()} />
         <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#0b4722]/10 flex items-center justify-center">
-            <Upload size={22} className="text-[#0b4722]" />
+          <div className="w-12 h-12 rounded-xl bg-[#a8c422]/10 flex items-center justify-center">
+            <Upload size={22} className="text-[#a8c422]" />
           </div>
           <div>
             <p className="font-semibold text-[#341631] font-display text-sm">

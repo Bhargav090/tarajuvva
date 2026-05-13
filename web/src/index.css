@@ -2,9 +2,9 @@
 
 /* ─── Tailwind v4 custom theme tokens ──────────────────────────────────────── */
 @theme {
-  --font-sans:    'Roc Grotesk Variable', 'Roc Grotesk', Outfit, system-ui, sans-serif;
-  --font-body:    'Poppins', system-ui, sans-serif;
-  --font-display: 'Roc Grotesk Variable', 'Roc Grotesk', Outfit, system-ui, sans-serif;
+  --font-sans:    'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
+  --font-body:    'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
+  --font-display: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
 
   /* Brand color tokens — usable as bg-brand-green, text-brand-dark, etc. */
   --color-brand-bg:       #eef4d1;
@@ -27,15 +27,14 @@
   body {
     background-color: #eef4d1;
     color: #341631;
-    /* Primary type (Roc stack); use class `font-body` for Poppins secondary */
-    font-family: 'Roc Grotesk Variable', 'Roc Grotesk', Outfit, system-ui, sans-serif;
+    font-family: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Roc Grotesk Variable', 'Roc Grotesk', Outfit, system-ui, sans-serif;
+    font-family: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
     color: #341631;
   }
 
@@ -48,12 +47,15 @@
   ::-webkit-scrollbar-track { background: #eef4d1; }
   ::-webkit-scrollbar-thumb { background: #0b4722; border-radius: 2px; }
 
-  input, textarea, select { font-family: 'Poppins', system-ui, sans-serif; }
+  input, textarea, select { font-family: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif; }
 }
 
 /* ─── Utilities ──────────────────────────────────────────────────────────────  */
 @layer utilities {
-  /* Text gradients */
+  /* Glyphs outside Roc demo range (₹, emoji, etc.) — Outfit/Poppins only */
+  .font-fallback {
+    font-family: Outfit, Poppins, system-ui, sans-serif;
+  }
   .text-gradient-green {
     background: linear-gradient(135deg, #0b4722, #1a7a3f);
     -webkit-background-clip: text;

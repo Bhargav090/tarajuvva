@@ -22,7 +22,7 @@ export default function Philosophy() {
           style={{ fontSize: 'clamp(1.8rem, 5vw, 4rem)' }}
         >
           "Most wardrobes don't have a
-          <span style={{ color: '#0b4722' }}> clothing problem.</span>
+          <span style={{ color: '#a8c422' }}> clothing problem.</span>
           <br />
           They have a
           <span style={{ color: '#6c0b20' }}> usage problem.</span>"
@@ -51,7 +51,7 @@ export default function Philosophy() {
             { v: '60%', l: 'never worn again' },
           ].map(s => (
             <div key={s.l}>
-              <p className="text-2xl sm:text-3xl font-black text-[#0b4722] font-display">{s.v}</p>
+              <p className="text-2xl sm:text-3xl font-black text-[#a8c422] font-display">{s.v}</p>
               <p className="text-xs text-[#341631]/45 font-display mt-1 leading-tight">{s.l}</p>
             </div>
           ))}

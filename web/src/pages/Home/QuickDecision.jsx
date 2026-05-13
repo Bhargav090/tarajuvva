@@ -12,7 +12,7 @@ export default function QuickDecision() {
         {/* Header */}
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-4"
-            style={{ background: '#0b472218', color: '#0b4722', border: '1px solid #0b472225' }}>
+            style={{ background: '#a8c42218', color: '#a8c422', border: '1px solid #a8c42225' }}>
             Quick Start
           </span>
           <h2 className="font-display font-black text-4xl sm:text-5xl text-[#341631] leading-tight">

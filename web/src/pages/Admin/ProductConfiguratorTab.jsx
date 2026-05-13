@@ -233,7 +233,7 @@ export default function ProductConfiguratorTab() {
                     <X size={14} />
                   </button>
                   {i === 0 && (
-                    <span className="absolute bottom-0 inset-x-0 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-[#eef4d1] bg-[#0b4722]/90 font-display">
+                    <span className="absolute bottom-0 inset-x-0 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-[#341631] bg-[#a8c422]/90 font-display">
                       Cover
                     </span>
                   )}
@@ -253,7 +253,7 @@ export default function ProductConfiguratorTab() {
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
         <label className="flex items-center gap-3 cursor-pointer select-none">
-          <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#0b4722] focus:ring-[#0b4722]" />
+          <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#a8c422] focus:ring-[#a8c422]" />
           <span className="text-sm font-semibold text-[#341631] font-display">Featured product</span>
         </label>
         <div className="flex flex-wrap gap-3 pt-2">
@@ -290,7 +290,7 @@ export default function ProductConfiguratorTab() {
                   to={`/shop/${p.id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#0b4722] font-display hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#a8c422] font-display hover:underline"
                 >
                   View <ExternalLink size={12} />
                 </Link>

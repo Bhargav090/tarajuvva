@@ -91,13 +91,12 @@ export default function Profile() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="flex items-center gap-5 mb-10 p-6 bg-[#0b4722] rounded-3xl">
-          {user.avatar ? (
-            <UserAvatar src={user.avatar} alt={user.name} className="w-16 h-16 rounded-2xl object-cover border-2 border-[#eef4d1]/20" />
-          ) : (
-            <div className="w-16 h-16 rounded-2xl bg-[#eef4d1]/15 flex items-center justify-center text-2xl font-black text-[#eef4d1] font-display">
-              {user.name?.[0]?.toUpperCase()}
-            </div>
-          )}
+          <UserAvatar
+            src={user.avatar}
+            name={user.name}
+            className="w-16 h-16 rounded-2xl border-2 border-[#eef4d1]/20"
+            fallbackClassName="bg-[#eef4d1]/15 text-2xl font-black text-[#eef4d1]"
+          />
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl font-black text-[#eef4d1] font-display">{user.name}</h1>
             <p className="text-[#eef4d1]/55 text-sm font-body">{user.email}</p>

@@ -6,7 +6,7 @@ import { ShoppingBag, Sparkles, Wrench, Heart, ArrowRight } from 'lucide-react';
 const NODES = [
   {
     icon: ShoppingBag, emoji: '🛍', label: 'I want something new',
-    action: 'Shop', to: '/shop', color: '#0b4722', bg: '#0b472215',
+    action: 'Shop', to: '/shop', color: '#a8c422', bg: '#a8c42215',
   },
   {
     icon: Sparkles, emoji: '✨', label: "I'm bored of my clothes",
@@ -77,13 +77,13 @@ export default function LoopSection() {
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-5 bg-[#0b4722]/10 text-[#0b4722] border border-[#0b4722]/20">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-5 bg-[#a8c422]/10 text-[#a8c422] border border-[#a8c422]/20">
               The Loop
             </span>
             <h2 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-[#341631] leading-tight">
               Your clothes.
               <br />
-              <span className="text-[#0b4722]">Every stage.</span>
+              <span className="text-[#a8c422]">Every stage.</span>
             </h2>
             <p className="mt-5 text-[#341631]/55 font-display text-base sm:text-lg max-w-lg mx-auto">
               What do you want to do with your clothes today?

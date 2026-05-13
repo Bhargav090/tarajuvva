@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from 're
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { FONT_STACK } from './utils/fontStack';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Ticker from './components/layout/Ticker';
@@ -70,7 +71,7 @@ export default function App() {
               style: {
                 background: '#341631',
                 color: '#eef4d1',
-                fontFamily: 'Poppins, sans-serif',
+                fontFamily: FONT_STACK,
                 fontSize: 13,
                 border: '1px solid rgba(238,244,209,0.12)',
                 borderRadius: 12,

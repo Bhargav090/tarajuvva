@@ -10,14 +10,14 @@ export default function About() {
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 pb-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-6 bg-[#0b4722]/10 text-[#0b4722] border border-[#0b4722]/20">
+          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-6 bg-[#a8c422]/10 text-[#a8c422] border border-[#a8c422]/20">
             Our Story
           </span>
           <h1 className="font-display font-black text-[#341631] leading-tight mb-6"
             style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)' }}>
             Why Tarajuvva
             <br />
-            <span className="text-[#0b4722]">exists.</span>
+            <span className="text-[#a8c422]">exists.</span>
           </h1>
           <p className="text-[#341631]/65 font-body text-lg sm:text-xl leading-relaxed max-w-2xl">
             We started Tarajuvva because we were tired of the same conversation: "I have nothing to wear" from wardrobes

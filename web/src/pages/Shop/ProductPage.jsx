@@ -24,7 +24,7 @@ export default function ProductPage() {
   if (!product) return (
     <div className="min-h-screen bg-[#eef4d1] flex flex-col items-center justify-center">
       <p className="text-[#341631] font-display font-bold text-xl mb-4">Product not found.</p>
-      <Link to="/shop" className="text-[#0b4722] font-semibold hover:underline font-display">← Back to Shop</Link>
+      <Link to="/shop" className="text-[#a8c422] font-semibold hover:underline font-display">← Back to Shop</Link>
     </div>
   );
 
@@ -43,7 +43,7 @@ export default function ProductPage() {
     <div className="min-h-screen bg-[#eef4d1] pt-2 sm:pt-4">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumb */}
-        <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#341631]/55 hover:text-[#0b4722] font-display mb-8 transition-colors">
+        <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#341631]/55 hover:text-[#a8c422] font-display mb-8 transition-colors">
           <ArrowLeft size={15} /> Back to Shop
         </Link>
 
@@ -64,7 +64,7 @@ export default function ProductPage() {
                 {product.images.map((img, i) => (
                   <button key={i} onClick={() => setActiveImg(i)}
                     className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
-                      activeImg === i ? 'border-[#0b4722]' : 'border-transparent'
+                      activeImg === i ? 'border-[#a8c422]' : 'border-transparent'
                     }`}>
                     <img src={img} alt="" className="w-full h-full object-cover" />
                   </button>
@@ -75,12 +75,12 @@ export default function ProductPage() {
 
           {/* Details */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-            <span className="text-xs font-bold text-[#0b4722] uppercase tracking-widest font-display">{product.category}</span>
+            <span className="text-xs font-bold text-[#a8c422] uppercase tracking-widest font-display">{product.category}</span>
             <h1 className="text-3xl sm:text-4xl font-black text-[#341631] font-display mt-2 mb-4 leading-tight">{product.name}</h1>
 
             {/* Price */}
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-3xl font-black text-[#0b4722] font-display">₹{product.price.toLocaleString('en-IN')}</span>
+              <span className="text-3xl font-black text-[#a8c422] font-display">₹{product.price.toLocaleString('en-IN')}</span>
               {product.original_price && (
                 <span className="text-lg text-[#341631]/35 line-through font-body">₹{product.original_price.toLocaleString('en-IN')}</span>
               )}
@@ -98,12 +98,12 @@ export default function ProductPage() {
             {product.ways_to_wear?.length > 0 && (
               <div className="bg-white rounded-2xl p-5 mb-8 border border-[#341631]/8">
                 <h3 className="text-sm font-bold text-[#341631] font-display mb-4 flex items-center gap-2">
-                  <Sparkles size={15} className="text-[#0b4722]" /> {product.ways_to_wear.length} Ways to Wear
+                  <Sparkles size={15} className="text-[#a8c422]" /> {product.ways_to_wear.length} Ways to Wear
                 </h3>
                 <ul className="space-y-2.5">
                   {product.ways_to_wear.map((w, i) => (
                     <li key={i} className="flex items-start gap-3 text-sm text-[#341631]/70 font-body">
-                      <CheckCircle size={14} className="text-[#0b4722] flex-shrink-0 mt-0.5" />
+                      <CheckCircle size={14} className="text-[#a8c422] flex-shrink-0 mt-0.5" />
                       {w}
                     </li>
                   ))}
@@ -115,7 +115,7 @@ export default function ProductPage() {
             {product.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-8">
                 {product.tags.map(t => (
-                  <span key={t} className="flex items-center gap-1 bg-[#0b4722]/8 text-[#0b4722] text-xs font-semibold rounded-full px-3 py-1 font-display">
+                  <span key={t} className="flex items-center gap-1 bg-[#a8c422]/8 text-[#a8c422] text-xs font-semibold rounded-full px-3 py-1 font-display">
                     <Tag size={10} /> {t}
                   </span>
                 ))}

@@ -37,7 +37,7 @@ export default function TextileWaste() {
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="text-[#eef4d1]/50 font-display text-base sm:text-lg mb-6"
+          className="text-[#eef4d1]/80 font-display text-base sm:text-lg mb-6"
         >
           Every year, India discards…
         </motion.p>
@@ -66,7 +66,7 @@ export default function TextileWaste() {
           >
             7M
           </p>
-          <p className="text-[#e2a3c9] font-bold text-xl sm:text-2xl font-display -mt-2 mb-3">
+          <p className="text-[#f0bdd8] font-bold text-xl sm:text-2xl font-display -mt-2 mb-3">
             tonnes of textile waste.
           </p>
         </motion.div>
@@ -76,7 +76,7 @@ export default function TextileWaste() {
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ duration: 0.6, delay: 1.4 }}
-          className="text-[#eef4d1]/60 font-display text-base sm:text-lg mb-12"
+          className="text-[#eef4d1]/90 font-display text-base sm:text-lg mb-12 max-w-xl mx-auto"
         >
           Most of it didn't need to be thrown away.
         </motion.p>
@@ -93,13 +93,15 @@ export default function TextileWaste() {
             return (
               <Link
                 key={c.to} to={c.to}
-                className="group flex flex-col items-center gap-2.5 p-5 rounded-2xl border border-[#eef4d1]/10 hover:border-opacity-30 transition-all duration-300 hover:-translate-y-1"
-                style={{ background: c.color + '20', borderColor: c.color + '30' }}
+                className="group flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl border border-[#eef4d1]/20 bg-[#eef4d1]/10 hover:bg-[#eef4d1]/14 hover:border-[#eef4d1]/35 transition-all duration-300 hover:-translate-y-1 shadow-lg shadow-black/25"
               >
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: c.color + '30' }}>
-                  <Icon size={20} style={{ color: c.color }} />
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md ring-2 ring-[#eef4d1]/20"
+                  style={{ background: c.color }}
+                >
+                  <Icon size={22} className="text-[#eef4d1]" strokeWidth={2.25} />
                 </div>
-                <span className="font-bold text-sm font-display" style={{ color: c.color }}>{c.label}</span>
+                <span className="font-bold text-sm sm:text-base font-display text-[#eef4d1]">{c.label}</span>
               </Link>
             );
           })}

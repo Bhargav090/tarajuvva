@@ -11,6 +11,10 @@ import { SHOP_CATEGORIES } from '../../utils/constants';
 
 const CATEGORIES = SHOP_CATEGORIES.filter((c) => c !== 'All');
 
+/** ~6MB file before base64 expansion keeps payload reasonable for JSON + LONGTEXT. */
+const MAX_FILE_BYTES = 6 * 1024 * 1024;
+const MAX_IMAGES = 12;
+
 const emptyForm = () => ({
   name: '',
   price: '',
@@ -37,11 +41,20 @@ function tagsFromRaw(raw) {
     .filter(Boolean);
 }
 
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || ''));
+    r.onerror = () => reject(new Error('Could not read file'));
+    r.readAsDataURL(file);
+  });
+}
+
 export default function ProductConfiguratorTab() {
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
   const fileInputRef = useRef(null);
   const [form, setForm] = useState(emptyForm);
-  const [imageUrls, setImageUrls] = useState([]);
+  const [imageDataUrls, setImageDataUrls] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [products, setProducts] = useState([]);
@@ -73,18 +86,40 @@ export default function ProductConfiguratorTab() {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
     if (files.length === 0) return;
+
+    const remaining = MAX_IMAGES - imageDataUrls.length;
+    if (remaining <= 0) {
+      toast.error(`Maximum ${MAX_IMAGES} images`);
+      return;
+    }
+
+    const toRead = files.slice(0, remaining);
+    for (const f of toRead) {
+      if (!/^image\/(jpeg|png|gif|webp)$/i.test(f.type)) {
+        toast.error(`${f.name}: use JPEG, PNG, GIF, or WebP`);
+        return;
+      }
+      if (f.size > MAX_FILE_BYTES) {
+        toast.error(`${f.name} is too large (max 6MB each)`);
+        return;
+      }
+    }
+
     setUploadingImages(true);
     try {
-      const fd = new FormData();
-      files.forEach((f) => fd.append('images', f));
-      const { data } = await api.post('/shop/products/upload-images', fd, {
-        headers: { ...authHeader },
-      });
-      const urls = data.urls || [];
-      if (urls.length) setImageUrls((prev) => [...prev, ...urls]);
-      toast.success(urls.length ? `${urls.length} image(s) uploaded` : 'No files saved');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed');
+      const urls = [];
+      for (const f of toRead) {
+        const dataUrl = await readFileAsDataUrl(f);
+        if (!/^data:image\/(png|jpeg|jpg|gif|webp);base64,/i.test(dataUrl)) {
+          toast.error(`${f.name}: unsupported image type`);
+          return;
+        }
+        urls.push(dataUrl);
+      }
+      setImageDataUrls((prev) => [...prev, ...urls]);
+      toast.success(`${urls.length} image(s) added as base64`);
+    } catch {
+      toast.error('Could not read one or more files');
     } finally {
       setUploadingImages(false);
     }
@@ -92,7 +127,7 @@ export default function ProductConfiguratorTab() {
 
   const resetAll = () => {
     setForm(emptyForm());
-    setImageUrls([]);
+    setImageDataUrls([]);
   };
 
   const onSubmit = async (e) => {
@@ -106,7 +141,7 @@ export default function ProductConfiguratorTab() {
     if (!form.name.trim()) return toast.error('Product name is required');
     if (Number.isNaN(price) || price < 0) return toast.error('Enter a valid price');
     if (original != null && (Number.isNaN(original) || original < 0)) return toast.error('Original price must be a valid number');
-    if (imageUrls.length === 0) return toast.error('Upload at least one product image');
+    if (imageDataUrls.length === 0) return toast.error('Add at least one image (uploaded as base64)');
 
     setSubmitting(true);
     try {
@@ -119,7 +154,7 @@ export default function ProductConfiguratorTab() {
           category: form.category.trim(),
           description: form.description.trim() || null,
           ways_to_wear,
-          images: imageUrls,
+          images: imageDataUrls,
           tags,
           stock: stock || 100,
           featured: !!form.featured,
@@ -151,13 +186,13 @@ export default function ProductConfiguratorTab() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#241621] font-display mb-2">Product configurator</h1>
-      <p className="text-sm text-[#241621]/55 font-body mb-8 max-w-2xl">
+      <h1 className="text-2xl font-black text-[#341631] font-display mb-2">Product configurator</h1>
+      <p className="text-sm text-[#341631]/55 font-body mb-8 max-w-2xl">
         Fill in the fields below and publish to the <code className="text-xs bg-[#eef4d1] px-1 rounded">products</code> table.
-        Upload images from your device (stored under <code className="text-xs bg-[#eef4d1] px-1 rounded">/uploads</code>). Ways to wear: one line each. Tags: comma-separated.
+        Images are read in the browser and sent as <strong>base64 data URLs</strong> (<code className="text-xs">data:image/…;base64,…</code>) in the JSON payload, then stored in the database. Legacy catalog items that still use https URLs continue to work in the shop.
       </p>
 
-      <form onSubmit={onSubmit} className="bg-white rounded-2xl p-6 sm:p-8 border border-[#241621]/8 mb-10 space-y-5 max-w-3xl">
+      <form onSubmit={onSubmit} className="bg-white rounded-2xl p-6 sm:p-8 border border-[#341631]/8 mb-10 space-y-5 max-w-3xl">
         <div className="grid sm:grid-cols-2 gap-5">
           <Input label="Product name" name="name" value={form.name} onChange={onChange} required placeholder="e.g. Indigo Block Print Kurta" />
           <Select label="Category" name="category" value={form.category} onChange={onChange} required>
@@ -192,7 +227,7 @@ export default function ProductConfiguratorTab() {
         />
 
         <div>
-          <span className="block text-sm font-semibold text-[#241621] mb-1.5 font-display">
+          <span className="block text-sm font-semibold text-[#341631] mb-1.5 font-display">
             Product images <span className="text-[#e34334]">*</span>
           </span>
           <input
@@ -210,30 +245,35 @@ export default function ProductConfiguratorTab() {
               size="sm"
               icon={ImagePlus}
               loading={uploadingImages}
+              disabled={imageDataUrls.length >= MAX_IMAGES}
               onClick={() => fileInputRef.current?.click()}
             >
-              Upload images
+              Add images
             </Button>
-            {imageUrls.length > 0 && (
-              <span className="text-xs text-[#241621]/50 font-body">{imageUrls.length} file(s) — first is the shop thumbnail</span>
+            {imageDataUrls.length > 0 && (
+              <span className="text-xs text-[#341631]/50 font-body">
+                {imageDataUrls.length} / {MAX_IMAGES} — first is the shop thumbnail
+              </span>
             )}
           </div>
-          <p className="text-xs text-[#241621]/45 font-body mt-2">JPEG, PNG, WebP, or GIF · up to 10MB each · up to 12 images per batch.</p>
-          {imageUrls.length > 0 && (
+          <p className="text-xs text-[#341631]/45 font-body mt-2">
+            JPEG, PNG, WebP, or GIF · up to 6MB per file · stored as base64 in MySQL (large payloads may take a few seconds).
+          </p>
+          {imageDataUrls.length > 0 && (
             <ul className="mt-4 flex flex-wrap gap-3">
-              {imageUrls.map((url, i) => (
-                <li key={`${url}-${i}`} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#241621]/12 bg-[#eef4d1]/50">
+              {imageDataUrls.map((url, i) => (
+                <li key={`${i}-${url.slice(0, 48)}`} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#341631]/12 bg-[#eef4d1]/50">
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"
-                    onClick={() => setImageUrls((prev) => prev.filter((_, j) => j !== i))}
-                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-[#241621]/85 text-[#eef4d1] flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
+                    onClick={() => setImageDataUrls((prev) => prev.filter((_, j) => j !== i))}
+                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-[#341631]/85 text-[#eef4d1] flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
                     aria-label={`Remove image ${i + 1}`}
                   >
                     <X size={14} />
                   </button>
                   {i === 0 && (
-                    <span className="absolute bottom-0 inset-x-0 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-[#241621] bg-[#a8c74a]/90 font-display">
+                    <span className="absolute bottom-0 inset-x-0 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-[#eef4d1] bg-[#0b4722]/90 font-display">
                       Cover
                     </span>
                   )}
@@ -253,8 +293,8 @@ export default function ProductConfiguratorTab() {
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
         <label className="flex items-center gap-3 cursor-pointer select-none">
-          <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#241621]/30 text-[#a8c74a] focus:ring-[#a8c74a]" />
-          <span className="text-sm font-semibold text-[#241621] font-display">Featured product</span>
+          <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#0b4722] focus:ring-[#0b4722]" />
+          <span className="text-sm font-semibold text-[#341631] font-display">Featured product</span>
         </label>
         <div className="flex flex-wrap gap-3 pt-2">
           <Button type="submit" variant="primary" loading={submitting}>
@@ -266,20 +306,20 @@ export default function ProductConfiguratorTab() {
         </div>
       </form>
 
-      <h2 className="text-lg font-black text-[#241621] font-display mb-4">Current catalog ({products.length})</h2>
+      <h2 className="text-lg font-black text-[#341631] font-display mb-4">Current catalog ({products.length})</h2>
       {loadingList ? (
         <div className="flex justify-center py-12">
           <Spinner size={32} />
         </div>
       ) : products.length === 0 ? (
-        <p className="text-[#241621]/45 font-body text-sm">No products yet.</p>
+        <p className="text-[#341631]/45 font-body text-sm">No products yet.</p>
       ) : (
         <div className="space-y-2 max-w-3xl">
           {products.map((p) => (
-            <div key={p.id} className="bg-white rounded-xl px-4 py-3 border border-[#241621]/8 flex flex-wrap items-center gap-3 justify-between">
+            <div key={p.id} className="bg-white rounded-xl px-4 py-3 border border-[#341631]/8 flex flex-wrap items-center gap-3 justify-between">
               <div className="min-w-0">
-                <p className="font-semibold text-[#241621] font-display text-sm truncate">{p.name}</p>
-                <p className="text-xs text-[#241621]/45 font-body">
+                <p className="font-semibold text-[#341631] font-display text-sm truncate">{p.name}</p>
+                <p className="text-xs text-[#341631]/45 font-body">
                   {p.category} · ₹{Number(p.price).toLocaleString('en-IN')}
                   {p.stock != null && ` · Stock ${p.stock}`}
                   {p.featured ? ' · Featured' : ''}
@@ -290,7 +330,7 @@ export default function ProductConfiguratorTab() {
                   to={`/shop/${p.id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#a8c74a] font-display hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#0b4722] font-display hover:underline"
                 >
                   View <ExternalLink size={12} />
                 </Link>

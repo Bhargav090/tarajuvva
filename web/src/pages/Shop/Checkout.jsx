@@ -4,6 +4,7 @@ import { ArrowLeft, ShoppingBag, CheckCircle } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useOrderSubmit } from '../../hooks/useOrderSubmit';
+import { productHeroImage } from '../../utils/productImage';
 import { Input, Textarea } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
 
@@ -85,7 +86,7 @@ export default function Checkout() {
             <div className="space-y-3 mb-5">
               {items.map(item => (
                 <div key={item.id} className="flex gap-3 items-center">
-                  <img src={item.images?.[0]} alt={item.name}
+                  <img src={productHeroImage(item.images)} alt={item.name}
                     className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#241621] font-display truncate">{item.name}</p>

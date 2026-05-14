@@ -2,11 +2,12 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Tag } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { productHeroImage } from '../../utils/productImage';
 import Button from './Button';
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
-  const img = product.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600&q=80';
+  const img = productHeroImage(product.images);
   const discount = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;

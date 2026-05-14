@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingBag, ArrowLeft, Tag, CheckCircle, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../context/CartContext';
+import { PRODUCT_IMAGE_PLACEHOLDER } from '../../utils/productImage';
 import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
 
@@ -14,6 +15,10 @@ export default function ProductPage() {
   const { addItem } = useCart();
   const [activeImg, setActiveImg] = useState(0);
   const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    setActiveImg(0);
+  }, [product?.id]);
 
   if (loading) return (
     <div className="min-h-screen bg-[#eef4d1] flex items-center justify-center">
@@ -39,6 +44,11 @@ export default function ProductPage() {
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
 
+  const gallery =
+    Array.isArray(product.images) && product.images.length > 0
+      ? product.images
+      : [PRODUCT_IMAGE_PLACEHOLDER];
+
   return (
     <div className="min-h-screen bg-[#eef4d1] pt-2 sm:pt-4">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -51,7 +61,7 @@ export default function ProductPage() {
           {/* Images */}
           <div>
             <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-white mb-3 relative">
-              <img src={product.images[activeImg]} alt={product.name}
+              <img src={gallery[activeImg]} alt={product.name}
                 className="w-full h-full object-cover" />
               {discount && (
                 <span className="absolute top-4 left-4 bg-[#e34334] text-white text-sm font-black rounded-full px-3 py-1 font-display">
@@ -59,9 +69,9 @@ export default function ProductPage() {
                 </span>
               )}
             </div>
-            {product.images.length > 1 && (
+            {gallery.length > 1 && (
               <div className="flex gap-3">
-                {product.images.map((img, i) => (
+                {gallery.map((img, i) => (
                   <button key={i} onClick={() => setActiveImg(i)}
                     className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
                       activeImg === i ? 'border-[#a8c74a]' : 'border-transparent'

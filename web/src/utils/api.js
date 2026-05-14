@@ -2,7 +2,8 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
-  timeout: 15000,
+  // Large product payloads (base64 images) can exceed default timeouts.
+  timeout: 120000,
   headers: { 'Content-Type': 'application/json' },
 });
 

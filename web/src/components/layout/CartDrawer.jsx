@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, ShoppingBag, Plus, Minus, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { productHeroImage } from '../../utils/productImage';
 import Button from '../ui/Button';
 
 export default function CartDrawer() {
@@ -53,7 +54,7 @@ export default function CartDrawer() {
                 items.map(item => (
                   <div key={item.id} className="flex gap-4 p-4 bg-[#eef4d1]/6 rounded-2xl border border-[#eef4d1]/8">
                     <img
-                      src={item.images?.[0] || 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=100&q=80'}
+                      src={productHeroImage(item.images)}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded-xl flex-shrink-0"
                     />

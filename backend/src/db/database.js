@@ -120,7 +120,7 @@ async function initializeDatabase() {
       category VARCHAR(128) NOT NULL,
       description TEXT,
       ways_to_wear TEXT,
-      images TEXT NOT NULL,
+      images LONGTEXT NOT NULL,
       tags TEXT,
       stock INT DEFAULT 100,
       featured TINYINT(1) DEFAULT 0,
@@ -193,6 +193,15 @@ async function initializeDatabase() {
   `);
 
   await ensureDefaultAdmin();
+
+  // Allow large base64 data URLs in product images (existing DBs may still have TEXT).
+  try {
+    await pool.execute('ALTER TABLE products MODIFY COLUMN images LONGTEXT NOT NULL');
+  } catch (e) {
+    if (e.code !== 'ER_BAD_FIELD_ERROR' && e.errno !== 1054) {
+      console.warn('[db] products.images column alter skipped:', e.message);
+    }
+  }
 
   const row = await get('SELECT COUNT(*) AS count FROM products');
   const productCount = Number(row.count);

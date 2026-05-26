@@ -1,116 +1,113 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { ShoppingBag, Sparkles, Wrench, Heart, ArrowRight } from 'lucide-react';
-
-const NODES = [
-  {
-    icon: ShoppingBag, emoji: '🛍', label: 'I want something new',
-    action: 'Shop', to: '/shop', color: '#a8c74a', bg: '#a8c74a15',
-  },
-  {
-    icon: Sparkles, emoji: '✨', label: "I'm bored of my clothes",
-    action: 'Reimagine', to: '/reimagine', color: '#4c1b1b', bg: '#4c1b1b15',
-  },
-  {
-    icon: Wrench, emoji: '🔧', label: 'Something is damaged',
-    action: 'Repair', to: '/repair', color: '#e34334', bg: '#e3433415',
-  },
-  {
-    icon: Heart, emoji: '💙', label: "I don't need this anymore",
-    action: 'Donate', to: '/donate', color: '#1b4e81', bg: '#1b4e8115',
-  },
-];
-
-function NodeCard({ node, i }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: i * 0.1 }}
-      viewport={{ once: true }}
-    >
-      <Link
-        to={node.to}
-        className="group relative block rounded-3xl p-6 sm:p-8 border-2 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl overflow-hidden"
-        style={{ background: node.bg, borderColor: node.color + '25' }}
-      >
-        {/* Big emoji bg */}
-        <span className="absolute right-4 bottom-4 text-7xl sm:text-8xl opacity-10 select-none pointer-events-none transition-transform duration-300 group-hover:scale-110 group-hover:opacity-15">
-          {node.emoji}
-        </span>
-
-        {/* Icon */}
-        <div
-          className="w-13 h-13 rounded-2xl flex items-center justify-center mb-5"
-          style={{ background: node.color + '20', width: 52, height: 52 }}
-        >
-          <node.icon size={24} style={{ color: node.color }} />
-        </div>
-
-        {/* Text */}
-        <p className="text-[#241621]/55 text-sm font-display mb-2 leading-relaxed">{node.label}</p>
-        <div className="flex items-center justify-between">
-          <span className="text-xl font-black font-display" style={{ color: node.color }}>
-            {node.action}
-          </span>
-          <ArrowRight
-            size={20} style={{ color: node.color }}
-            className="opacity-0 group-hover:opacity-100 transition-all duration-200 -translate-x-2 group-hover:translate-x-0"
-          />
-        </div>
-      </Link>
-    </motion.div>
-  );
-}
+import { ArrowRight } from 'lucide-react';
+import FashionLoop, {
+  LOOP_VERTICALS,
+  useLoopVerticalState,
+} from '../../components/home/FashionLoop';
 
 export default function LoopSection() {
-  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const {
+    activeIndex,
+    setActiveIndex,
+    hoverIndex,
+    setHoverIndex,
+    active,
+  } = useLoopVerticalState(0);
 
   return (
-    <section ref={ref} className="section bg-[#eef4d1]">
+    <section ref={ref} className="section bg-white border-y border-[#241621]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        {/* Header */}
-        <div className="text-center mb-12 sm:mb-16">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.55 }}
           >
             <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-5 bg-[#a8c74a]/10 text-[#a8c74a] border border-[#a8c74a]/20">
-              The Loop
+              The system
             </span>
-            <h2 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-[#241621] leading-tight">
-              Your clothes.
+            <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-[2.75rem] text-[#241621] leading-[1.1] mb-4">
+              Four verticals.
               <br />
-              <span className="text-[#a8c74a]">Every stage.</span>
+              One closed loop.
             </h2>
-            <p className="mt-5 text-[#241621]/55 font-display text-base sm:text-lg max-w-lg mx-auto">
-              What do you want to do with your clothes today?
+            <p className="text-[#241621]/55 font-display text-base leading-relaxed mb-8 max-w-md">
+              Tarajuvva isn&apos;t a clothing brand pretending to care. It&apos;s an operating system: every garment can be bought, remade, fixed, or donated. No exit. No landfill.
             </p>
+
+            <motion.div
+              key={active.action}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="rounded-2xl border-2 border-[#241621] p-6 sm:p-8 mb-8 min-h-[200px] flex flex-col justify-between"
+              style={{ background: active.color, color: active.textOnColor }}
+            >
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest font-display mb-3 opacity-90">
+                  {active.num} · {active.action}
+                </p>
+                <p className="font-display font-black text-xl sm:text-2xl leading-snug">
+                  {active.headline}
+                </p>
+                {active.subline && (
+                  <p className="mt-3 text-sm font-display opacity-80 leading-relaxed">
+                    {active.subline}
+                  </p>
+                )}
+              </div>
+              <Link
+                to={active.to}
+                className="mt-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest font-display underline underline-offset-4 hover:opacity-80 transition-opacity"
+              >
+                {active.cta}
+                <ArrowRight size={14} />
+              </Link>
+            </motion.div>
+
+            <div className="flex flex-wrap gap-2">
+              {LOOP_VERTICALS.map((v, i) => {
+                const isPinned = activeIndex === i && hoverIndex === null;
+                const isHover = hoverIndex === i;
+                return (
+                  <button
+                    key={v.action}
+                    type="button"
+                    onMouseEnter={() => setHoverIndex(i)}
+                    onMouseLeave={() => setHoverIndex(null)}
+                    onFocus={() => setHoverIndex(i)}
+                    onBlur={() => setHoverIndex(null)}
+                    onClick={() => setActiveIndex(i)}
+                    className="rounded-lg px-3.5 py-2 text-xs font-bold font-display border-2 border-[#241621] transition-colors duration-200"
+                    style={{
+                      background: isPinned || isHover ? '#241621' : 'transparent',
+                      color: isPinned || isHover ? '#eef4d1' : '#241621',
+                    }}
+                  >
+                    {v.num} {v.action}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={inView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.55, delay: 0.1 }}
+            className="flex justify-center lg:justify-end"
+          >
+            <FashionLoop
+              activeIndex={activeIndex}
+              onActiveChange={setActiveIndex}
+              hoverIndex={hoverIndex}
+              onHoverChange={setHoverIndex}
+            />
           </motion.div>
         </div>
-
-        {/* 2×2 Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 max-w-3xl mx-auto">
-          {NODES.map((node, i) => <NodeCard key={node.to} node={node} i={i} />)}
-        </div>
-
-        {/* Center connector badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={inView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="flex justify-center mt-10"
-        >
-          <div className="inline-flex items-center gap-3 bg-[#241621] text-[#eef4d1] rounded-2xl px-6 py-4 shadow-xl">
-            <span className="text-2xl">🧵</span>
-            <div>
-              <p className="text-sm font-black font-display">It's all connected</p>
-              <p className="text-xs text-[#eef4d1]/55 font-display">Buy → Reimagine → Repair → Donate → Repeat</p>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </section>
   );

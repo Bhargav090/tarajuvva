@@ -41,7 +41,7 @@ export default function DropZone({ files, onAdd, onRemove, maxFiles = 5 }) {
       {files.length > 0 && (
         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
           {files.map((f, i) => (
-            <div key={i} className="relative group rounded-xl overflow-hidden aspect-square bg-[#eef4d1]">
+            <div key={i} className="relative group rounded-xl overflow-hidden aspect-square bg-white">
               <img src={f.preview} alt="" className="w-full h-full object-cover" />
               <button
                 type="button"

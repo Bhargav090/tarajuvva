@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, ArrowLeft, Tag, CheckCircle, Sparkles } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Tag, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../context/CartContext';
@@ -21,13 +21,13 @@ export default function ProductPage() {
   }, [product?.id]);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#eef4d1] flex items-center justify-center">
+    <div className="min-h-screen bg-white flex items-center justify-center">
       <Spinner size={36} />
     </div>
   );
 
   if (!product) return (
-    <div className="min-h-screen bg-[#eef4d1] flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center">
       <p className="text-[#241621] font-display font-bold text-xl mb-4">Product not found.</p>
       <Link to="/shop" className="text-[#a8c74a] font-semibold hover:underline font-display">← Back to Shop</Link>
     </div>
@@ -48,9 +48,10 @@ export default function ProductPage() {
     Array.isArray(product.images) && product.images.length > 0
       ? product.images
       : [PRODUCT_IMAGE_PLACEHOLDER];
+  const viewLabels = ['Front View', 'Back View', 'Side View', 'Detail View'];
 
   return (
-    <div className="min-h-screen bg-[#eef4d1] pt-2 sm:pt-4">
+    <div className="min-h-screen bg-white pt-2 sm:pt-4">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumb */}
         <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#241621]/55 hover:text-[#a8c74a] font-display mb-8 transition-colors">
@@ -58,29 +59,20 @@ export default function ProductPage() {
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
-          {/* Images */}
+          {/* Primary image — other views selected in Explore Garment Views */}
           <div>
-            <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-white mb-3 relative">
-              <img src={gallery[activeImg]} alt={product.name}
-                className="w-full h-full object-cover" />
+            <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-white relative">
+              <img
+                src={gallery[activeImg]}
+                alt={`${product.name}${activeImg === 0 ? '' : ` — ${viewLabels[activeImg] || `View ${activeImg + 1}`}`}`}
+                className="w-full h-full object-cover transition-opacity duration-200"
+              />
               {discount && (
                 <span className="absolute top-4 left-4 bg-[#e34334] text-white text-sm font-black rounded-full px-3 py-1 font-display">
                   -{discount}% OFF
                 </span>
               )}
             </div>
-            {gallery.length > 1 && (
-              <div className="flex gap-3">
-                {gallery.map((img, i) => (
-                  <button key={i} onClick={() => setActiveImg(i)}
-                    className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
-                      activeImg === i ? 'border-[#a8c74a]' : 'border-transparent'
-                    }`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Details */}
@@ -104,20 +96,35 @@ export default function ProductPage() {
             {/* Description */}
             <p className="text-[#241621]/65 font-body text-base leading-relaxed mb-8">{product.description}</p>
 
-            {/* Ways to wear */}
-            {product.ways_to_wear?.length > 0 && (
+            {/* Hover-to-preview garment sides */}
+            {gallery.length > 1 && (
               <div className="bg-white rounded-2xl p-5 mb-8 border border-[#241621]/8">
                 <h3 className="text-sm font-bold text-[#241621] font-display mb-4 flex items-center gap-2">
-                  <Sparkles size={15} className="text-[#a8c74a]" /> {product.ways_to_wear.length} Ways to Wear
+                  <Sparkles size={15} className="text-[#a8c74a]" /> Explore Garment Views
                 </h3>
-                <ul className="space-y-2.5">
-                  {product.ways_to_wear.map((w, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-[#241621]/70 font-body">
-                      <CheckCircle size={14} className="text-[#a8c74a] flex-shrink-0 mt-0.5" />
-                      {w}
-                    </li>
+                <p className="text-xs text-[#241621]/55 font-display mb-3">
+                  Select a view to update the main image.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {gallery.map((img, i) => (
+                    <button
+                      key={img + i}
+                      type="button"
+                      onMouseEnter={() => setActiveImg(i)}
+                      onFocus={() => setActiveImg(i)}
+                      onClick={() => setActiveImg(i)}
+                      aria-pressed={activeImg === i}
+                      className={`rounded-xl overflow-hidden border transition-all ${
+                        activeImg === i ? 'border-[#a8c74a]' : 'border-[#241621]/10 hover:border-[#a8c74a]/40'
+                      }`}
+                    >
+                      <img src={img} alt={`${product.name} ${viewLabels[i] || `View ${i + 1}`}`} className="w-full aspect-square object-cover" />
+                      <span className="block px-2 py-1.5 text-[10px] font-display text-[#241621]/65 text-center">
+                        {viewLabels[i] || `View ${i + 1}`}
+                      </span>
+                    </button>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
@@ -147,8 +154,8 @@ export default function ProductPage() {
                 {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
               </Button>
               <Link to="/reimagine" className="flex-1">
-                <Button variant="outline-burgundy" size="xl" fullWidth icon={Sparkles}>
-                  Reimagine It
+                <Button variant="outline-burgundy" size="xl" fullWidth icon={Sparkles} className="whitespace-nowrap min-w-[190px]">
+                  Reimagine&nbsp;It
                 </Button>
               </Link>
             </div>

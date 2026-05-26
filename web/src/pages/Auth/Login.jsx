@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import Button from '../../components/ui/Button';
+import brandIcon from '../../assets/icons/Artboard 3@2x-8.png';
 
 export default function Login() {
   const { login, user }    = useAuth();
@@ -17,7 +18,9 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (user) navigate(from, { replace: true }); }, [user]);
+  useEffect(() => {
+    if (user) navigate(from, { replace: true });
+  }, [user, navigate, from]);
 
   const onChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -48,42 +51,47 @@ export default function Login() {
     }
   };
 
-  const onGoogleSuccess = async (response) => {
+  const onGoogleSuccess = useCallback(async (response) => {
     try {
       const { data } = await api.post('/auth/google', { credential: response.credential });
       if (data.success) {
         login(data.token, data.user);
         toast.success(`Welcome, ${data.user.name}! 🎉`);
-        navigate(from, { replace: true });
       }
     } catch (err) {
       toast.error('Google sign-in failed');
     }
-  };
+  }, [login]);
 
   useEffect(() => {
     if (!window.google) return;
-    window.google.accounts.id.initialize({
-      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
-      callback: onGoogleSuccess,
-    });
+    if (!window.__tarajuvvaGsiInitialized) {
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+        callback: onGoogleSuccess,
+      });
+      window.__tarajuvvaGsiInitialized = true;
+    }
+    const btn = document.getElementById('google-signin-btn');
+    if (!btn) return;
+    btn.innerHTML = '';
     window.google.accounts.id.renderButton(
-      document.getElementById('google-signin-btn'),
+      btn,
       { theme: 'outline', size: 'large', width: 340, logo_alignment: 'center' }
     );
-  }, []);
+    return () => {
+      window.google.accounts.id.cancel();
+    };
+  }, [onGoogleSuccess]);
 
   return (
-    <div className="min-h-screen bg-[#eef4d1] flex">
+    <div className="min-h-screen bg-white flex">
       {/* Left visual */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#a8c74a] flex-col justify-center px-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 70%, #eef4d1 0%, transparent 60%)' }} />
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 70%, #ffffff 0%, transparent 60%)' }} />
         <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }}>
-          <Link to="/" className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 rounded-xl bg-[#eef4d1] flex items-center justify-center">
-              <span className="text-[#a8c74a] font-black text-lg font-display">T</span>
-            </div>
-            <span className="text-[#241621] font-black text-xl font-display">Tarajuvva</span>
+          <Link to="/" className="flex items-center mb-16">
+            <img src={brandIcon} alt="Tarajuvva" className="w-40 h-auto object-contain" />
           </Link>
           <h1 className="font-display font-black text-[#241621] leading-tight mb-6" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}>
             Your wardrobe,
@@ -111,11 +119,8 @@ export default function Login() {
           className="w-full max-w-md"
         >
           {/* Mobile logo */}
-          <Link to="/" className="flex items-center gap-2.5 mb-10 lg:hidden">
-            <div className="w-8 h-8 rounded-lg bg-[#a8c74a] flex items-center justify-center">
-              <span className="text-[#241621] font-black text-sm font-display">T</span>
-            </div>
-            <span className="text-xl font-black text-[#241621] font-display">Tarajuvva</span>
+          <Link to="/" className="flex items-center mb-10 lg:hidden">
+            <img src={brandIcon} alt="Tarajuvva" className="w-32 h-auto object-contain" />
           </Link>
 
           <h2 className="text-3xl font-black text-[#241621] font-display mb-2">Welcome back</h2>

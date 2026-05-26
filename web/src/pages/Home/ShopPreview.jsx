@@ -11,7 +11,7 @@ export default function ShopPreview() {
   const { products, loading } = useProducts({ limit: 4 });
 
   return (
-    <section className="section bg-[#e6edca]">
+    <section className="section bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <SectionHeader
           pill="Shop"

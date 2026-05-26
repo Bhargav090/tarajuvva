@@ -5,7 +5,7 @@ export default function Philosophy() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.4 });
 
   return (
-    <section ref={ref} className="py-24 sm:py-32 px-4 bg-[#eef4d1] overflow-hidden">
+    <section ref={ref} className="py-24 sm:py-32 px-4 bg-white overflow-hidden">
       <div className="max-w-4xl mx-auto text-center">
         {/* Decorative lines */}
         <div className="flex items-center justify-center gap-3 mb-10">

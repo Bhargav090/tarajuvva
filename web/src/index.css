@@ -7,8 +7,8 @@
   --font-display: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
 
   /* Brand color tokens — usable as bg-brand-green, text-brand-dark, etc. */
-  --color-brand-bg:       #eef4d1;
-  --color-brand-bg-alt:   #e6edca;
+  --color-brand-bg:       #ffffff;
+  --color-brand-bg-alt:   #f5f5f5;
   --color-brand-green:    #a8c74a;
   --color-brand-burgundy: #4c1b1b;
   --color-brand-pink:     #e2a3c9;
@@ -25,7 +25,7 @@
   html { scroll-behavior: smooth; font-size: 16px; }
 
   body {
-    background-color: #eef4d1;
+    background-color: #ffffff;
     color: #241621;
     font-family: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -44,7 +44,7 @@
   }
 
   ::-webkit-scrollbar       { width: 4px; }
-  ::-webkit-scrollbar-track { background: #eef4d1; }
+  ::-webkit-scrollbar-track { background: #f5f5f5; }
   ::-webkit-scrollbar-thumb { background: #a8c74a; border-radius: 2px; }
 
   input, textarea, select { font-family: 'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif; }
@@ -102,4 +102,15 @@
   /* Section spacing */
   .section { padding: 5rem 1rem; }
   @media (min-width: 640px) { .section { padding: 6rem 1.5rem; } }
+
+  /* Fashion loop — outer dashed orbit */
+  @keyframes fashion-loop-orbit {
+    to { transform: rotate(360deg); }
+  }
+  .fashion-loop-orbit {
+    animation: fashion-loop-orbit 30s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fashion-loop-orbit { animation: none; }
+  }
 }

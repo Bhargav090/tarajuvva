@@ -6,7 +6,7 @@ import Button from '../../components/ui/Button';
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-[#eef4d1] pt-2 sm:pt-4">
+    <div className="min-h-screen bg-white pt-2 sm:pt-4">
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 pb-12">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
@@ -49,7 +49,7 @@ export default function About() {
                 </p>
               </div>
             </div>
-            <div className="bg-[#eef4d1]/5 rounded-3xl p-8 border border-[#eef4d1]/10">
+            <div className="bg-white/5 rounded-3xl p-8 border border-[#eef4d1]/10">
               <blockquote className="text-2xl font-black text-[#e2a3c9] font-display leading-tight mb-4">
                 "A garment's story doesn't end when you're done with it."
               </blockquote>
@@ -83,7 +83,7 @@ export default function About() {
       </section>
 
       {/* Philosophy */}
-      <section className="bg-[#e6edca] py-16 px-4">
+      <section className="bg-white py-16 px-4">
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-4xl font-black text-[#241621] font-display mb-6">
             "Wear more. Buy less. Fix what you already own."

@@ -78,7 +78,7 @@ export default function Profile() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#eef4d1] flex items-center justify-center pt-4">
+      <div className="min-h-screen bg-white flex items-center justify-center pt-4">
         <Spinner size={32} />
       </div>
     );
@@ -87,14 +87,14 @@ export default function Profile() {
 
   return (
     <>
-    <div className="min-h-screen bg-[#eef4d1] pt-4 pb-16">
+    <div className="min-h-screen bg-white pt-4 pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="flex items-center gap-5 mb-10 p-6 bg-[#a8c74a] rounded-3xl">
           <UserAvatar
             src={user.avatar}
             name={user.name}
-            className="w-16 h-16 rounded-2xl border-2 border-[#eef4d1]/20"
+            className="w-16 h-16 rounded-2xl border-2 border-white/40"
             fallbackClassName="bg-[#241621]/10 text-2xl font-black text-[#241621]"
           />
           <motion.div className="flex-1 min-w-0">
@@ -234,7 +234,7 @@ export default function Profile() {
                   <Badge status={r.status} />
                 </div>
                 {r.admin_notes && (
-                  <div className="mt-4 p-3 bg-[#eef4d1] rounded-xl">
+                  <div className="mt-4 p-3 bg-white rounded-xl">
                     <p className="text-xs font-bold text-[#241621]/50 mb-1 font-display">Note from team</p>
                     <p className="text-sm text-[#241621] font-body">{r.admin_notes}</p>
                   </div>

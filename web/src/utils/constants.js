@@ -4,9 +4,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 export const BRAND = {
   // Official palette — bg → 1 primary → 2 secondary → 3 tertiary → accent row
-  bg:        '#eef4d1',   // background
+  bg:        '#ffffff',   // background
   bgCard:    '#ffffff',
-  bgAlt:     '#e6edca',
+  bgAlt:     '#f5f5f5',
   primary:   '#a8c74a',   // lime green – SHOP / primary
   secondary: '#4c1b1b',   // burgundy – REIMAGINE
   tertiary:  '#e2a3c9',   // blush pink – accent
@@ -22,7 +22,7 @@ export const BRAND = {
   textLight: '#eef4d1',   // text on dark bg
   // Borders
   border:    'rgba(36,22,33,0.12)',
-  borderLight: 'rgba(238,244,209,0.18)',
+  borderLight: 'rgba(36,22,33,0.08)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,6 +39,7 @@ export const NAV_LINKS = [
 export const TICKER_MESSAGES = [
   '✦ Wear more. Waste less.',
   '✦ Turn your old clothes into new fits.',
+  '✦ 2 repairs free on a purchase.',
   '✦ 7 million tonnes of textile waste. Let\'s fix that.',
   '✦ Circular fashion starts here.',
   '✦ Every garment has a second life.',

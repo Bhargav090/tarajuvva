@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Globe, AtSign, Mail } from 'lucide-react';
 import { NAV_LINKS } from '../../utils/constants';
+import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
 
 export default function Footer() {
   return (
@@ -9,11 +10,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center gap-2.5 mb-5">
-              <div className="w-9 h-9 rounded-lg bg-[#a8c74a] flex items-center justify-center">
-                <span className="text-[#241621] font-black text-base font-display">T</span>
-              </div>
-              <span className="text-xl font-black tracking-tight font-display">Tarajuvva</span>
+            <div className="flex items-center mb-5">
+              <img src={darkBrandIcon} alt="Tarajuvva" className="w-32 h-auto object-contain" />
             </div>
             <p className="text-[#eef4d1]/60 text-sm leading-relaxed font-body max-w-xs">
               A circular fashion system built around your wardrobe. Wear more. Buy less. Fix what you already own.

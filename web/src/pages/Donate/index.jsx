@@ -8,7 +8,7 @@ export default function Donate() {
   const { form, onChange, onSubmit, loading, success } = useWaitlist(config.type);
 
   return (
-    <div className="min-h-screen bg-[#eef4d1] pt-2 sm:pt-4">
+    <div className="min-h-screen bg-white pt-2 sm:pt-4">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left */}

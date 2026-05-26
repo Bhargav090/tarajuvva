@@ -35,7 +35,7 @@ export default function CartDrawer() {
                   </span>
                 )}
               </div>
-              <button onClick={closeCart} className="p-2 rounded-xl text-[#eef4d1]/60 hover:text-[#eef4d1] hover:bg-[#eef4d1]/8 transition-all">
+              <button onClick={closeCart} className="p-2 rounded-xl text-[#eef4d1]/60 hover:text-[#eef4d1] hover:bg-white/8 transition-all">
                 <X size={20} />
               </button>
             </div>
@@ -52,7 +52,7 @@ export default function CartDrawer() {
                 </div>
               ) : (
                 items.map(item => (
-                  <div key={item.id} className="flex gap-4 p-4 bg-[#eef4d1]/6 rounded-2xl border border-[#eef4d1]/8">
+                  <div key={item.id} className="flex gap-4 p-4 bg-white/6 rounded-2xl border border-[#eef4d1]/8">
                     <img
                       src={productHeroImage(item.images)}
                       alt={item.name}

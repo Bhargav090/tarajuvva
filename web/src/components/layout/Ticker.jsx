@@ -15,7 +15,7 @@ export default function Ticker({ barHeightPx = 40 }) {
         transition={{ repeat: Infinity, duration: 28, ease: 'linear' }}
       >
         {msgs.map((msg, i) => (
-          <span key={i} className="inline-block px-8 text-[11px] sm:text-xs font-semibold text-[#241621] tracking-widest uppercase font-display">
+          <span key={i} className="inline-block px-8 text-xs sm:text-sm font-bold text-[#241621] tracking-widest uppercase font-display">
             {msg}
           </span>
         ))}

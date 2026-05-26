@@ -11,7 +11,7 @@ const SLIDES = [
 
 export default function Hero() {
   return (
-    <section className="relative min-h-screen bg-[#a8c74a] flex flex-col lg:flex-row overflow-hidden">
+    <section className="relative min-h-[calc(100svh-var(--ticker-h,40px)-var(--nav-h,3.5rem))] bg-[#a8c74a] flex flex-col lg:flex-row overflow-hidden">
       {/* Left — Text */}
       <div className="relative z-10 flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-24 lg:py-0 lg:w-[55%] order-2 lg:order-1">
         {/* Badge */}
@@ -85,7 +85,7 @@ export default function Hero() {
         {/* Main image */}
         <motion.div
           initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}
-          className="absolute inset-4 sm:inset-6 lg:inset-8 lg:left-0"
+          className="absolute left-4 right-4 bottom-4 top-0 sm:left-6 sm:right-6 sm:bottom-6 sm:top-0 lg:left-0 lg:right-8 lg:bottom-8 lg:top-0"
         >
           <img
             src={SLIDES[0]}
@@ -105,7 +105,7 @@ export default function Hero() {
         {/* Top badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.75 }}
-          className="absolute top-10 right-4 sm:right-10 lg:-right-4 bg-[#eef4d1] rounded-2xl px-4 py-3 shadow-xl"
+          className="absolute top-10 right-4 sm:right-10 lg:-right-4 bg-white rounded-2xl px-4 py-3 shadow-xl"
         >
           <p className="text-[#a8c74a] font-black text-sm font-display">✦ 500+ Reimagined</p>
         </motion.div>

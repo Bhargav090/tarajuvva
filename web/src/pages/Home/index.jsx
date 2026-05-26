@@ -12,9 +12,9 @@ export default function Home() {
     <main>
       <Hero />
       <QuickDecision />
+      <ShopPreview />
       <TextileWaste />
       <LoopSection />
-      <ShopPreview />
       <ReimaginePreview />
       <Philosophy />
       <FinalCTA />

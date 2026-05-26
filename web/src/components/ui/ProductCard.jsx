@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Tag } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
@@ -7,7 +8,14 @@ import Button from './Button';
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
+  const [hoverImg, setHoverImg] = useState(null);
+  const [selectedImg, setSelectedImg] = useState(null);
   const img = productHeroImage(product.images);
+  const gallery =
+    Array.isArray(product.images) && product.images.length > 0
+      ? product.images
+      : [img];
+  const activeImg = hoverImg || selectedImg || img;
   const discount = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
@@ -21,9 +29,13 @@ export default function ProductCard({ product }) {
       className="group bg-white rounded-2xl overflow-hidden border border-[#241621]/8 shadow-sm card-hover"
     >
       {/* Image */}
-      <Link to={`/shop/${product.id}`} className="block relative overflow-hidden aspect-[4/5]">
+      <Link
+        to={`/shop/${product.id}`}
+        className="block relative overflow-hidden aspect-[4/5]"
+        onMouseLeave={() => setHoverImg(null)}
+      >
         <img
-          src={img}
+          src={activeImg}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
@@ -38,15 +50,34 @@ export default function ProductCard({ product }) {
             {product.tags[0]}
           </span>
         )}
-        {/* Ways to wear hover overlay */}
-        {product.ways_to_wear?.length > 0 && (
-          <div className="absolute inset-0 bg-[#a8c74a]/90 flex flex-col justify-center p-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <p className="text-[#241621] text-xs font-bold uppercase tracking-wider mb-3 font-display">3 ways to wear</p>
-            {product.ways_to_wear.slice(0, 3).map((w, i) => (
-              <p key={i} className="text-[#241621]/85 text-xs font-body mb-1.5 flex items-start gap-1.5">
-                <span className="text-[#e2a3c9] mt-0.5 flex-shrink-0">✦</span> {w}
-              </p>
-            ))}
+        {/* Hover overlay: preview garment sides */}
+        {gallery.length > 1 && (
+          <div className="absolute inset-0 bg-[#241621]/35 p-3 sm:p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+            <div className="w-full bg-white/95 rounded-xl p-2.5 border border-[#241621]/10">
+              <p className="text-[10px] text-[#241621]/70 font-display mb-2 text-center">Hover to preview, click to keep a side</p>
+              <div className="grid grid-cols-4 gap-2">
+                {gallery.slice(0, 4).map((sideImg, i) => (
+                  <button
+                    key={sideImg + i}
+                    type="button"
+                    onMouseEnter={(e) => {
+                      e.preventDefault();
+                      setHoverImg(sideImg);
+                    }}
+                    onFocus={() => setHoverImg(sideImg)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedImg(sideImg);
+                    }}
+                    className={`rounded-lg overflow-hidden border ${
+                      activeImg === sideImg ? 'border-[#a8c74a]' : 'border-[#241621]/10 hover:border-[#a8c74a]/50'
+                    }`}
+                  >
+                    <img src={sideImg} alt={`${product.name} side ${i + 1}`} className="w-full aspect-square object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </Link>

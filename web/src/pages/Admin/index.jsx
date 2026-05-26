@@ -23,6 +23,7 @@ import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
 import { ORDER_STATUSES, REIMAGINE_STATUSES } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
+import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, color, sub }) {
@@ -90,7 +91,7 @@ function AdminChangePasswordModal({ open, onClose }) {
       <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40" onClick={onClose} />
       <form
         onSubmit={onSubmit}
-        className="relative z-[1] w-full max-w-md rounded-2xl border border-[#241621]/10 bg-[#eef4d1] p-6 shadow-xl"
+        className="relative z-[1] w-full max-w-md rounded-2xl border border-[#241621]/10 bg-white p-6 shadow-xl"
       >
         <h2 className="text-lg font-black text-[#241621] font-display mb-1">Change password</h2>
         <p className="text-xs text-[#241621]/50 font-body mb-4">Use a strong password you have not used elsewhere.</p>
@@ -130,7 +131,7 @@ export default function Admin() {
 
   return (
     <>
-    <div className="min-h-screen bg-[#eef4d1] flex">
+    <div className="min-h-screen bg-white flex">
       {/* Sidebar Overlay (mobile) */}
       <AnimatePresence>
         {sidebar && (
@@ -144,18 +145,10 @@ export default function Admin() {
       <AnimatePresence>
         {(sidebar || true) && (
           <motion.aside
-            className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-[#241621] z-40 flex flex-col transition-transform duration-300 ${sidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+            className={`fixed inset-y-0 left-0 z-40 flex h-screen w-56 shrink-0 flex-col overflow-hidden bg-[#241621] transition-transform duration-300 lg:relative lg:translate-x-0 ${sidebar ? 'translate-x-0' : '-translate-x-full'}`}
           >
-            <div className="px-6 py-6 border-b border-[#eef4d1]/10">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#a8c74a] flex items-center justify-center">
-                  <span className="text-[#241621] font-black text-sm font-display">T</span>
-                </div>
-                <div>
-                  <p className="text-[#eef4d1] font-black text-sm font-display">Tarajuvva</p>
-                  <p className="text-[#eef4d1]/40 text-xs font-body">Admin Panel</p>
-                </div>
-              </div>
+            <div className="flex justify-center py-6 border-b border-[#eef4d1]/10">
+              <img src={darkBrandIcon} alt="Tarajuvva" className="w-24 h-auto object-contain" />
             </div>
 
             <nav className="flex-1 px-3 py-4 space-y-1">
@@ -163,8 +156,8 @@ export default function Admin() {
                 <button key={t.id} onClick={() => { setTab(t.id); setSidebar(false); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-display transition-all ${
                     tab === t.id
-                      ? 'bg-[#eef4d1] text-[#241621]'
-                      : 'text-[#eef4d1]/60 hover:text-[#eef4d1] hover:bg-[#eef4d1]/8'
+                      ? 'bg-white text-[#241621]'
+                      : 'text-[#eef4d1]/60 hover:text-[#eef4d1] hover:bg-white/10'
                   }`}
                 >
                   <t.icon size={16} /> {t.label}
@@ -174,7 +167,7 @@ export default function Admin() {
 
             <div className="px-3 py-4 border-t border-[#eef4d1]/10 space-y-1">
               <button type="button" onClick={() => setPwOpen(true)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-display text-[#eef4d1]/70 hover:text-[#eef4d1] hover:bg-[#eef4d1]/8 transition-all">
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-display text-[#eef4d1]/70 hover:text-[#eef4d1] hover:bg-white/10 transition-all">
                 <Key size={16} /> Change password
               </button>
               <button type="button" onClick={() => setLogoutOpen(true)}
@@ -190,7 +183,7 @@ export default function Admin() {
       <div className="flex-1 min-w-0">
         {/* Mobile topbar */}
         <div className="lg:hidden flex items-center gap-4 px-4 py-4 bg-white border-b border-[#241621]/8 sticky top-0 z-20">
-          <button onClick={() => setSidebar(true)} className="p-2 rounded-xl hover:bg-[#eef4d1]">
+          <button onClick={() => setSidebar(true)} className="p-2 rounded-xl hover:bg-gray-50">
             <Menu size={20} className="text-[#241621]" />
           </button>
           <p className="font-black text-[#241621] font-display">Admin Panel</p>
@@ -292,7 +285,7 @@ function ReimagineTab() {
               </div>
               <StatusSelect value={r.status} options={REIMAGINE_STATUSES} onUpdate={s => updateStatus(r.id, s)} />
             </div>
-            {r.notes && <p className="text-xs text-[#241621]/55 font-body bg-[#eef4d1] rounded-lg p-2 mt-2">{r.notes}</p>}
+            {r.notes && <p className="text-xs text-[#241621]/55 font-body bg-white rounded-lg p-2 mt-2">{r.notes}</p>}
             {r.images?.length > 0 && (
               <div className="flex gap-2 mt-3">
                 {r.images.map((img, i) => (

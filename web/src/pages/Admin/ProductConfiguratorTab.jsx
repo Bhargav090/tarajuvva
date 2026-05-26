@@ -188,7 +188,7 @@ export default function ProductConfiguratorTab() {
     <div>
       <h1 className="text-2xl font-black text-[#341631] font-display mb-2">Product configurator</h1>
       <p className="text-sm text-[#341631]/55 font-body mb-8 max-w-2xl">
-        Fill in the fields below and publish to the <code className="text-xs bg-[#eef4d1] px-1 rounded">products</code> table.
+        Fill in the fields below and publish to the <code className="text-xs bg-white px-1 rounded">products</code> table.
         Images are read in the browser and sent as <strong>base64 data URLs</strong> (<code className="text-xs">data:image/…;base64,…</code>) in the JSON payload, then stored in the database. Legacy catalog items that still use https URLs continue to work in the shop.
       </p>
 
@@ -262,7 +262,7 @@ export default function ProductConfiguratorTab() {
           {imageDataUrls.length > 0 && (
             <ul className="mt-4 flex flex-wrap gap-3">
               {imageDataUrls.map((url, i) => (
-                <li key={`${i}-${url.slice(0, 48)}`} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#341631]/12 bg-[#eef4d1]/50">
+                <li key={`${i}-${url.slice(0, 48)}`} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#341631]/12 bg-gray-50">
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"

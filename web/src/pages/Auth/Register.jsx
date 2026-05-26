@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import Button from '../../components/ui/Button';
+import brandIcon from '../../assets/icons/Artboard 3@2x-8.png';
 
 export default function Register() {
   const { login, user } = useAuth();
@@ -14,7 +15,9 @@ export default function Register() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (user) navigate('/'); }, [user]);
+  useEffect(() => {
+    if (user) navigate('/', { replace: true });
+  }, [user, navigate]);
 
   const onChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -39,28 +42,36 @@ export default function Register() {
     }
   };
 
-  const onGoogleSuccess = async (response) => {
+  const onGoogleSuccess = useCallback(async (response) => {
     try {
       const { data } = await api.post('/auth/google', { credential: response.credential });
       if (data.success) {
         login(data.token, data.user);
         toast.success(`Welcome, ${data.user.name}! 🎉`);
-        navigate('/');
       }
     } catch { toast.error('Google sign-in failed'); }
-  };
+  }, [login]);
 
   useEffect(() => {
     if (!window.google) return;
-    window.google.accounts.id.initialize({
-      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
-      callback: onGoogleSuccess,
-    });
+    if (!window.__tarajuvvaGsiInitialized) {
+      window.google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+        callback: onGoogleSuccess,
+      });
+      window.__tarajuvvaGsiInitialized = true;
+    }
+    const btn = document.getElementById('google-register-btn');
+    if (!btn) return;
+    btn.innerHTML = '';
     window.google.accounts.id.renderButton(
-      document.getElementById('google-register-btn'),
+      btn,
       { theme: 'outline', size: 'large', width: 340, logo_alignment: 'center' }
     );
-  }, []);
+    return () => {
+      window.google.accounts.id.cancel();
+    };
+  }, [onGoogleSuccess]);
 
   const fields = [
     { name: 'name',      label: 'Full Name',        type: 'text',     icon: User,  placeholder: 'Your full name' },
@@ -70,16 +81,13 @@ export default function Register() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#eef4d1] flex items-center justify-center px-4 py-16">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4 py-16">
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Link to="/" className="flex items-center gap-2.5 mb-10">
-          <div className="w-8 h-8 rounded-lg bg-[#a8c74a] flex items-center justify-center">
-            <span className="text-[#241621] font-black text-sm font-display">T</span>
-          </div>
-          <span className="text-xl font-black text-[#241621] font-display">Tarajuvva</span>
+        <Link to="/" className="flex items-center mb-10">
+          <img src={brandIcon} alt="Tarajuvva" className="w-32 h-auto object-contain" />
         </Link>
 
         <h2 className="text-3xl font-black text-[#241621] font-display mb-2">Create account</h2>

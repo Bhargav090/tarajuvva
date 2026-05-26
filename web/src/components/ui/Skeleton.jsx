@@ -56,7 +56,7 @@ export function Spinner({ size = 24, color = '#a8c74a' }) {
 
 export function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#eef4d1]">
+    <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="text-center">
         <Spinner size={36} />
         <p className="mt-4 text-sm text-[#241621]/50 font-body">Loading…</p>

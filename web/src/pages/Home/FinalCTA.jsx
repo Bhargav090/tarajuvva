@@ -7,8 +7,8 @@ export default function FinalCTA() {
   return (
     <section className="py-24 sm:py-32 px-4 bg-[#a8c74a] overflow-hidden relative">
       {/* Decorative circles */}
-      <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-[#eef4d1]/5 pointer-events-none" />
-      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-[#eef4d1]/5 pointer-events-none" />
+      <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-white/5 pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-white/5 pointer-events-none" />
 
       <div className="relative max-w-3xl mx-auto text-center">
         <motion.p
@@ -56,7 +56,7 @@ export default function FinalCTA() {
             <Button
               size="xl"
               icon={ArrowRight} iconPosition="right"
-              className="!bg-[#eef4d1] !text-[#a8c74a] hover:!bg-white font-bold font-display"
+              className="!bg-white !text-[#a8c74a] hover:!bg-gray-50 font-bold font-display"
             >
               Shop Collection
             </Button>

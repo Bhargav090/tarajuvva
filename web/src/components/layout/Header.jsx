@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { NAV_LINKS } from '../../utils/constants';
 import UserAvatar from '../ui/UserAvatar';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import brandIcon from '../../assets/icons/Artboard 3@2x-8.png';
 
 export default function Header() {
   const { totalItems, openCart } = useCart();
@@ -39,7 +40,7 @@ export default function Header() {
   }, [open]);
 
   const navLinkClass = ({ isActive }) =>
-    `text-sm font-semibold font-display transition-colors tracking-wide ${
+    `text-xl font-bold font-display transition-colors tracking-wide ${
       isActive ? 'text-[#a8c74a]' : 'text-[#241621]/70 hover:text-[#a8c74a]'
     }`;
 
@@ -48,21 +49,16 @@ export default function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'bg-[#eef4d1]/95 backdrop-blur-md shadow-sm border-b border-[#241621]/8'
-            : 'bg-[#eef4d1]'
+            ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-[#241621]/8'
+            : 'bg-white'
         }`}
         style={{ top: 'var(--ticker-h, 40px)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 group" onClick={() => setOpen(false)}>
-              <div className="w-8 h-8 rounded-lg bg-[#a8c74a] flex items-center justify-center">
-                <span className="text-[#241621] font-black text-sm font-display">T</span>
-              </div>
-              <span className="text-lg font-black text-[#241621] tracking-tight font-display group-hover:text-[#a8c74a] transition-colors">
-                Tarajuvva
-              </span>
+            <Link to="/" className="flex items-center" onClick={() => setOpen(false)}>
+              <img src={brandIcon} alt="Tarajuvva" className="w-24 sm:w-32 h-auto object-contain" />
             </Link>
 
             {/* Desktop Nav */}
@@ -122,11 +118,11 @@ export default function Header() {
                           <p className="text-xs text-[#241621]/50 font-body truncate">{user.email}</p>
                         </div>
                         <Link to="/profile" onClick={() => setUserMenu(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-[#eef4d1] transition-colors font-body">
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-gray-50 transition-colors font-body">
                           <User size={15} /> My Profile
                         </Link>
                         <Link to="/profile/orders" onClick={() => setUserMenu(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-[#eef4d1] transition-colors font-body">
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-gray-50 transition-colors font-body">
                           <Package size={15} /> My Orders
                         </Link>
                         <button
@@ -174,7 +170,7 @@ export default function Header() {
             <motion.div
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 340, damping: 32 }}
-              className="fixed right-0 top-0 h-full w-4/5 max-w-xs z-[57] bg-[#eef4d1] flex flex-col md:hidden"
+              className="fixed right-0 top-0 h-full w-4/5 max-w-xs z-[57] bg-white flex flex-col md:hidden"
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-[#241621]/10">
                 <span className="font-black text-lg text-[#241621] font-display">Menu</span>

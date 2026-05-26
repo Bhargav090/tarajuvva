@@ -6,7 +6,7 @@ export default function StatusSelect({ value, options, onUpdate, loading }) {
       value={value}
       onChange={e => onUpdate(e.target.value)}
       disabled={loading}
-      className="text-xs font-semibold rounded-lg px-2.5 py-1.5 border border-[#241621]/15 bg-[#eef4d1] cursor-pointer font-display outline-none focus:ring-2 focus:ring-[#a8c74a]/20"
+      className="text-xs font-semibold rounded-lg px-2.5 py-1.5 border border-[#241621]/15 bg-white cursor-pointer font-display outline-none focus:ring-2 focus:ring-[#a8c74a]/20"
       style={{ color: STATUS_COLORS[value] || '#241621' }}
     >
       {options.map(s => (

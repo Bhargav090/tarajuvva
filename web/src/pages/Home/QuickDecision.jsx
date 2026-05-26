@@ -1,13 +1,17 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Sparkles, Wrench, Heart, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { QUICK_CARDS } from '../../utils/constants';
+import shopIcon from '../../assets/icons/shop.png';
+import reimagineIcon from '../../assets/icons/reimagine.png';
+import repairIcon from '../../assets/icons/repair.png';
+import donateIcon from '../../assets/icons/donate.png';
 
-const ICONS = { ShoppingBag, Sparkles, Wrench, Heart };
+const ICONS = { ShoppingBag: shopIcon, Sparkles: reimagineIcon, Wrench: repairIcon, Heart: donateIcon };
 
 export default function QuickDecision() {
   return (
-    <section className="section bg-[#eef4d1]">
+    <section className="section bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center mb-12">
@@ -24,7 +28,7 @@ export default function QuickDecision() {
         {/* Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {QUICK_CARDS.map((card, i) => {
-            const Icon = ICONS[card.icon] || ShoppingBag;
+            const iconSrc = ICONS[card.icon] || shopIcon;
             return (
               <motion.div
                 key={card.to}
@@ -38,11 +42,8 @@ export default function QuickDecision() {
                   className="group block p-5 sm:p-6 rounded-2xl bg-white border border-[#241621]/8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full"
                 >
                   {/* Icon */}
-                  <div
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
-                    style={{ background: card.color + '18' }}
-                  >
-                    <Icon size={22} style={{ color: card.color }} />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110">
+                    <img src={iconSrc} alt={card.action} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
                   </div>
                   {/* Label */}
                   <p className="text-[#241621]/55 text-xs font-display mb-1 leading-snug">{card.label}</p>

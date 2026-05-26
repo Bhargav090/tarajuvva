@@ -21,7 +21,7 @@ export default function Checkout() {
 
   if (items.length === 0 && !done) {
     return (
-      <div className="min-h-screen bg-[#eef4d1] flex flex-col items-center justify-center gap-5">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-5">
         <ShoppingBag size={48} className="text-[#241621]/20" />
         <p className="text-[#241621] font-display font-bold text-xl">Your cart is empty.</p>
         <Link to="/shop"><Button variant="primary">Shop Now</Button></Link>
@@ -31,7 +31,7 @@ export default function Checkout() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[#eef4d1] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
           className="text-center max-w-md"
@@ -53,7 +53,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#eef4d1] pt-2 sm:pt-4">
+    <div className="min-h-screen bg-white pt-2 sm:pt-4">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#241621]/55 hover:text-[#a8c74a] font-display mb-8 transition-colors">
           <ArrowLeft size={15} /> Back to Shop
@@ -71,7 +71,7 @@ export default function Checkout() {
             <Input label="Email" name="user_email" value={form.user_email} onChange={onChange} type="email" />
             <Textarea label="Delivery Address" name="address" value={form.address} onChange={onChange} required rows={3} />
             <Textarea label="Order Notes (optional)" name="notes" value={form.notes} onChange={onChange} rows={2} />
-            <div className="bg-[#eef4d1] rounded-xl p-4 border border-[#241621]/8">
+            <div className="bg-white rounded-xl p-4 border border-[#241621]/8">
               <p className="text-sm font-bold text-[#241621] font-display mb-1">💳 Payment Method</p>
               <p className="text-xs text-[#241621]/55 font-body">Cash on Delivery (COD) — Pay when your order arrives.</p>
             </div>

@@ -6,6 +6,14 @@ import Button from '../../components/ui/Button';
 import { Input, Textarea } from '../../components/ui/FormField';
 import { GARMENTS, TRANSFORMATIONS, REIMAGINE_STEPS } from '../../utils/constants';
 import { useReimagineSubmit } from '../../hooks/useReimagineSubmit';
+import garmentFront from '../../assets/icons/Artboard 3@2x-8.png';
+import garmentSide from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
+
+const GARMENT_VIEWS = [
+  { label: 'Front view', src: garmentFront, alt: 'Garment front view' },
+  { label: 'Side view', src: garmentSide, alt: 'Garment side view' },
+  { label: 'Detail view', src: garmentFront, alt: 'Garment detail view', mirror: true },
+];
 
 export default function Reimagine() {
   const {
@@ -18,7 +26,7 @@ export default function Reimagine() {
   } = useReimagineSubmit();
 
   if (done) return (
-    <div className="min-h-screen bg-[#eef4d1] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
         <div className="w-20 h-20 bg-[#4c1b1b]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
           <CheckCircle size={40} className="text-[#4c1b1b]" />
@@ -32,7 +40,7 @@ export default function Reimagine() {
   );
 
   return (
-    <div className="min-h-screen bg-[#eef4d1] pt-0 sm:pt-2">
+    <div className="min-h-screen bg-white pt-0 sm:pt-2">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
         {/* Page header */}
         <div className="text-center mb-4 sm:mb-5">

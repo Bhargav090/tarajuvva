@@ -19,7 +19,7 @@ export default function Shop() {
   });
 
   return (
-    <div className="bg-[#eef4d1] min-h-screen">
+    <div className="bg-white min-h-screen">
       <PageBanner
         badge="Shop"
         badgeColor="#a8c74a"
@@ -29,7 +29,7 @@ export default function Shop() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-8 sticky top-14 sm:top-16 bg-[#eef4d1]/95 backdrop-blur-md py-4 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-[#241621]/8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-8 sticky top-14 sm:top-16 bg-white/95 backdrop-blur-md py-4 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-[#241621]/8">
           {/* Category pills */}
           <div className="flex flex-wrap gap-2">
             {SHOP_CATEGORIES.map(c => (

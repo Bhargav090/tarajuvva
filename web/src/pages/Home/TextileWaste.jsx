@@ -1,8 +1,5 @@
-import { useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { ShoppingBag, Sparkles, Wrench, Heart } from 'lucide-react';
 
 const EMOJI_DATA = ['👗','👖','🧥','👕','🧣','👗','🥻','👔'];
 
@@ -19,19 +16,12 @@ function FallingGarment({ emoji, index }) {
   );
 }
 
-const CTAS = [
-  { label: 'Buy Smarter',  to: '/shop',      icon: ShoppingBag, color: '#a8c74a' },
-  { label: 'Reimagine',    to: '/reimagine', icon: Sparkles,    color: '#4c1b1b' },
-  { label: 'Repair',       to: '/repair',    icon: Wrench,      color: '#e34334' },
-  { label: 'Donate',       to: '/donate',    icon: Heart,       color: '#1b4e81' },
-];
-
 export default function TextileWaste() {
   const { ref: inViewRef, inView } = useInView({ triggerOnce: true, threshold: 0.3 });
 
   return (
-    <section ref={inViewRef} className="section bg-[#241621] overflow-hidden">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
+    <section ref={inViewRef} className="section min-h-[70vh] bg-[#241621] overflow-hidden flex items-center">
+      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 text-center">
         {/* Step 1 */}
         <motion.p
           initial={{ opacity: 0, y: 16 }}
@@ -82,7 +72,7 @@ export default function TextileWaste() {
         </motion.p>
 
         {/* CTA grid */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 1.8 }}
@@ -93,7 +83,7 @@ export default function TextileWaste() {
             return (
               <Link
                 key={c.to} to={c.to}
-                className="group flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl border border-[#eef4d1]/20 bg-[#eef4d1]/10 hover:bg-[#eef4d1]/14 hover:border-[#eef4d1]/35 transition-all duration-300 hover:-translate-y-1 shadow-lg shadow-black/25"
+                className="group flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl border border-[#eef4d1]/20 bg-white/10 hover:bg-white/14 hover:border-[#eef4d1]/35 transition-all duration-300 hover:-translate-y-1 shadow-lg shadow-black/25"
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center shadow-md ring-2 ring-[#eef4d1]/20"
@@ -105,7 +95,7 @@ export default function TextileWaste() {
               </Link>
             );
           })}
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   );

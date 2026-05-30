@@ -23,7 +23,24 @@ import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
 import { ORDER_STATUSES, REIMAGINE_STATUSES } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
+import { uploadUrl } from '../../utils/uploadUrl';
 import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
+
+function formatDate(value) {
+  if (!value) return '—';
+  return new Date(value).toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function capitalize(s) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, color, sub }) {
@@ -274,25 +291,68 @@ function ReimagineTab() {
   return (
     <div>
       <h1 className="text-2xl font-black text-[#241621] font-display mb-6">Reimagine Requests ({requests.length})</h1>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {requests.map(r => (
-          <div key={r.id} className="bg-white rounded-2xl p-5 border border-[#241621]/8">
-            <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-              <div>
-                <p className="font-bold text-[#241621] font-display">{r.user_name}</p>
-                <p className="text-sm text-[#4c1b1b] font-display">{r.garment_type} → {r.transformation}</p>
-                <p className="text-xs text-[#241621]/45 font-body">{r.user_phone}</p>
+          <div key={r.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div className="min-w-0">
+                <p className="text-xs text-[#241621]/40 font-mono-tj uppercase tracking-wider">
+                  #{r.id.slice(0, 8).toUpperCase()} · {formatDate(r.created_at)}
+                </p>
+                <p className="font-bold text-[#241621] font-display text-lg mt-1">{r.user_name}</p>
+                <p className="text-sm text-[#4c1b1b] font-display mt-0.5">
+                  {capitalize(r.garment_type)} → {r.transformation}
+                  {r.is_custom && (
+                    <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#4c1b1b]/10 text-[#4c1b1b] px-2 py-0.5 rounded">
+                      Custom
+                    </span>
+                  )}
+                </p>
               </div>
               <StatusSelect value={r.status} options={REIMAGINE_STATUSES} onUpdate={s => updateStatus(r.id, s)} />
             </div>
-            {r.notes && <p className="text-xs text-[#241621]/55 font-body bg-white rounded-lg p-2 mt-2">{r.notes}</p>}
+
+            <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-sm border-t border-[#241621]/8 pt-4">
+              <div>
+                <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Phone</dt>
+                <dd className="text-[#241621] font-body">{r.user_phone || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Email</dt>
+                <dd className="text-[#241621] font-body break-all">{r.user_email || '—'}</dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Pickup / delivery address</dt>
+                <dd className="text-[#241621] font-body whitespace-pre-wrap">{r.address || '—'}</dd>
+              </div>
+              {r.notes && (
+                <div className="sm:col-span-2">
+                  <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Notes</dt>
+                  <dd className="text-[#241621]/75 font-body whitespace-pre-wrap bg-[#241621]/[0.03] rounded-lg p-3 mt-0.5">
+                    {r.notes}
+                  </dd>
+                </div>
+              )}
+            </dl>
+
             {r.images?.length > 0 && (
-              <div className="flex gap-2 mt-3">
-                {r.images.map((img, i) => (
-                  <a key={i} href={img} target="_blank" rel="noreferrer">
-                    <img src={img} alt="" className="w-12 h-12 rounded-lg object-cover hover:opacity-80" />
-                  </a>
-                ))}
+              <div className="mt-4 pt-4 border-t border-[#241621]/8">
+                <p className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-2">
+                  Garment photos ({r.images.length})
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {r.images.map((img, i) => (
+                    <a
+                      key={i}
+                      href={uploadUrl(img)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block border border-[#241621]/15 rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
+                    >
+                      <img src={uploadUrl(img)} alt={`Garment photo ${i + 1}`} className="w-16 h-16 object-cover" />
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </div>

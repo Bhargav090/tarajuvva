@@ -37,34 +37,83 @@ export const NAV_LINKS = [
 ];
 
 export const TICKER_MESSAGES = [
-  '✦ Wear more. Waste less.',
-  '✦ Turn your old clothes into new fits.',
-  '✦ 2 repairs free on a purchase.',
-  '✦ 7 million tonnes of textile waste. Let\'s fix that.',
-  '✦ Circular fashion starts here.',
-  '✦ Every garment has a second life.',
-  '✦ Buy less. Choose well. Make it last.',
+  'SHOP THE DROP',
+  '10 PIECES, 100 OUTFITS',
+  'PIECES THAT DO SIX JOBS',
+  'REIMAGINE YOUR WARDROBE',
+  'SEND US YOUR OLD — GET BACK YOUR NEW',
+  'UPCYCLE INTO MODERN PRESETS',
+  'REMAKE OVER REPLACE',
+  '2 REPAIRS FREE ON PURCHASE',
+];
+
+export const TESTIMONIALS = [
+  {
+    quote: 'I sent in three sarees. Got back two dresses and a co-ord. My mum cried. Good cry.',
+    name: 'Ananya R.',
+    city: 'Bengaluru',
+  },
+  {
+    quote: "Their shirt has lasted three years and I've worn it as a top, jacket, and dress. Math checks out.",
+    name: 'Vikram T.',
+    city: 'Mumbai',
+  },
+  {
+    quote: "First fashion brand that didn't try to lecture me. They just made the cool thing.",
+    name: 'Saanvi M.',
+    city: 'Delhi',
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SHOP
 // ─────────────────────────────────────────────────────────────────────────────
-export const SHOP_CATEGORIES = ['All', 'Tops', 'Co-ords', 'Outerwear', 'Sarees', 'Dresses'];
+export const SHOP_CATEGORIES = [
+  { label: 'Everything', value: null },
+  { label: 'Tops',       value: 'Tops' },
+  { label: 'Bottoms',    value: 'Bottoms' },
+  { label: 'Sets',       value: 'Co-ords' },
+  { label: 'Dresses',    value: 'Dresses' },
+];
 
 export const SORT_OPTIONS = [
-  { value: 'default',    label: 'Sort: Default' },
-  { value: 'price_asc',  label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
+  { value: 'newest',     label: 'Sort: newest' },
+  { value: 'price_asc',  label: 'Price: low → high' },
+  { value: 'price_desc', label: 'Price: high → low' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // REIMAGINE
 // ─────────────────────────────────────────────────────────────────────────────
 export const GARMENTS = [
-  { id: 'saree', label: 'Saree', emoji: '🥻', desc: 'Traditional or designer sarees' },
-  { id: 'kurti', label: 'Kurti', emoji: '👗', desc: 'Any kurta or kurti' },
-  { id: 'shirt', label: 'Shirt', emoji: '👔', desc: 'Formal or casual shirts' },
-  { id: 'pant',  label: 'Pant',  emoji: '👖', desc: 'Trousers or jeans' },
+  {
+    id: 'saree',
+    label: 'Saree',
+    emoji: '🥻',
+    desc: 'Six yards of memory. Reimagined.',
+    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?crop=entropy&cs=srgb&fm=jpg&w=900&q=80',
+  },
+  {
+    id: 'kurti',
+    label: 'Kurti',
+    emoji: '👗',
+    desc: 'That kurti you stopped wearing in 2019.',
+    image: 'https://images.unsplash.com/photo-1745313452052-0e4e341f326c?crop=entropy&cs=srgb&fm=jpg&w=900&q=80',
+  },
+  {
+    id: 'shirt',
+    label: 'Shirt',
+    emoji: '👔',
+    desc: 'His shirt. Your rules now.',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?crop=entropy&cs=srgb&fm=jpg&w=900&q=80',
+  },
+  {
+    id: 'pant',
+    label: 'Pant',
+    emoji: '👖',
+    desc: 'Old jeans. New plot.',
+    image: 'https://images.unsplash.com/photo-1714143136372-ddaf8b606da7?crop=entropy&cs=srgb&fm=jpg&w=900&q=80',
+  },
 ];
 
 export const TRANSFORMATIONS = {
@@ -81,7 +130,38 @@ export const REIMAGINE_PRESETS = [
   { from: 'Pant',  to: 'Jorts / Flare',     emoji: '👖', color: BRAND.blue     },
 ];
 
-export const REIMAGINE_STEPS = ['Garment', 'Transform', 'Summary', 'Upload', 'Details'];
+export const TRANSFORMATION_META = {
+  'Dress':              { display: 'Dress', blurb: 'One piece. Many moods.' },
+  'Co-ord Set':         { display: 'Co-ord Set', blurb: 'Matched set. Zero effort.' },
+  'Blouse + Skirt':     { display: 'Blouse + Skirt', blurb: 'Two pieces from six yards.' },
+  'Cape + Palazzos':    { display: 'Cape + Palazzos', blurb: 'Drama meets ease.' },
+  'Skirt':              { display: 'Skirt', blurb: 'Spin-friendly. Pocket optional.' },
+  'Halter Top':         { display: 'Racerback Halter Top', blurb: 'Backless. Strappy. Summer-coded.' },
+  'Crop Top':           { display: 'Crop Top', blurb: 'Short. Sharp. Very now.' },
+  'Peplum Top':         { display: 'Peplum Top', blurb: 'Waist definition without the work.' },
+  'Japanese Shirt':     { display: 'Japanese Shirt', blurb: 'Square cut. Dropped shoulder. Big mood.' },
+  'Corset Back':        { display: 'Corset Back', blurb: 'Structured back. Soft front.' },
+  'Tote Bag':           { display: 'Tote Bag', blurb: 'Carry the memory. Literally.' },
+  'Patchwork':          { display: 'Patchwork', blurb: 'Franken-fit. On purpose.' },
+  'Jorts (Shorts)':     { display: 'Jorts', blurb: 'Cutoffs with a conscience.' },
+  'Flared Pants':       { display: 'Flared Pants', blurb: 'Disco is dead. Long live the flare.' },
+  'Palazzo':            { display: 'Palazzo', blurb: 'Wide leg. Full breeze.' },
+  'Custom':             { display: 'Custom', blurb: 'Your brief. Our scissors.' },
+};
+
+export function getTransformationMeta(name) {
+  return TRANSFORMATION_META[name] || { display: name, blurb: 'Made to your measurements.' };
+}
+
+export const REIMAGINE_STEPS = ['Garment', 'Transform', 'Details'];
+
+export const REIMAGINE_FLOW = ['Pick base', 'Pick preset', 'Your details', 'Done'];
+
+export const REIMAGINE_STEP_HEADINGS = [
+  'What did you bring us?',
+  null, // transform — dynamic per garment
+  'Tell us where to send it.',
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HOME — QUICK DECISION CARDS
@@ -117,30 +197,31 @@ export const STATUS_COLORS = {
 // ─────────────────────────────────────────────────────────────────────────────
 export const WAITLIST_CONFIGS = {
   repair: {
-    type:        'repair',
-    icon:        'Wrench',
-    accentColor:  BRAND.red,
-    badge:        'Coming Soon',
-    headline:   ['Repair is', 'coming.'],
-    subtext:    'Because throwing away is lazy. Join the waitlist and be first to know.',
-    ctaLabel:   '🔧 Join Repair Waitlist',
-    preview: {
-      title: 'What Repair will include',
-      items: ['Stitch & seam repairs','Zipper replacements','Button & hook fixes','Lining repairs','Custom alterations'],
-    },
+    type: 'repair',
+    bgVar: '--tj-repair',
+    blobPosition: 'top',
+    eyebrow: '03 · Repair · Coming soon',
+    headline: ['The mend', 'is the mood.'],
+    subtext: "Buttons, hems, holes, hearts. Send us anything that's broken and we'll bring it back — visible repairs encouraged. Launching mid-2026.",
+    formLabel: 'Be the first in line',
+    stats: [
+      { value: '~₹299', label: 'starting price' },
+      { value: '7 days', label: 'average turnaround' },
+      { value: 'Pan-IN', label: 'pickup + drop' },
+    ],
   },
   donate: {
-    type:        'donate',
-    icon:        'Heart',
-    accentColor:  BRAND.blue,
-    badge:        'Coming Soon',
-    headline:   ["Clothes shouldn't", 'end with you.'],
-    subtext:    'Join the waitlist and be first to donate when the program launches.',
-    ctaLabel:   '💙 Join Donate Waitlist',
+    type: 'donate',
+    bgVar: '--tj-donate',
+    blobPosition: 'bottom',
+    eyebrow: '04 · Donate · Coming soon',
+    headline: ["When it's done", 'with you.'],
+    subtext: 'Drop garments at any Tarajuvva pickup point. We sort, route to NGOs, repurpose with maker collectives, or recycle yarns. Documented, tracked, no greenwashing.',
+    formLabel: 'Get a heads-up at launch',
     stats: [
-      { value: '7M',  label: 'Tonnes wasted annually' },
-      { value: '60%', label: 'Clothes never worn again' },
-      { value: '∞',   label: "A garment's potential" },
+      { value: '3 routes', label: 'reuse · repair · recycle' },
+      { value: 'Free', label: 'always' },
+      { value: 'Receipt', label: 'where it ended up' },
     ],
   },
 };
@@ -148,6 +229,15 @@ export const WAITLIST_CONFIGS = {
 // ─────────────────────────────────────────────────────────────────────────────
 // ABOUT PAGE
 // ─────────────────────────────────────────────────────────────────────────────
+export const MANIFESTO_LINES = [
+  { title: 'No polyester. Ever.', desc: "Not even blends. Not even 'just 5%'." },
+  { title: 'Every garment ships with a remake guide.', desc: 'So you know what it can become later.' },
+  { title: 'Customer support over influencer marketing.', desc: "We'd rather fix your shirt than promote a new one." },
+  { title: 'Local first.', desc: 'Made within 200km of where it ships from, when possible.' },
+  { title: 'Honest pricing.', desc: 'Margins on the page. We hide nothing.' },
+  { title: 'Not perfect. Just trying.', desc: 'We mess up. We post about it. We fix it.' },
+];
+
 export const BRAND_VALUES = [
   { title: 'Circular',      desc: 'Every garment has multiple lives. We help you find them all.',                      emoji: '🔄' },
   { title: 'Honest',        desc: "We're not here to sell you more stuff. We're here to help you use what you own.",   emoji: '💬' },
@@ -156,8 +246,8 @@ export const BRAND_VALUES = [
 ];
 
 export const HERO_STATS = [
-  { value: '500+', label: 'Happy customers' },
-  { value: '7M',   label: 'Tonnes of waste to fight' },
-  { value: '₹199', label: 'Custom consultation' },
-  { value: '24hrs',label: 'Reimagine response' },
+  { value: '100+', label: 'ways to wear 10 pieces' },
+  { value: '1×',   label: 'garment, 4 lifetimes' },
+  { value: '₹199', label: 'remake consult' },
+  { value: '0',    label: 'polyester, ever' },
 ];

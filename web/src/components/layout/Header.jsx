@@ -8,14 +8,12 @@ import { useAuth } from '../../context/AuthContext';
 import { NAV_LINKS } from '../../utils/constants';
 import UserAvatar from '../ui/UserAvatar';
 import ConfirmDialog from '../ui/ConfirmDialog';
-import brandIcon from '../../assets/icons/Artboard 3@2x-8.png';
 
-export default function Header() {
+export default function Header({ hasTicker = false }) {
   const { totalItems, openCart } = useCart();
   const { user, logout }         = useAuth();
   const navigate                  = useNavigate();
   const [open, setOpen]           = useState(false);
-  const [scrolled, setScrolled]   = useState(false);
   const [userMenu, setUserMenu]   = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
 
@@ -28,37 +26,28 @@ export default function Header() {
   };
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 12);
-    window.addEventListener('scroll', fn, { passive: true });
-    return () => window.removeEventListener('scroll', fn);
-  }, []);
-
-  // Prevent body scroll when mobile nav open
-  useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
   const navLinkClass = ({ isActive }) =>
-    `text-xl font-bold font-display transition-colors tracking-wide ${
-      isActive ? 'text-[#a8c74a]' : 'text-[#241621]/70 hover:text-[#a8c74a]'
+    `text-sm font-medium tracking-wide transition-colors ${
+      isActive ? 'text-black' : 'text-black/60 hover:text-black'
     }`;
 
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-[#241621]/8'
-            : 'bg-white'
-        }`}
-        style={{ top: 'var(--ticker-h, 40px)' }}
+        className="fixed left-0 right-0 z-50 bg-white/85 backdrop-blur-xl border-b border-black/10"
+        style={{ top: hasTicker ? 'var(--ticker-h)' : 0 }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
+        <div className="tj-container">
+          <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center" onClick={() => setOpen(false)}>
-              <img src={brandIcon} alt="Tarajuvva" className="w-24 sm:w-32 h-auto object-contain" />
+            <Link to="/" className="flex items-center gap-0.5" onClick={() => setOpen(false)}>
+              <span className="font-display font-extrabold tracking-tighter text-2xl text-[#0a0a0a]">
+                tarajuvva<span className="text-[var(--tj-shop-deep)]">.</span>
+              </span>
             </Link>
 
             {/* Desktop Nav */}
@@ -73,19 +62,11 @@ export default function Header() {
               {/* Cart */}
               <button
                 onClick={openCart}
-                className="relative p-2 rounded-xl text-[#241621] hover:bg-[#241621]/6 transition-colors"
+                className="relative inline-flex items-center gap-2 px-3 py-2 rounded-full border border-black/15 text-sm font-medium text-[#0a0a0a] hover:border-black/30 transition-colors"
                 aria-label="Cart"
               >
-                <ShoppingBag size={20} />
-                {totalItems > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }} animate={{ scale: 1 }}
-                    className="absolute -top-0.5 -right-0.5 bg-[#e34334] text-white text-[9px] font-black rounded-full w-4.5 h-4.5 flex items-center justify-center font-display"
-                    style={{ width: 17, height: 17 }}
-                  >
-                    {totalItems > 9 ? '9+' : totalItems}
-                  </motion.span>
-                )}
+                <ShoppingBag size={18} />
+                <span className="font-display">{totalItems > 9 ? '9+' : totalItems}</span>
               </button>
 
               {/* User menu */}

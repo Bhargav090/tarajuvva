@@ -9,7 +9,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import { SHOP_CATEGORIES } from '../../utils/constants';
 
-const CATEGORIES = SHOP_CATEGORIES.filter((c) => c !== 'All');
+const CATEGORIES = SHOP_CATEGORIES.filter(c => c.value).map(c => c.value);
 
 /** ~6MB file before base64 expansion keeps payload reasonable for JSON + LONGTEXT. */
 const MAX_FILE_BYTES = 6 * 1024 * 1024;

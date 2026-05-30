@@ -18,23 +18,30 @@ export default function LoopSection() {
   } = useLoopVerticalState(0);
 
   return (
-    <section ref={ref} className="section bg-white border-y border-[#241621]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+    <section
+      ref={ref}
+      className="relative tj-section overflow-hidden bg-[#f9f9f9] border-y border-black"
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+        <div className="tj-loop-blob tj-loop-blob-green" />
+        <div className="tj-loop-blob tj-loop-blob-orange" />
+      </div>
+
+      <div className="tj-container relative">
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.55 }}
+            className="lg:col-span-5 order-2 lg:order-1"
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-5 bg-[#a8c74a]/10 text-[#a8c74a] border border-[#a8c74a]/20">
-              The system
-            </span>
-            <h2 className="font-display font-black text-3xl sm:text-4xl lg:text-[2.75rem] text-[#241621] leading-[1.1] mb-4">
+            <p className="tj-eyebrow">The system</p>
+            <h2 className="tj-h2 mt-4 text-[#0a0a0a]">
               Four verticals.
               <br />
-              One closed loop.
+              <span className="italic font-light">One closed loop.</span>
             </h2>
-            <p className="text-[#241621]/55 font-display text-base leading-relaxed mb-8 max-w-md">
+            <p className="text-black/55 text-base leading-relaxed mb-8 max-w-md mt-4">
               Tarajuvva isn&apos;t a clothing brand pretending to care. It&apos;s an operating system: every garment can be bought, remade, fixed, or donated. No exit. No landfill.
             </p>
 
@@ -43,7 +50,7 @@ export default function LoopSection() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="rounded-2xl border-2 border-[#241621] p-6 sm:p-8 mb-8 min-h-[200px] flex flex-col justify-between"
+              className="p-6 sm:p-8 mb-8 min-h-[200px] flex flex-col justify-between"
               style={{ background: active.color, color: active.textOnColor }}
             >
               <div>
@@ -54,7 +61,7 @@ export default function LoopSection() {
                   {active.headline}
                 </p>
                 {active.subline && (
-                  <p className="mt-3 text-sm font-display opacity-80 leading-relaxed">
+                  <p className="mt-3 text-sm opacity-80 leading-relaxed">
                     {active.subline}
                   </p>
                 )}
@@ -81,10 +88,11 @@ export default function LoopSection() {
                     onFocus={() => setHoverIndex(i)}
                     onBlur={() => setHoverIndex(null)}
                     onClick={() => setActiveIndex(i)}
-                    className="rounded-lg px-3.5 py-2 text-xs font-bold font-display border-2 border-[#241621] transition-colors duration-200"
+                    className="px-3.5 py-2 text-xs font-bold font-display border transition-colors duration-200"
                     style={{
-                      background: isPinned || isHover ? '#241621' : 'transparent',
-                      color: isPinned || isHover ? '#eef4d1' : '#241621',
+                      background: isPinned || isHover ? '#0a0a0a' : '#ffffff',
+                      color: isPinned || isHover ? '#ffffff' : 'rgba(10, 10, 10, 0.45)',
+                      borderColor: isPinned || isHover ? '#0a0a0a' : 'rgba(10, 10, 10, 0.15)',
                     }}
                   >
                     {v.num} {v.action}
@@ -98,7 +106,7 @@ export default function LoopSection() {
             initial={{ opacity: 0, scale: 0.96 }}
             animate={inView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.55, delay: 0.1 }}
-            className="flex justify-center lg:justify-end"
+            className="lg:col-span-7 order-1 lg:order-2 flex justify-center lg:justify-end"
           >
             <FashionLoop
               activeIndex={activeIndex}

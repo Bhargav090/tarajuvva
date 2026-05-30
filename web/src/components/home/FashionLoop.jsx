@@ -1,23 +1,22 @@
 import { useMemo, useState } from 'react';
-import { BRAND } from '../../utils/constants';
 
 export const LOOP_VERTICALS = [
   {
     num: '01',
     action: 'Shop',
     to: '/shop',
-    color: BRAND.green,
-    textOnColor: BRAND.dark,
+    color: '#c8ff2e',
+    textOnColor: '#0a0a0a',
     headline: 'New garments built for 100 outfits.',
     subline: 'Modular, functional, easy-wear pieces.',
-    cta: 'Shop the drop',
+    cta: 'Browse the drop',
   },
   {
     num: '02',
     action: 'Reimagine',
     to: '/reimagine',
-    color: BRAND.burgundy,
-    textOnColor: BRAND.textLight,
+    color: '#6e0e1a',
+    textOnColor: '#ffffff',
     headline: 'Send us your old. Get back your new.',
     subline: 'Upcycle into modern presets or go custom.',
     cta: 'Start a remake',
@@ -27,7 +26,7 @@ export const LOOP_VERTICALS = [
     action: 'Repair',
     to: '/repair',
     color: '#1a3df0',
-    textOnColor: BRAND.textLight,
+    textOnColor: '#ffffff',
     headline: 'The mend is the mood.',
     subline: "Coming soon: we'll mend it back to life.",
     cta: 'Notify me',
@@ -37,9 +36,9 @@ export const LOOP_VERTICALS = [
     action: 'Donate',
     to: '/donate',
     color: '#ff6a1a',
-    textOnColor: BRAND.dark,
-    headline: "If we can't reuse it, someone else will.",
-    subline: 'Give garments their next life.',
+    textOnColor: '#ffffff',
+    headline: "When it's done with you.",
+    subline: 'Coming soon: every donated piece finds a next person, a next project, or a next purpose.',
     cta: 'Notify me',
   },
 ];
@@ -72,7 +71,7 @@ function LoopNode({ vertical, position, isHighlighted, onEnter, onLeave, onSelec
   return (
     <button
       type="button"
-      className="absolute z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#241621] focus-visible:ring-offset-2"
+      className="absolute z-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
       style={{
         top: position.top,
         left: position.left,
@@ -89,9 +88,9 @@ function LoopNode({ vertical, position, isHighlighted, onEnter, onLeave, onSelec
       <div
         className={[
           'w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full',
-          'flex flex-col items-center justify-center border-2 border-[#241621]',
+          'flex flex-col items-center justify-center border-2 border-black',
           'transition-all duration-300',
-          isHighlighted ? 'scale-110 shadow-[6px_6px_0_0_#000]' : 'scale-100',
+          isHighlighted ? 'scale-110 shadow-[6px_6px_0_0_#0a0a0a]' : 'scale-100 shadow-none',
         ].join(' ')}
         style={{ background: vertical.color, color: vertical.textOnColor }}
       >
@@ -118,8 +117,8 @@ export default function FashionLoop({
   );
 
   return (
-    <div className="relative w-full max-w-[440px] aspect-square mx-auto">
-      {/* Outermost dashed orbit — rotates to suggest the closed loop cycle */}
+    <div className="relative w-full max-w-[480px] aspect-square mx-auto">
+      {/* Outer dashed orbit — rotates */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none fashion-loop-orbit"
         viewBox="0 0 200 200"
@@ -130,21 +129,24 @@ export default function FashionLoop({
           cx="100"
           cy="100"
           r="98"
-          stroke="#241621"
-          strokeWidth="0.5"
+          stroke="#0a0a0a"
+          strokeWidth="0.6"
           strokeDasharray="2 4"
         />
       </svg>
 
-      <div className="absolute inset-6 rounded-full border border-[#241621]/20 pointer-events-none" />
-      <div className="absolute inset-16 rounded-full border border-[#241621]/10 pointer-events-none" />
+      {/* Inner solid rings — static light grey */}
+      <div className="absolute inset-6 rounded-full border border-black/20 pointer-events-none" />
+      <div className="absolute inset-16 rounded-full border border-black/10 pointer-events-none" />
 
       <div className="absolute inset-[22%] flex flex-col items-center justify-center text-center pointer-events-none px-4">
-        <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] font-display text-[#241621]/45 leading-relaxed">
+        <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em] font-display text-black/40 leading-none">
           Circular Fashion
-          <br />
+        </p>
+        <p className="font-display font-black text-5xl sm:text-6xl text-[#0a0a0a] leading-none mt-1">
           OS
-          <br />
+        </p>
+        <p className="text-[9px] sm:text-[10px] font-mono-tj uppercase tracking-[0.18em] text-black/45 mt-1.5">
           v1.0 — IN
         </p>
       </div>

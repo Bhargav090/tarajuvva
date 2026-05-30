@@ -1,90 +1,64 @@
 import { Link } from 'react-router-dom';
-import { Globe, AtSign, Mail } from 'lucide-react';
 import { NAV_LINKS } from '../../utils/constants';
-import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
 
 export default function Footer() {
+  const verticals = NAV_LINKS.filter(l => l.to !== '/about');
+  const brandLinks = NAV_LINKS.filter(l => l.to === '/about');
+
   return (
-    <footer className="bg-[#241621] text-[#eef4d1]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
-          {/* Brand */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <div className="flex items-center mb-5">
-              <img src={darkBrandIcon} alt="Tarajuvva" className="w-32 h-auto object-contain" />
-            </div>
-            <p className="text-[#eef4d1]/60 text-sm leading-relaxed font-body max-w-xs">
-              A circular fashion system built around your wardrobe. Wear more. Buy less. Fix what you already own.
-            </p>
-            <div className="flex gap-3 mt-6">
-              {[
-                { icon: Globe, href: '#', label: 'Website' },
-                { icon: AtSign, href: '#', label: 'Instagram' },
-                { icon: Mail, href: 'mailto:hello@tarajuvva.com', label: 'Email' },
-              ].map(({ icon: Icon, href, label }) => (
-                <a
-                  key={label} href={href}
-                  className="w-9 h-9 rounded-xl border border-[#eef4d1]/12 flex items-center justify-center text-[#eef4d1]/50 hover:text-[#eef4d1] hover:border-[#eef4d1]/30 transition-all"
-                  aria-label={label}
-                >
-                  <Icon size={16} />
-                </a>
-              ))}
-            </div>
+    <footer className="border-t border-black bg-white">
+      <div className="tj-container py-16 md:py-20 grid md:grid-cols-12 gap-10">
+        <div className="md:col-span-5">
+          <div className="font-display font-extrabold tracking-tighter text-5xl md:text-6xl leading-[0.85] text-[#0a0a0a]">
+            tarajuvva<span className="text-[var(--tj-shop-deep)]">.</span>
           </div>
-
-          {/* Navigation */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-display">Explore</h4>
-            <ul className="space-y-3">
-              {NAV_LINKS.map(l => (
-                <li key={l.to}>
-                  <Link to={l.to} className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-body">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Policies */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-display">Policies</h4>
-            <ul className="space-y-3">
-              {['Shipping Policy','Returns & Exchanges','Privacy Policy','Terms of Use'].map(l => (
-                <li key={l}>
-                  <a href="#" className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-body">{l}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-widest text-[#eef4d1]/40 mb-5 font-display">Contact</h4>
-            <ul className="space-y-3">
-              <li>
-                <a href="mailto:hello@tarajuvva.com" className="text-sm text-[#eef4d1]/65 hover:text-[#eef4d1] transition-colors font-body">
-                  hello@tarajuvva.com
-                </a>
-              </li>
-              <li className="text-sm text-[#eef4d1]/65 font-body">Hyderabad, India 🇮🇳</li>
-              <li>
-                <span className="inline-flex items-center gap-1.5 bg-[#a8c74a]/50 rounded-full px-3 py-1 text-xs font-semibold text-[#241621] font-display">
-                  ✦ Response within 24 hours
-                </span>
-              </li>
-            </ul>
-          </div>
+          <p className="mt-4 text-black/60 max-w-md font-display">
+            A circular fashion operating system, made in India. Wear it. Remake it. Repair it. Donate it.
+          </p>
         </div>
 
-        {/* Bottom */}
-        <div className="pt-8 border-t border-[#eef4d1]/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-[#eef4d1]/35 font-body">
+        <div className="md:col-span-3">
+          <p className="tj-eyebrow mb-4">Verticals</p>
+          <ul className="space-y-2 font-display">
+            {verticals.map(l => (
+              <li key={l.to}>
+                <Link to={l.to} className="hover:underline text-[#0a0a0a]">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="md:col-span-2">
+          <p className="tj-eyebrow mb-4">Brand</p>
+          <ul className="space-y-2 font-display">
+            {brandLinks.map(l => (
+              <li key={l.to}>
+                <Link to={l.to} className="hover:underline text-[#0a0a0a]">
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="md:col-span-2">
+          <p className="tj-eyebrow mb-4">Reach</p>
+          <ul className="space-y-2 font-display">
+            <li>
+              <a href="mailto:hi@tarajuvva.in" className="hover:underline text-[#0a0a0a]">
+                hi@tarajuvva.in
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="border-t border-black/10">
+        <div className="tj-container py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-black/40 font-display">
             © {new Date().getFullYear()} Tarajuvva. All rights reserved.
-          </p>
-          <p className="text-xs text-[#eef4d1]/35 font-body">
-            Wear more. Waste less. 🌿
           </p>
         </div>
       </div>

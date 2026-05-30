@@ -11,6 +11,7 @@ import UserAvatar from '../../components/ui/UserAvatar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import api from '../../utils/api';
+import { uploadUrl } from '../../utils/uploadUrl';
 
 const TABS = [
   { id: 'profile', label: 'Profile',           icon: User     },
@@ -222,10 +223,13 @@ export default function Profile() {
             ) : reimagine.map(r => (
               <div key={r.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8">
                 <div className="flex items-start justify-between gap-4">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-[#241621]/40 font-body mb-1">Request #{r.id.slice(0,8).toUpperCase()}</p>
                     <p className="font-bold text-[#241621] font-display">
                       {r.garment_type} → {r.transformation}
+                      {r.is_custom && (
+                        <span className="ml-2 text-[10px] font-semibold uppercase text-[#4c1b1b]">Custom</span>
+                      )}
                     </p>
                     <p className="text-xs text-[#241621]/45 font-body mt-0.5 flex items-center gap-1">
                       <Clock size={11} /> {new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -233,8 +237,43 @@ export default function Profile() {
                   </div>
                   <Badge status={r.status} />
                 </div>
+                <dl className="mt-4 grid sm:grid-cols-2 gap-3 text-sm">
+                  {r.user_phone && (
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Phone</dt>
+                      <dd className="text-[#241621]/75 font-body">{r.user_phone}</dd>
+                    </div>
+                  )}
+                  {r.user_email && (
+                    <div>
+                      <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Email</dt>
+                      <dd className="text-[#241621]/75 font-body break-all">{r.user_email}</dd>
+                    </div>
+                  )}
+                  {r.address && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Address</dt>
+                      <dd className="text-[#241621]/75 font-body whitespace-pre-wrap">{r.address}</dd>
+                    </div>
+                  )}
+                  {r.notes && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Your notes</dt>
+                      <dd className="text-[#241621]/75 font-body whitespace-pre-wrap">{r.notes}</dd>
+                    </div>
+                  )}
+                </dl>
+                {r.images?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {r.images.map((img, i) => (
+                      <a key={i} href={uploadUrl(img)} target="_blank" rel="noreferrer">
+                        <img src={uploadUrl(img)} alt="" className="w-14 h-14 rounded-lg object-cover border border-[#241621]/10 hover:opacity-80" />
+                      </a>
+                    ))}
+                  </div>
+                )}
                 {r.admin_notes && (
-                  <div className="mt-4 p-3 bg-white rounded-xl">
+                  <div className="mt-4 p-3 bg-[#4c1b1b]/5 rounded-xl border border-[#4c1b1b]/10">
                     <p className="text-xs font-bold text-[#241621]/50 mb-1 font-display">Note from team</p>
                     <p className="text-sm text-[#241621] font-body">{r.admin_notes}</p>
                   </div>

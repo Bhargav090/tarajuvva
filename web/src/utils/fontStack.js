@@ -1,6 +1,9 @@
-/** Roc Grotesk first; Outfit/Poppins only for glyphs outside demo unicode-range. */
+/** Reference site stack: Satoshi body, Cabinet Grotesk display (Fontshare). */
 export const FONT_STACK =
-  "'Roc Grotesk', Outfit, Poppins, system-ui, sans-serif";
+  "'Satoshi', ui-sans-serif, system-ui, sans-serif";
+
+export const FONT_DISPLAY =
+  "'Cabinet Grotesk', 'Satoshi', ui-sans-serif, system-ui, sans-serif";
 
 export const FONT_FALLBACK =
-  'Outfit, Poppins, system-ui, sans-serif';
+  'ui-sans-serif, system-ui, sans-serif';

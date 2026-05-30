@@ -1,19 +1,37 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
-import StepIndicator from '../../components/ui/StepIndicator';
+import ReimagineStepBar from '../../components/ui/ReimagineStepBar';
 import DropZone from '../../components/ui/DropZone';
-import Button from '../../components/ui/Button';
-import { Input, Textarea } from '../../components/ui/FormField';
-import { GARMENTS, TRANSFORMATIONS, REIMAGINE_STEPS } from '../../utils/constants';
+import {
+  GARMENTS,
+  TRANSFORMATIONS,
+  REIMAGINE_STEP_HEADINGS,
+  getTransformationMeta,
+} from '../../utils/constants';
 import { useReimagineSubmit } from '../../hooks/useReimagineSubmit';
-import garmentFront from '../../assets/icons/Artboard 3@2x-8.png';
-import garmentSide from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
 
-const GARMENT_VIEWS = [
-  { label: 'Front view', src: garmentFront, alt: 'Garment front view' },
-  { label: 'Side view', src: garmentSide, alt: 'Garment side view' },
-  { label: 'Detail view', src: garmentFront, alt: 'Garment detail view', mirror: true },
-];
+const FIELD =
+  'w-full px-4 py-3 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm';
+
+function FieldWrap({ label, required, children }) {
+  return (
+    <div>
+      {label && (
+        <label className="block text-xs font-mono-tj uppercase tracking-[0.18em] text-black/60 mb-2">
+          {label}{required && ' *'}
+        </label>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function displayStepNum(step) {
+  if (step === 0) return '01';
+  if (step === 1) return '02';
+  if (step === 3) return '03';
+  return '01';
+}
 
 export default function Reimagine() {
   const {
@@ -25,155 +43,247 @@ export default function Reimagine() {
     onSubmit, loading, done,
   } = useReimagineSubmit();
 
-  if (done) return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4">
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-        <div className="w-20 h-20 bg-[#4c1b1b]/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
-          <CheckCircle size={40} className="text-[#4c1b1b]" />
-        </div>
-        <h2 className="text-3xl font-black text-[#241621] font-display mb-3">Request Sent!</h2>
-        <p className="text-[#241621]/60 font-body text-sm leading-relaxed">
-          Thank you for reimagining with Tarajuvva. We'll review your request and get back within 24 hours.
-        </p>
-      </motion.div>
-    </div>
-  );
+  const garmentLabel = GARMENTS.find(g => g.id === garment)?.label ?? '';
+  const transformMeta = getTransformationMeta(transformation);
+
+  if (done) {
+    return (
+      <div className="min-h-[70vh] bg-white flex items-center justify-center px-4 border-b border-black">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-16 h-16 border border-black flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={32} className="text-[var(--tj-reimagine)]" />
+          </div>
+          <h2 className="tj-h2 text-3xl text-[#0a0a0a]">Request sent.</h2>
+          <p className="text-black/60 mt-4 leading-relaxed">
+            Thank you for reimagining with Tarajuvva. We&apos;ll review your request and get back within 24 hours.
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  const stepHeading =
+    step === 1
+      ? `How to transform your ${garmentLabel}?`
+      : step !== 3
+        ? REIMAGINE_STEP_HEADINGS[step]
+        : null;
 
   return (
-    <div className="min-h-screen bg-white pt-0 sm:pt-2">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 sm:py-5">
-        {/* Page header */}
-        <div className="text-center mb-4 sm:mb-5">
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-3 bg-[#4c1b1b]/10 text-[#4c1b1b] border border-[#4c1b1b]/20">
-            Reimagine
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-black text-[#241621] font-display leading-tight">
-            Bored of<br />
-            <span className="text-[#4c1b1b]">your clothes?</span>
+    <div className="min-h-screen bg-white">
+      <section className="border-b border-black bg-[var(--tj-reimagine)] text-white" data-testid="reimagine-hero">
+        <div className="tj-container py-14 md:py-20 lg:py-24">
+          <p className="tj-eyebrow text-white/60">02 · Reimagine</p>
+          <h1 className="tj-h1 mt-3 text-white">
+            Send the old.
+            <br />
+            <span className="italic font-light">Get the new.</span>
           </h1>
-          <p className="mt-3 text-[#241621]/55 font-body">Transform them into something you'll love again.</p>
+          <p className="text-white/75 text-lg md:text-xl max-w-2xl mt-6 leading-relaxed">
+            Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour.
+          </p>
         </div>
+      </section>
 
-        <StepIndicator steps={REIMAGINE_STEPS} current={step} />
+      <ReimagineStepBar currentStep={step} />
 
-        <div className="mt-4 sm:mt-5 bg-white rounded-3xl p-5 sm:p-6 border border-[#241621]/8">
+      <section className="border-b border-black bg-white">
+        <div className="tj-container py-12 md:py-16 lg:py-20 pb-20">
+          {step !== 3 && (
+            <>
+              <p className="tj-eyebrow mb-3">Step {displayStepNum(step)}</p>
+              {stepHeading && (
+                <h2 className="tj-h2 text-[#0a0a0a] mb-10 md:mb-12 max-w-3xl">
+                  {stepHeading}
+                </h2>
+              )}
+            </>
+          )}
+
           <AnimatePresence mode="wait">
-            {/* Step 0 — Garment */}
             {step === 0 && (
-              <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#241621] font-display mb-6">Select your garment</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {GARMENTS.map(g => (
-                    <button
-                      key={g.id} onClick={() => { setGarment(g.id); setStep(1); }}
-                      className={`flex flex-col items-start gap-2 p-5 rounded-2xl border-2 text-left transition-all hover:-translate-y-0.5 ${
-                        garment === g.id ? 'border-[#4c1b1b] bg-[#4c1b1b]/5' : 'border-[#241621]/10 hover:border-[#4c1b1b]/40'
-                      }`}
-                    >
-                      <span className="text-3xl">{g.emoji}</span>
-                      <div>
-                        <p className="font-bold text-[#241621] font-display">{g.label}</p>
-                        <p className="text-xs text-[#241621]/45 font-body">{g.desc}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              <motion.div
+                key="s0"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5"
+              >
+                {GARMENTS.map(g => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    data-testid={`segment-${g.id}`}
+                    onClick={() => { setGarment(g.id); setStep(1); }}
+                    className="text-left tj-card group hover:-translate-y-1 transition-transform overflow-hidden"
+                  >
+                    <div className="aspect-square overflow-hidden bg-[var(--tj-bg-soft)]">
+                      <img
+                        src={g.image}
+                        alt={g.label}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                    <div className="p-4 md:p-5 border-t border-black">
+                      <p className="font-display text-xl md:text-2xl font-extrabold text-[#0a0a0a] leading-tight">
+                        {g.label}
+                      </p>
+                      <p className="text-sm text-black/60 mt-1 leading-snug">{g.desc}</p>
+                      <span className="mt-3 md:mt-4 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/70 group-hover:text-black">
+                        Pick this <ArrowRight size={12} />
+                      </span>
+                    </div>
+                  </button>
+                ))}
               </motion.div>
             )}
 
-            {/* Step 1 — Transformation */}
             {step === 1 && (
-              <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#241621] font-display mb-6">
-                  How to transform your {GARMENTS.find(g => g.id === garment)?.label}?
-                </h2>
-                <div className="space-y-2">
+              <motion.div
+                key="s1"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+              >
+                <div className="grid sm:grid-cols-2 gap-3 max-w-3xl">
                   {(TRANSFORMATIONS[garment] || []).map(t => (
                     <button
-                      key={t} onClick={() => { setTransformation(t); setStep(2); }}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
-                        transformation === t ? 'border-[#4c1b1b] bg-[#4c1b1b]/5' : 'border-[#241621]/10 hover:border-[#4c1b1b]/40'
+                      key={t}
+                      type="button"
+                      onClick={() => { setTransformation(t); setStep(3); }}
+                      className={`flex items-center justify-between p-5 border text-left transition-all hover:-translate-y-0.5 ${
+                        transformation === t
+                          ? 'border-black bg-black text-white'
+                          : 'border-black/20 hover:border-black'
                       }`}
                     >
-                      <span className="font-semibold text-[#241621] font-display">{t}</span>
-                      <ArrowRight size={16} className="text-[#241621]/30" />
+                      <span className="font-display font-bold">
+                        {getTransformationMeta(t).display}
+                      </span>
+                      <ArrowRight size={16} className="opacity-40" />
                     </button>
                   ))}
                 </div>
-                <Button variant="ghost" icon={ArrowLeft} className="mt-5" onClick={() => setStep(0)}>Back</Button>
+                <button
+                  type="button"
+                  onClick={() => setStep(0)}
+                  className="mt-8 inline-flex items-center gap-2 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/60 hover:text-black"
+                >
+                  <ArrowLeft size={14} /> Back
+                </button>
               </motion.div>
             )}
 
-            {/* Step 2 — Summary */}
-            {step === 2 && (
-              <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#241621] font-display mb-6">Your transformation</h2>
-                <div className="bg-[#4c1b1b]/5 rounded-2xl p-6 border border-[#4c1b1b]/15 mb-8">
-                  <p className="text-[#241621]/55 text-sm font-body mb-2">You are converting:</p>
-                  <div className="flex items-center gap-4">
-                    <span className="text-2xl font-black text-[#241621] font-display">
-                      {GARMENTS.find(g => g.id === garment)?.label}
-                    </span>
-                    <ArrowRight size={20} className="text-[#4c1b1b]" />
-                    <span className="text-2xl font-black text-[#4c1b1b] font-display">{transformation}</span>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <Button variant="ghost" icon={ArrowLeft} onClick={() => setStep(1)}>Back</Button>
-                  <Button variant="burgundy" fullWidth icon={ArrowRight} iconPosition="right" onClick={() => setStep(3)}>
-                    Continue
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 3 — Upload */}
             {step === 3 && (
-              <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#241621] font-display mb-2">Upload photos</h2>
-                <p className="text-[#241621]/50 font-body text-sm mb-6">Show us the garment from multiple angles.</p>
-                <DropZone files={files} onAdd={addFiles} onRemove={removeFile} />
-                <Textarea
-                  label="Notes (optional)"
-                  name="notes"
-                  value={details.notes}
-                  onChange={e => setDetails(p => ({ ...p, notes: e.target.value }))}
-                  rows={3}
-                  placeholder="Any specific requirements, fabric details, etc."
-                  className="mt-5"
-                />
-                <div className="flex gap-3 mt-5">
-                  <Button variant="ghost" icon={ArrowLeft} onClick={() => setStep(2)}>Back</Button>
-                  <Button variant="burgundy" fullWidth icon={ArrowRight} iconPosition="right" onClick={() => setStep(4)}>
-                    Continue
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Step 4 — Details */}
-            {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-xl font-black text-[#241621] font-display mb-6">Your details</h2>
-                <form onSubmit={onSubmit} className="space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <Input label="Full Name" name="user_name" value={details.user_name} onChange={e => setDetails(p => ({ ...p, user_name: e.target.value }))} required />
-                    <Input label="Phone" name="user_phone" type="tel" value={details.user_phone} onChange={e => setDetails(p => ({ ...p, user_phone: e.target.value }))} required />
+              <motion.div
+                key="s3"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start"
+              >
+                {/* Left — context */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
+                  >
+                    <ArrowLeft size={14} /> Change preset
+                  </button>
+                  <p className="tj-eyebrow mt-8 mb-3">Step 03</p>
+                  <h2 className="tj-h2 text-[#0a0a0a]">Tell us where to send it.</h2>
+                  <div className="tj-card p-5 md:p-6 mt-8">
+                    <p className="text-xs font-mono-tj uppercase tracking-[0.18em] text-[var(--tj-reimagine)]">
+                      Your remake
+                    </p>
+                    <p className="font-display text-xl md:text-2xl font-extrabold text-[#0a0a0a] mt-2 leading-snug">
+                      {garmentLabel} → {transformMeta.display}
+                    </p>
+                    <p className="text-sm text-black/60 mt-2">{transformMeta.blurb}</p>
                   </div>
-                  <Input label="Email" name="user_email" type="email" value={details.user_email} onChange={e => setDetails(p => ({ ...p, user_email: e.target.value }))} />
-                  <Textarea label="Pickup / Delivery Address" name="address" value={details.address} onChange={e => setDetails(p => ({ ...p, address: e.target.value }))} required rows={3} />
-                  <div className="flex gap-3 pt-2">
-                    <Button variant="ghost" icon={ArrowLeft} onClick={() => setStep(3)}>Back</Button>
-                    <Button type="submit" variant="burgundy" fullWidth loading={loading}>
-                      Submit Request
-                    </Button>
+                </div>
+
+                {/* Right — form */}
+                <form onSubmit={onSubmit} className="space-y-5">
+                  <FieldWrap label="Full name" required>
+                    <input
+                      name="user_name"
+                      value={details.user_name}
+                      onChange={e => setDetails(p => ({ ...p, user_name: e.target.value }))}
+                      required
+                      className={FIELD}
+                    />
+                  </FieldWrap>
+                  <FieldWrap label="Email">
+                    <input
+                      name="user_email"
+                      type="email"
+                      value={details.user_email}
+                      onChange={e => setDetails(p => ({ ...p, user_email: e.target.value }))}
+                      className={FIELD}
+                    />
+                  </FieldWrap>
+                  <FieldWrap label="Phone" required>
+                    <input
+                      name="user_phone"
+                      type="tel"
+                      value={details.user_phone}
+                      onChange={e => setDetails(p => ({ ...p, user_phone: e.target.value }))}
+                      required
+                      className={FIELD}
+                    />
+                  </FieldWrap>
+                  <FieldWrap label="Pickup / delivery address" required>
+                    <textarea
+                      name="address"
+                      value={details.address}
+                      onChange={e => setDetails(p => ({ ...p, address: e.target.value }))}
+                      required
+                      rows={2}
+                      className={`${FIELD} resize-none`}
+                    />
+                  </FieldWrap>
+                  <FieldWrap label="Upload a photo of the garment">
+                    <DropZone
+                      files={files}
+                      onAdd={addFiles}
+                      onRemove={removeFile}
+                      variant="compact"
+                    />
+                  </FieldWrap>
+                  <FieldWrap label="Notes (optional)">
+                    <textarea
+                      name="notes"
+                      value={details.notes}
+                      onChange={e => setDetails(p => ({ ...p, notes: e.target.value }))}
+                      rows={4}
+                      placeholder="Any specifics? Sentimental value? Don't touch the buttons?"
+                      className={`${FIELD} resize-none`}
+                    />
+                  </FieldWrap>
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full tj-btn-reimagine justify-center disabled:opacity-60"
+                    >
+                      {loading ? 'Submitting…' : 'Submit remake request'}
+                    </button>
+                    <p className="text-xs text-black/45 mt-3 text-center">
+                      We&apos;ll respond within 24 hours with a quote and timeline.
+                    </p>
                   </div>
                 </form>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

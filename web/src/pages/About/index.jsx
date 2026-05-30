@@ -1,99 +1,77 @@
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { BRAND_VALUES } from '../../utils/constants';
-import Button from '../../components/ui/Button';
+import { MANIFESTO_LINES } from '../../utils/constants';
+
+const FOUNDER_IMAGE =
+  'https://images.unsplash.com/photo-1727859452051-cc042ba1609a?crop=entropy&cs=srgb&fm=jpg&w=900&q=80';
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-white pt-2 sm:pt-4">
+    <div className="bg-white min-h-screen">
       {/* Hero */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-16 pb-12">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-6 bg-[#a8c74a]/10 text-[#a8c74a] border border-[#a8c74a]/20">
-            Our Story
-          </span>
-          <h1 className="font-display font-black text-[#241621] leading-tight mb-6"
-            style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)' }}>
-            Why Tarajuvva
+      <section className="border-b border-black" data-testid="about-page">
+        <div className="tj-container py-16 md:py-24">
+          <p className="tj-eyebrow">About</p>
+          <h1 className="tj-h1 mt-3 max-w-4xl text-[#0a0a0a]">
+            We started Tarajuvva because
             <br />
-            <span className="text-[#a8c74a]">exists.</span>
+            <span className="italic font-light bg-[var(--tj-shop)] px-3">
+              we were tired of pretending.
+            </span>
           </h1>
-          <p className="text-[#241621]/65 font-body text-lg sm:text-xl leading-relaxed max-w-2xl">
-            We started Tarajuvva because we were tired of the same conversation: "I have nothing to wear" from wardrobes
-            stuffed with clothes. That contradiction needed fixing.
-          </p>
-        </motion.div>
+        </div>
       </section>
 
-      {/* Founder story */}
-      <section className="bg-[#241621] py-16 sm:py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-black text-[#eef4d1] font-display mb-6">
-                We're not here to sell you more clothes.
-              </h2>
-              <div className="space-y-4 text-[#eef4d1]/65 font-body leading-relaxed">
-                <p>
-                  Every fashion brand tells you to buy more. We're building the opposite — a system that helps you
-                  extract more value from what you already own.
-                </p>
-                <p>
-                  The average Indian wardrobe has clothes that were worn once, gifted sarees still in plastic, shirts
-                  that don't fit anymore but feel too good to throw. That's not a waste problem. That's an imagination problem.
-                </p>
-                <p>
-                  Tarajuvva is a circular fashion platform — shop better, reimagine creatively, repair before replacing,
-                  donate before discarding.
-                </p>
-              </div>
-            </div>
-            <div className="bg-white/5 rounded-3xl p-8 border border-[#eef4d1]/10">
-              <blockquote className="text-2xl font-black text-[#e2a3c9] font-display leading-tight mb-4">
-                "A garment's story doesn't end when you're done with it."
-              </blockquote>
-              <p className="text-[#eef4d1]/55 font-body text-sm">— Tarajuvva Manifesto</p>
-            </div>
+      {/* Founders */}
+      <section className="tj-section">
+        <div className="tj-container grid md:grid-cols-12 gap-10">
+          <div className="md:col-span-5">
+            <img
+              src={FOUNDER_IMAGE}
+              alt="Founders"
+              className="w-full aspect-[4/5] object-cover border border-black"
+            />
+            <p className="tj-eyebrow mt-3">The founders · Bengaluru, India</p>
+          </div>
+          <div className="md:col-span-7 space-y-6 text-lg text-black/75 leading-relaxed">
+            <p>
+              We grew up in homes where a saree got 30 years of love and three afterlives. Then fashion told
+              us this stuff was old-fashioned, and that we needed eight new outfits per Diwali.
+            </p>
+            <p>
+              We tried that. It was exhausting and expensive and our wardrobes still felt empty. So we built
+              Tarajuvva — a system, not a brand — that takes the way our grandmothers thought about
+              clothes and gives it a sharp, modern, slightly cheeky edge.
+            </p>
+            <p className="font-display text-2xl md:text-3xl font-extrabold text-black tracking-tight">
+              We don&apos;t do &quot;sustainable fashion.&quot; We do fashion that doesn&apos;t end.
+            </p>
+            <p>
+              Every piece you buy from us is built with four exits in mind: wear it, remake it, repair it, donate it.
+              The garment outlives the trend. The customer outgrows nothing.
+            </p>
+            <p>
+              We&apos;re a tiny team. We make our own pieces. We answer our own DMs. We argue about button
+              placements. We hope you stick around.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Values */}
-      <section className="section max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl sm:text-5xl font-black text-[#241621] font-display">What we stand for</h2>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {BRAND_VALUES.map((v, i) => (
-            <motion.div
-              key={v.title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-2xl p-6 border border-[#241621]/8"
-            >
-              <span className="text-3xl block mb-4">{v.emoji}</span>
-              <h3 className="text-lg font-black text-[#241621] font-display mb-2">{v.title}</h3>
-              <p className="text-sm text-[#241621]/55 font-body leading-relaxed">{v.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Philosophy */}
-      <section className="bg-white py-16 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <p className="text-4xl font-black text-[#241621] font-display mb-6">
-            "Wear more. Buy less. Fix what you already own."
-          </p>
-          <p className="text-[#241621]/55 font-body mb-8">
-            This isn't a slogan. It's the only business model that makes sense in a world drowning in textile waste.
-          </p>
-          <div className="flex flex-wrap gap-3 justify-center">
-            <Link to="/reimagine"><Button variant="primary" size="lg">Start Reimagining</Button></Link>
-            <Link to="/shop"><Button variant="outline-green" size="lg" icon={ArrowRight} iconPosition="right">Shop Now</Button></Link>
+      {/* Manifesto */}
+      <section className="tj-section bg-[var(--tj-bg-soft)] border-y border-black">
+        <div className="tj-container">
+          <p className="tj-eyebrow">Manifesto</p>
+          <h2 className="tj-h2 mt-3 max-w-3xl text-[#0a0a0a]">
+            Five lines we won&apos;t compromise on.
+          </h2>
+          <div className="grid md:grid-cols-2 gap-px bg-black border border-black mt-10">
+            {MANIFESTO_LINES.map(line => (
+              <div key={line.title} className="bg-white p-8">
+                <p className="font-display text-2xl md:text-3xl font-extrabold tracking-tight text-[#0a0a0a]">
+                  {line.title}
+                </p>
+                <p className="text-black/60 mt-2">{line.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

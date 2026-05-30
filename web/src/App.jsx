@@ -6,8 +6,8 @@ import { AuthProvider } from './context/AuthContext';
 import { FONT_STACK } from './utils/fontStack';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
-import Ticker from './components/layout/Ticker';
 import CartDrawer from './components/layout/CartDrawer';
+import Ticker from './components/layout/Ticker';
 
 import Home       from './pages/Home';
 import Shop       from './pages/Shop';
@@ -22,8 +22,10 @@ import Login      from './pages/Auth/Login';
 import Register   from './pages/Auth/Register';
 import Profile    from './pages/Profile';
 
-/** Must match the fixed ticker row height in `Ticker` (px). */
-const TICKER_BAR_PX = 40;
+/** Must match fixed header row height in `Header` (px). */
+const NAV_BAR_PX = 64;
+/** Must match fixed ticker band height on the landing page (px). */
+const TICKER_BAR_PX = 48;
 
 /** Reset window scroll on forward navigations (PUSH/REPLACE). POP keeps browser scroll restore. */
 function ScrollToTop() {
@@ -40,18 +42,24 @@ function Layout({ children }) {
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith('/admin');
   const isAuth  = pathname === '/login' || pathname === '/register';
+  const isHome    = pathname === '/';
 
   if (isAdmin || isAuth) return <>{children}</>;
 
   return (
     <div
-      className="[--nav-h:3.5rem] sm:[--nav-h:4rem]"
-      style={{ '--ticker-h': `${TICKER_BAR_PX}px` }}
+      style={{
+        '--nav-h': `${NAV_BAR_PX}px`,
+        '--ticker-h': isHome ? `${TICKER_BAR_PX}px` : '0px',
+      }}
     >
-      <Ticker barHeightPx={TICKER_BAR_PX} />
-      <Header />
-      {/* Reserve space for fixed ticker + fixed nav so page content is not covered */}
-      <div aria-hidden className="shrink-0 h-[calc(var(--ticker-h)+var(--nav-h))]" />
+      {isHome && <Ticker />}
+      <Header hasTicker={isHome} />
+      {/* Reserve space for fixed ticker + nav so page content is not covered */}
+      <div
+        aria-hidden
+        className="shrink-0 h-[calc(var(--ticker-h)+var(--nav-h))]"
+      />
       <CartDrawer />
       <main>{children}</main>
       <Footer />

@@ -42,7 +42,11 @@ router.get('/me/orders', authenticateUser, async (req, res) => {
 // ── MY REIMAGINE REQUESTS ─────────────────────────────────────────────────────
 router.get('/me/reimagine', authenticateUser, async (req, res) => {
   const requests = await all('SELECT * FROM reimagine_requests WHERE user_id = ? ORDER BY created_at DESC', [req.user.id]);
-  const parsed = requests.map(r => ({ ...r, images: JSON.parse(r.images || '[]') }));
+  const parsed = requests.map(r => ({
+    ...r,
+    is_custom: Boolean(r.is_custom),
+    images: JSON.parse(r.images || '[]'),
+  }));
   res.json({ success: true, requests: parsed });
 });
 

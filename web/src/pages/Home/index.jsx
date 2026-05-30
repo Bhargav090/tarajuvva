@@ -1,23 +1,23 @@
 import Hero from './Hero';
-import QuickDecision from './QuickDecision';
-import TextileWaste from './TextileWaste';
-import LoopSection from './LoopSection';
 import ShopPreview from './ShopPreview';
+import LoopSection from './LoopSection';
 import ReimaginePreview from './ReimaginePreview';
-import Philosophy from './Philosophy';
+import BrandPosition from './BrandPosition';
+import Testimonials from './Testimonials';
+import WaitlistPreview from './WaitlistPreview';
 import FinalCTA from './FinalCTA';
 
 export default function Home() {
   return (
-    <main>
+    <>
       <Hero />
-      <QuickDecision />
       <ShopPreview />
-      <TextileWaste />
       <LoopSection />
       <ReimaginePreview />
-      <Philosophy />
+      <BrandPosition />
+      <Testimonials />
+      <WaitlistPreview />
       <FinalCTA />
-    </main>
+    </>
   );
 }

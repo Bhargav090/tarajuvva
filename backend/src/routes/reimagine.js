@@ -26,16 +26,31 @@ router.get('/transformations/:garment', (req, res) => {
 
 router.post('/requests', optionalAuth, upload.array('images', 5), async (req, res) => {
   const { user_name, user_phone, user_email, address, garment_type, transformation, notes, is_custom } = req.body;
-  if (!user_name || !user_phone || !garment_type || !transformation)
+  if (!user_name?.trim() || !user_phone?.trim() || !garment_type?.trim() || !transformation?.trim())
     return res.status(400).json({ success: false, message: 'Missing required fields' });
+  if (!address?.trim())
+    return res.status(400).json({ success: false, message: 'Pickup / delivery address is required' });
 
   const images  = req.files?.map(f => `/uploads/${f.filename}`) || [];
   const id      = uuidv4();
   const user_id = req.user?.id || null;
+  const custom  = is_custom === '1' || is_custom === 1 || is_custom === true || transformation === 'Custom';
 
   await run(
     `INSERT INTO reimagine_requests (id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,notes,images,is_custom) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-    [id, user_id, user_name, user_phone, user_email || null, address || null, garment_type, transformation, notes || null, JSON.stringify(images), is_custom ? 1 : 0]
+    [
+      id,
+      user_id,
+      user_name.trim(),
+      user_phone.trim(),
+      user_email?.trim() || null,
+      address.trim(),
+      garment_type.trim(),
+      transformation.trim(),
+      notes?.trim() || null,
+      JSON.stringify(images),
+      custom ? 1 : 0,
+    ]
   );
 
   res.status(201).json({
@@ -52,7 +67,14 @@ router.get('/requests', authenticateAdmin, async (req, res) => {
   if (status) { q += ' AND status=?'; params.push(status); }
   q += ' ORDER BY created_at DESC';
   const rows = await all(q, params);
-  res.json({ success: true, requests: rows.map(r => ({ ...r, images: JSON.parse(r.images || '[]') })) });
+  res.json({
+    success: true,
+    requests: rows.map(r => ({
+      ...r,
+      is_custom: Boolean(r.is_custom),
+      images: JSON.parse(r.images || '[]'),
+    })),
+  });
 });
 
 router.patch('/requests/:id/status', authenticateAdmin, async (req, res) => {

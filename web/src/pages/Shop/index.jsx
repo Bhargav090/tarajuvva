@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { SlidersHorizontal, ChevronDown } from 'lucide-react';
-import PageBanner from '../../components/ui/PageBanner';
+import { Filter, ChevronDown } from 'lucide-react';
 import ProductCard from '../../components/ui/ProductCard';
 import { ProductGridSkeleton } from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
@@ -8,9 +7,9 @@ import { useProducts } from '../../hooks/useProducts';
 import { SHOP_CATEGORIES, SORT_OPTIONS } from '../../utils/constants';
 
 export default function Shop() {
-  const [category, setCategory] = useState('All');
-  const [sort, setSort] = useState('default');
-  const { products, loading } = useProducts({ category: category === 'All' ? null : category });
+  const [category, setCategory] = useState(SHOP_CATEGORIES[0]);
+  const [sort, setSort] = useState('newest');
+  const { products, loading } = useProducts({ category: category.value });
 
   const sorted = [...products].sort((a, b) => {
     if (sort === 'price_asc')  return a.price - b.price;
@@ -20,55 +19,74 @@ export default function Shop() {
 
   return (
     <div className="bg-white min-h-screen">
-      <PageBanner
-        badge="Shop"
-        badgeColor="#a8c74a"
-        title="The Collection."
-        subtitle="Thoughtfully made. Multiple ways to wear. Zero guilt."
-      />
+      {/* Hero */}
+      <section className="border-b border-black" data-testid="shop-header">
+        <div className="tj-container py-12 md:py-20 grid md:grid-cols-12 gap-6 items-end">
+          <div className="md:col-span-8">
+            <p className="tj-eyebrow">01 · Shop</p>
+            <h1 className="tj-h1 mt-3 text-[#0a0a0a]">
+              Ten pieces.
+              <br />
+              <span className="italic font-light bg-[var(--tj-shop)] px-3">
+                A hundred outfits.
+              </span>
+            </h1>
+          </div>
+          <p className="md:col-span-4 text-black/65 text-base md:text-lg leading-relaxed">
+            Built modular. Designed to remix. Priced honestly. No hidden synthetics, no half-truths.
+          </p>
+        </div>
+      </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-8 sticky top-14 sm:top-16 bg-white/95 backdrop-blur-md py-4 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-[#241621]/8">
-          {/* Category pills */}
-          <div className="flex flex-wrap gap-2">
-            {SHOP_CATEGORIES.map(c => (
+      {/* Filters */}
+      <div className="sticky top-16 z-30 bg-white/90 backdrop-blur-xl border-b border-black/10">
+        <div className="tj-container py-3 flex items-center gap-4 overflow-x-auto no-scrollbar">
+          <Filter size={14} className="shrink-0 text-black/60" aria-hidden />
+          {SHOP_CATEGORIES.map(c => {
+            const active = category.label === c.label;
+            return (
               <button
-                key={c} onClick={() => setCategory(c)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold font-display transition-all ${
-                  category === c
-                    ? 'bg-[#a8c74a] text-[#241621]'
-                    : 'bg-white text-[#241621]/60 border border-[#241621]/12 hover:border-[#a8c74a]/30 hover:text-[#a8c74a]'
+                key={c.label}
+                type="button"
+                data-testid={`filter-${c.label.toLowerCase()}`}
+                onClick={() => setCategory(c)}
+                className={`shrink-0 text-xs font-mono-tj uppercase tracking-[0.18em] px-3 py-1.5 border transition ${
+                  active
+                    ? 'bg-black text-white border-black'
+                    : 'border-black/20 text-black/60 hover:border-black'
                 }`}
               >
-                {c}
+                {c.label}
               </button>
-            ))}
-          </div>
-          {/* Sort */}
-          <div className="relative flex-shrink-0">
+            );
+          })}
+          <div className="ml-auto relative shrink-0">
             <select
-              value={sort} onChange={e => setSort(e.target.value)}
-              className="appearance-none bg-white border border-[#241621]/12 rounded-xl px-4 py-2 text-xs font-semibold text-[#241621] font-display pr-8 outline-none cursor-pointer focus:border-[#a8c74a]"
+              value={sort}
+              onChange={e => setSort(e.target.value)}
+              className="appearance-none bg-transparent border border-black/20 text-xs font-mono-tj uppercase tracking-[0.18em] px-3 py-1.5 pr-8 outline-none cursor-pointer text-black/60 hover:border-black focus:border-black"
             >
-              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {SORT_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
             </select>
-            <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#241621]/40 pointer-events-none" />
+            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 pointer-events-none" />
           </div>
         </div>
+      </div>
 
-        {/* Results count */}
-        {!loading && (
-          <p className="text-xs text-[#241621]/45 font-body mb-6">{sorted.length} products</p>
-        )}
-
-        {/* Grid */}
+      {/* Grid */}
+      <div className="tj-container py-10 md:py-14 pb-20">
         {loading ? (
           <ProductGridSkeleton count={8} />
         ) : sorted.length === 0 ? (
-          <EmptyState icon={SlidersHorizontal} title="No products found" desc="Try a different category." />
+          <EmptyState
+            icon={Filter}
+            title="Nothing in this category yet."
+            desc="Try Everything or another filter."
+          />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {sorted.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         )}

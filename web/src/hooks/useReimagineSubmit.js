@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import api from '../utils/api';
 
 export function useReimagineSubmit() {
@@ -20,11 +21,14 @@ export function useReimagineSubmit() {
       const fd = new FormData();
       fd.append('garment_type', garment);
       fd.append('transformation', transformation);
-      Object.entries(details).forEach(([k, v]) => fd.append(k, v));
+      fd.append('is_custom', transformation === 'Custom' ? '1' : '0');
+      Object.entries(details).forEach(([k, v]) => fd.append(k, v ?? ''));
       files.forEach(f => fd.append('images', f));
 
       await api.post('/reimagine/requests', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       setDone(true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not submit your request. Please try again.');
     } finally {
       setLoading(false);
     }

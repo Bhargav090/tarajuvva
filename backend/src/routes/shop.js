@@ -3,6 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
+const { parseImages, pickStorableImage, enrichOrderItems } = require('../lib/orderItems');
 
 /** Max serialized length per image string (base64 data URLs can be large). */
 const MAX_IMAGE_STRING = 20 * 1024 * 1024;
@@ -38,14 +39,17 @@ async function resolveOrderItems(rawItems) {
       throw err;
     }
 
-    const product = await get('SELECT id, name, price FROM products WHERE id = ?', [id]);
+    const product = await get('SELECT id, name, price, images FROM products WHERE id = ?', [id]);
     if (!product) {
       const err = new Error(`Product not found: ${id}`);
       err.status = 404;
       throw err;
     }
 
-    items.push({ id: product.id, name: product.name, price: product.price, qty });
+    const image = pickStorableImage(parseImages(product.images));
+    const line = { id: product.id, name: product.name, price: product.price, qty };
+    if (image) line.image = image;
+    items.push(line);
     total += product.price * qty;
   }
 
@@ -227,10 +231,11 @@ router.post('/orders', authenticateUser, async (req, res) => {
   );
 
   const row = await get('SELECT * FROM orders WHERE id=?', [id]);
+  const itemsWithImages = await enrichOrderItems(orderItems, get);
   res.status(201).json({
     success: true,
     message: 'Thank you for shopping with Tarajuvva. Your order is being processed and will be dispatched soon.',
-    order: { ...row, items: orderItems },
+    order: { ...row, items: itemsWithImages },
   });
 });
 
@@ -244,7 +249,13 @@ router.get('/orders', authenticateAdmin, async (req, res) => {
   }
   q += ' ORDER BY created_at DESC';
   const rows = await all(q, params);
-  res.json({ success: true, orders: rows.map((o) => ({ ...o, items: JSON.parse(o.items) })) });
+  const orders = await Promise.all(
+    rows.map(async (o) => ({
+      ...o,
+      items: await enrichOrderItems(JSON.parse(o.items), get),
+    }))
+  );
+  res.json({ success: true, orders });
 });
 
 router.patch('/orders/:id/status', authenticateAdmin, async (req, res) => {

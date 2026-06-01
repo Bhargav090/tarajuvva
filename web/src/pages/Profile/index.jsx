@@ -12,6 +12,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import api from '../../utils/api';
 import { uploadUrl } from '../../utils/uploadUrl';
+import OrderItemLine from '../../components/orders/OrderItemLine';
 
 const TABS = [
   { id: 'profile', label: 'Profile',           icon: User     },
@@ -184,8 +185,14 @@ export default function Profile() {
                 </Link>
               </div>
             ) : orders.map(o => (
-              <div key={o.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8">
-                <div className="flex items-start justify-between gap-4 mb-4">
+              <div
+                key={o.id}
+                className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8"
+              >
+                <Link
+                  to={`/profile/orders/${o.id}`}
+                  className="flex items-start justify-between gap-4 mb-4 group"
+                >
                   <div>
                     <p className="text-xs text-[#241621]/40 font-body mb-1">Order #{o.id.slice(0,8).toUpperCase()}</p>
                     <p className="text-lg font-black text-[#a8c74a] font-display">₹{o.total.toLocaleString('en-IN')}</p>
@@ -194,15 +201,18 @@ export default function Profile() {
                     </p>
                   </div>
                   <Badge status={o.status} />
-                </div>
-                <div className="space-y-1.5">
+                </Link>
+                <div className="space-y-1 border-t border-[#241621]/8 pt-3">
                   {o.items.map((item, i) => (
-                    <div key={i} className="flex justify-between text-sm font-body">
-                      <span className="text-[#241621]/70">{item.name} × {item.qty}</span>
-                      <span className="text-[#241621] font-semibold">₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
-                    </div>
+                    <OrderItemLine key={`${item.id}-${i}`} item={item} />
                   ))}
                 </div>
+                <Link
+                  to={`/profile/orders/${o.id}`}
+                  className="mt-4 inline-block text-xs font-semibold text-[#a8c74a] font-display hover:underline"
+                >
+                  View order details →
+                </Link>
               </div>
             ))}
           </div>

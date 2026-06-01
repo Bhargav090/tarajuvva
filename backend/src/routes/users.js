@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const { authenticateAdmin } = require('../middleware/auth');
 const { get, run, all } = require('../db/database');
+const { enrichOrderItems } = require('../lib/orderItems');
 
 // ── AUTH MIDDLEWARE (user-level) ──────────────────────────────────────────────
 const jwt = require('jsonwebtoken');
@@ -34,9 +35,27 @@ router.put('/me', authenticateUser, async (req, res) => {
 
 // ── MY ORDERS ─────────────────────────────────────────────────────────────────
 router.get('/me/orders', authenticateUser, async (req, res) => {
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ success: false, message: 'Customer account required' });
+  }
   const orders = await all('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', [req.user.id]);
-  const parsed = orders.map(o => ({ ...o, items: JSON.parse(o.items) }));
+  const parsed = await Promise.all(
+    orders.map(async (o) => ({
+      ...o,
+      items: await enrichOrderItems(JSON.parse(o.items), get),
+    }))
+  );
   res.json({ success: true, orders: parsed });
+});
+
+router.get('/me/orders/:id', authenticateUser, async (req, res) => {
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ success: false, message: 'Customer account required' });
+  }
+  const order = await get('SELECT * FROM orders WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
+  if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+  const items = await enrichOrderItems(JSON.parse(order.items), get);
+  res.json({ success: true, order: { ...order, items } });
 });
 
 // ── MY REIMAGINE REQUESTS ─────────────────────────────────────────────────────

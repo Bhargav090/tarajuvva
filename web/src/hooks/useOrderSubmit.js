@@ -12,6 +12,7 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
   });
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState(null);
 
   const onChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -20,7 +21,8 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
     setLoading(true);
     try {
       const orderItems = items.map(({ id, qty }) => ({ id, qty }));
-      await api.post('/shop/orders', { ...form, items: orderItems, total });
+      const { data } = await api.post('/shop/orders', { ...form, items: orderItems, total });
+      setPlacedOrderId(data.order?.id || null);
       setDone(true);
       onSuccess?.();
     } catch (err) {
@@ -30,5 +32,5 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
     }
   };
 
-  return { form, onChange, onSubmit, loading, done };
+  return { form, onChange, onSubmit, loading, done, placedOrderId };
 }

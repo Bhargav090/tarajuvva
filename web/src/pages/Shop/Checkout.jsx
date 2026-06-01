@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, CheckCircle } from 'lucide-react';
@@ -21,13 +21,17 @@ export default function Checkout() {
       navigate('/login', { replace: true, state: { from: '/checkout' } });
     }
   }, [user, authLoading, navigate]);
-  const { form, onChange, onSubmit, loading, done } = useOrderSubmit({
+  const { form, onChange, onSubmit, loading, done, placedOrderId } = useOrderSubmit({
     items, total,
     user,
     // Clear cart only — do not navigate away: a delayed navigate('/') was firing
     // after users opened "My Orders" and pulled them back to the home page.
     onSuccess: () => clearCart(),
   });
+
+  useLayoutEffect(() => {
+    if (done) window.scrollTo({ top: 0, left: 0 });
+  }, [done]);
 
   if (authLoading || !user) {
     return (
@@ -49,10 +53,12 @@ export default function Checkout() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="w-full min-h-[calc(100dvh-var(--nav-h))] bg-white flex flex-col items-center justify-center px-4 py-12">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="w-full max-w-md mx-auto text-center"
         >
           <div className="w-20 h-20 bg-[#a8c74a]/12 rounded-3xl flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} className="text-[#a8c74a]" />
@@ -63,7 +69,11 @@ export default function Checkout() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3 justify-center">
             <Link to="/shop"><Button variant="primary">Continue Shopping</Button></Link>
-            {user && <Link to="/profile/orders"><Button variant="outline-green">My Orders</Button></Link>}
+            {user && placedOrderId && (
+              <Link to={`/profile/orders/${placedOrderId}`}>
+                <Button variant="outline-green">View order</Button>
+              </Link>
+            )}
           </div>
         </motion.div>
       </div>

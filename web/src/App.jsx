@@ -21,6 +21,7 @@ import Admin      from './pages/Admin';
 import Login      from './pages/Auth/Login';
 import Register   from './pages/Auth/Register';
 import Profile    from './pages/Profile';
+import OrderDetail from './pages/Profile/OrderDetail';
 
 /** Must match fixed header row height in `Header` (px). */
 const NAV_BAR_PX = 64;
@@ -100,8 +101,9 @@ export default function App() {
               <Route path="/about"             element={<About />} />
               <Route path="/login"             element={<Login />} />
               <Route path="/register"          element={<Register />} />
-              <Route path="/profile"           element={<Profile />} />
-              <Route path="/profile/:section"  element={<Profile />} />
+              <Route path="/profile"                    element={<Profile />} />
+              <Route path="/profile/orders/:orderId" element={<OrderDetail />} />
+              <Route path="/profile/:section"         element={<Profile />} />
               <Route path="/admin"             element={<Admin />} />
               <Route path="*" element={
                 <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">

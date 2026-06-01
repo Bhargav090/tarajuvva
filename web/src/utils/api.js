@@ -15,10 +15,10 @@ api.interceptors.request.use(cfg => {
     h?.Authorization ||
     h?.authorization;
   if (hasExplicitAuth) return cfg;
+  // Only attach customer token here — admin routes set Authorization explicitly.
+  // Falling back to admin_token caused shop orders to use an admin id and hit FK errors.
   const userToken = localStorage.getItem('user_token');
-  const adminToken = localStorage.getItem('admin_token');
-  const token = userToken || adminToken;
-  if (token) cfg.headers['Authorization'] = `Bearer ${token}`;
+  if (userToken) cfg.headers['Authorization'] = `Bearer ${userToken}`;
   return cfg;
 });
 

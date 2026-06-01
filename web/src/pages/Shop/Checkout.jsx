@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingBag, CheckCircle } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
@@ -7,10 +8,19 @@ import { useOrderSubmit } from '../../hooks/useOrderSubmit';
 import { productHeroImage } from '../../utils/productImage';
 import { Input, Textarea } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
+import { Spinner } from '../../components/ui/Skeleton';
 
 export default function Checkout() {
   const { items, total, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate('/login', { replace: true, state: { from: '/checkout' } });
+    }
+  }, [user, authLoading, navigate]);
   const { form, onChange, onSubmit, loading, done } = useOrderSubmit({
     items, total,
     user,
@@ -18,6 +28,14 @@ export default function Checkout() {
     // after users opened "My Orders" and pulled them back to the home page.
     onSuccess: () => clearCart(),
   });
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Spinner size={32} />
+      </div>
+    );
+  }
 
   if (items.length === 0 && !done) {
     return (

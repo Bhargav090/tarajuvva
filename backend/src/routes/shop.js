@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
-const { authenticateAdmin, optionalAuth } = require('../middleware/auth');
+const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 
 /** Max serialized length per image string (base64 data URLs can be large). */
 const MAX_IMAGE_STRING = 20 * 1024 * 1024;
@@ -197,10 +197,19 @@ router.delete('/products/:id', authenticateAdmin, async (req, res) => {
 });
 
 // ── ORDERS ────────────────────────────────────────────────────────────────────
-router.post('/orders', optionalAuth, async (req, res) => {
+router.post('/orders', authenticateUser, async (req, res) => {
   const { user_name, user_email, user_phone, address, items, payment_method, notes } = req.body;
   if (!user_name || !user_phone || !address || !items)
     return res.status(400).json({ success: false, message: 'Missing required fields' });
+
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ success: false, message: 'Sign in with a customer account to place orders' });
+  }
+
+  const dbUser = await get('SELECT id FROM users WHERE id = ?', [req.user.id]);
+  if (!dbUser) {
+    return res.status(401).json({ success: false, message: 'Account not found. Please sign in again.' });
+  }
 
   let orderItems;
   let total;
@@ -211,7 +220,7 @@ router.post('/orders', optionalAuth, async (req, res) => {
   }
 
   const id = uuidv4();
-  const user_id = req.user?.id || null;
+  const user_id = dbUser.id;
   await run(
     `INSERT INTO orders (id,user_id,user_name,user_email,user_phone,address,items,total,payment_method,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`,
     [id, user_id, user_name, user_email || null, user_phone, address, JSON.stringify(orderItems), total, payment_method || 'cod', notes || null]

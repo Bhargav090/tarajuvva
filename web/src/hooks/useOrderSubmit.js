@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import api from '../utils/api';
 
 export function useOrderSubmit({ items, total, user, onSuccess }) {
@@ -18,9 +19,12 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post('/shop/orders', { ...form, items, total });
+      const orderItems = items.map(({ id, qty }) => ({ id, qty }));
+      await api.post('/shop/orders', { ...form, items: orderItems, total });
       setDone(true);
       onSuccess?.();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not place order');
     } finally {
       setLoading(false);
     }

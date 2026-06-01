@@ -2,10 +2,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Plus, Minus, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { productHeroImage } from '../../utils/productImage';
 
 export default function CartDrawer() {
   const { isOpen, closeCart, items, removeItem, updateQty, total, totalItems } = useCart();
+  const { user } = useAuth();
 
   return (
     <AnimatePresence>
@@ -99,8 +101,13 @@ export default function CartDrawer() {
                   <span className="text-black/60 text-sm font-display">Subtotal</span>
                   <span className="font-display font-bold text-xl">₹{total.toLocaleString('en-IN')}</span>
                 </div>
-                <Link to="/checkout" onClick={closeCart} className="tj-btn-ink w-full flex">
-                  Checkout <ArrowRight size={16} />
+                <Link
+                  to={user ? '/checkout' : '/login'}
+                  state={user ? undefined : { from: '/checkout' }}
+                  onClick={closeCart}
+                  className="tj-btn-ink w-full flex"
+                >
+                  {user ? 'Checkout' : 'Sign in to checkout'} <ArrowRight size={16} />
                 </Link>
               </div>
             )}

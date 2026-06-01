@@ -18,6 +18,40 @@ function parseJsonArray(str, fallback = '[]') {
   }
 }
 
+/** Resolve cart lines to a compact order snapshot (id, name, price, qty) from the DB. */
+async function resolveOrderItems(rawItems) {
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    const err = new Error('Order must include at least one item');
+    err.status = 400;
+    throw err;
+  }
+
+  const items = [];
+  let total = 0;
+
+  for (const line of rawItems) {
+    const id = line.id || line.product_id;
+    const qty = Math.max(1, parseInt(line.qty, 10) || 1);
+    if (!id) {
+      const err = new Error('Each item must include a product id');
+      err.status = 400;
+      throw err;
+    }
+
+    const product = await get('SELECT id, name, price FROM products WHERE id = ?', [id]);
+    if (!product) {
+      const err = new Error(`Product not found: ${id}`);
+      err.status = 404;
+      throw err;
+    }
+
+    items.push({ id: product.id, name: product.name, price: product.price, qty });
+    total += product.price * qty;
+  }
+
+  return { items, total };
+}
+
 /**
  * Normalizes `images` to a non-empty array of strings.
  * Preferred: `data:image/<type>;base64,...` (stored in DB as JSON).
@@ -164,22 +198,30 @@ router.delete('/products/:id', authenticateAdmin, async (req, res) => {
 
 // ── ORDERS ────────────────────────────────────────────────────────────────────
 router.post('/orders', optionalAuth, async (req, res) => {
-  const { user_name, user_email, user_phone, address, items, total, payment_method, notes } = req.body;
-  if (!user_name || !user_phone || !address || !items || !total)
+  const { user_name, user_email, user_phone, address, items, payment_method, notes } = req.body;
+  if (!user_name || !user_phone || !address || !items)
     return res.status(400).json({ success: false, message: 'Missing required fields' });
+
+  let orderItems;
+  let total;
+  try {
+    ({ items: orderItems, total } = await resolveOrderItems(items));
+  } catch (err) {
+    return res.status(err.status || 400).json({ success: false, message: err.message });
+  }
 
   const id = uuidv4();
   const user_id = req.user?.id || null;
   await run(
     `INSERT INTO orders (id,user_id,user_name,user_email,user_phone,address,items,total,payment_method,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`,
-    [id, user_id, user_name, user_email || null, user_phone, address, JSON.stringify(items), total, payment_method || 'cod', notes || null]
+    [id, user_id, user_name, user_email || null, user_phone, address, JSON.stringify(orderItems), total, payment_method || 'cod', notes || null]
   );
 
   const row = await get('SELECT * FROM orders WHERE id=?', [id]);
   res.status(201).json({
     success: true,
     message: 'Thank you for shopping with Tarajuvva. Your order is being processed and will be dispatched soon.',
-    order: { ...row, items },
+    order: { ...row, items: orderItems },
   });
 });
 

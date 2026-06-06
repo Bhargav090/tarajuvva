@@ -117,51 +117,54 @@ export default function FashionLoop({
   );
 
   return (
-    <div className="relative w-full max-w-[480px] aspect-square mx-auto">
-      {/* Outer dashed orbit — rotates */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none fashion-loop-orbit"
-        viewBox="0 0 200 200"
-        fill="none"
-        aria-hidden
-      >
-        <circle
-          cx="100"
-          cy="100"
-          r="98"
-          stroke="#0a0a0a"
-          strokeWidth="0.6"
-          strokeDasharray="2 4"
-        />
-      </svg>
+    <div className="relative w-full max-w-[520px] aspect-square mx-auto">
+      {/* Safe gutter keeps edge nodes fully visible on mobile. */}
+      <div className="absolute inset-10 sm:inset-12 md:inset-14">
+        {/* Outer dashed orbit — rotates */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none fashion-loop-orbit"
+          viewBox="0 0 200 200"
+          fill="none"
+          aria-hidden
+        >
+          <circle
+            cx="100"
+            cy="100"
+            r="98"
+            stroke="#0a0a0a"
+            strokeWidth="0.6"
+            strokeDasharray="2 4"
+          />
+        </svg>
 
-      {/* Inner solid rings — static light grey */}
-      <div className="absolute inset-6 rounded-full border border-black/20 pointer-events-none" />
-      <div className="absolute inset-16 rounded-full border border-black/10 pointer-events-none" />
+        {/* Inner solid rings — static light grey */}
+        <div className="absolute inset-6 rounded-full border border-black/20 pointer-events-none" />
+        <div className="absolute inset-16 rounded-full border border-black/10 pointer-events-none" />
 
-      <div className="absolute inset-[22%] flex flex-col items-center justify-center text-center pointer-events-none px-4">
-        <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em] font-display text-black/40 leading-none">
-          Circular Fashion
-        </p>
-        <p className="font-display font-black text-5xl sm:text-6xl text-[#0a0a0a] leading-none mt-1">
-          OS
-        </p>
-        <p className="text-[9px] sm:text-[10px] font-mono-tj uppercase tracking-[0.18em] text-black/45 mt-1.5">
-          v1.0 — IN
-        </p>
+        <div className="absolute inset-[22%] flex flex-col items-center justify-center text-center pointer-events-none px-4">
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em] font-display text-black/40 leading-none">
+            Circular Fashion
+          </p>
+          <p className="font-display font-black text-5xl sm:text-6xl text-[#0a0a0a] leading-none mt-1">
+            OS
+          </p>
+          <p className="text-[9px] sm:text-[10px] font-mono-tj uppercase tracking-[0.18em] text-black/45 mt-1.5">
+            v1.0 — IN
+          </p>
+        </div>
+
+        {LOOP_VERTICALS.map((vertical, i) => (
+          <LoopNode
+            key={vertical.action}
+            vertical={vertical}
+            position={NODE_POSITIONS[i]}
+            isHighlighted={displayIndex === i}
+            onEnter={() => onHoverChange(i)}
+            onLeave={() => onHoverChange(null)}
+            onSelect={() => onActiveChange(i)}
+          />
+        ))}
       </div>
-
-      {LOOP_VERTICALS.map((vertical, i) => (
-        <LoopNode
-          key={vertical.action}
-          vertical={vertical}
-          position={NODE_POSITIONS[i]}
-          isHighlighted={displayIndex === i}
-          onEnter={() => onHoverChange(i)}
-          onLeave={() => onHoverChange(null)}
-          onSelect={() => onActiveChange(i)}
-        />
-      ))}
     </div>
   );
 }

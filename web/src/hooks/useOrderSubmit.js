@@ -20,7 +20,7 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const orderItems = items.map(({ id, qty }) => ({ id, qty }));
+      const orderItems = items.map(({ id, qty, size }) => ({ id, qty, ...(size ? { size } : {}) }));
       const { data } = await api.post('/shop/orders', { ...form, items: orderItems, total });
       setPlacedOrderId(data.order?.id || null);
       setDone(true);

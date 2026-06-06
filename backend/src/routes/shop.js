@@ -47,9 +47,10 @@ async function resolveOrderItems(rawItems) {
     }
 
     const image = pickStorableImage(parseImages(product.images));
-    const line = { id: product.id, name: product.name, price: product.price, qty };
-    if (image) line.image = image;
-    items.push(line);
+    const orderLine = { id: product.id, name: product.name, price: product.price, qty };
+    if (image) orderLine.image = image;
+    if (line.size) orderLine.size = String(line.size).trim();
+    items.push(orderLine);
     total += product.price * qty;
   }
 
@@ -97,7 +98,16 @@ const parseProduct = (p) => ({
   images: parseJsonArray(p.images),
   ways_to_wear: parseJsonArray(p.ways_to_wear),
   tags: parseJsonArray(p.tags),
+  sizes: parseJsonArray(p.sizes),
 });
+
+/** Validate and normalise sizes array: [{label, available}]. */
+function normalizeSizes(raw) {
+  if (!raw || !Array.isArray(raw)) return [];
+  return raw
+    .filter((s) => s && typeof s.label === 'string' && s.label.trim())
+    .map((s) => ({ label: String(s.label).trim().toUpperCase(), available: s.available !== false }));
+}
 
 // ── PRODUCTS ──────────────────────────────────────────────────────────────────
 router.get('/products', async (req, res) => {
@@ -140,10 +150,11 @@ router.post('/products', authenticateAdmin, async (req, res) => {
   }
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
+  const sizeList = normalizeSizes(req.body.sizes);
   const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
   const id = uuidv4();
   await run(
-    `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,sizes,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id,
       String(name).trim(),
@@ -155,6 +166,7 @@ router.post('/products', authenticateAdmin, async (req, res) => {
       JSON.stringify(imgList),
       JSON.stringify(tagList),
       stockNum,
+      JSON.stringify(sizeList),
       featured ? 1 : 0,
     ]
   );
@@ -175,9 +187,10 @@ router.put('/products/:id', authenticateAdmin, async (req, res) => {
   }
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
+  const sizeList = normalizeSizes(req.body.sizes);
   const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
   await run(
-    `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,stock=?,featured=? WHERE id=?`,
+    `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,stock=?,sizes=?,featured=? WHERE id=?`,
     [
       String(name).trim(),
       priceNum,
@@ -188,6 +201,7 @@ router.put('/products/:id', authenticateAdmin, async (req, res) => {
       JSON.stringify(imgList),
       JSON.stringify(tagList),
       stockNum,
+      JSON.stringify(sizeList),
       featured ? 1 : 0,
       req.params.id,
     ]
@@ -198,6 +212,15 @@ router.put('/products/:id', authenticateAdmin, async (req, res) => {
 router.delete('/products/:id', authenticateAdmin, async (req, res) => {
   await run('DELETE FROM products WHERE id=?', [req.params.id]);
   res.json({ success: true });
+});
+
+/** Admin only — update size availability without touching other fields. */
+router.patch('/products/:id/sizes', authenticateAdmin, async (req, res) => {
+  const row = await get('SELECT id FROM products WHERE id = ?', [req.params.id]);
+  if (!row) return res.status(404).json({ success: false, message: 'Product not found' });
+  const sizeList = normalizeSizes(req.body.sizes);
+  await run('UPDATE products SET sizes = ? WHERE id = ?', [JSON.stringify(sizeList), req.params.id]);
+  res.json({ success: true, sizes: sizeList });
 });
 
 // ── ORDERS ────────────────────────────────────────────────────────────────────

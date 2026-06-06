@@ -38,6 +38,9 @@ app.use('/api/shop',      require('./src/routes/shop'));
 app.use('/api/reimagine', require('./src/routes/reimagine'));
 app.use('/api/waitlist',  require('./src/routes/waitlist'));
 app.use('/api/admin',     require('./src/routes/admin'));
+app.use('/api/settings',  require('./src/routes/settings'));
+app.use('/api/admin/hero-images', require('./src/routes/heroImages'));
+app.use('/api/admin/reimagine-images', require('./src/routes/reimagineImages'));
 
 // Health check
 app.get('/api/health', (req, res) => {

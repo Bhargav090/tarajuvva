@@ -7,14 +7,14 @@ import { productHeroImage } from '../../utils/productImage';
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
-  const [hoverImg, setHoverImg] = useState(null);
-  const [selectedImg, setSelectedImg] = useState(null);
+  const [hovering, setHovering] = useState(false);
   const img = productHeroImage(product.images);
   const gallery =
     Array.isArray(product.images) && product.images.length > 0
       ? product.images
       : [img];
-  const activeImg = hoverImg || selectedImg || img;
+  const primary = gallery[0];
+  const hoverImage = gallery[1] || null;
   const tagline = product.description?.split('.')[0]
     ? `${product.description.split('.')[0]}.`
     : '';
@@ -34,46 +34,31 @@ export default function ProductCard({ product }) {
         <Link
           to={`/shop/${product.id}`}
           className="block relative overflow-hidden aspect-[3/4] bg-[var(--tj-bg-soft)]"
-          onMouseLeave={() => setHoverImg(null)}
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
         >
           <img
-            src={activeImg}
+            src={primary}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${
+              hovering && hoverImage ? 'opacity-0' : 'opacity-100'
+            }`}
             loading="lazy"
           />
-          <span className="absolute top-2 left-2 bg-[var(--tj-shop)] text-black text-[10px] font-mono-tj uppercase tracking-wider px-2 py-1">
+          {hoverImage && (
+            <img
+              src={hoverImage}
+              alt=""
+              aria-hidden
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${
+                hovering ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading="lazy"
+            />
+          )}
+          <span className="absolute top-2 left-2 z-[1] bg-[var(--tj-shop)] text-black text-[10px] font-mono-tj uppercase tracking-wider px-2 py-1">
             Modular
           </span>
-          {gallery.length > 1 && (
-            <div className="absolute inset-0 bg-black/35 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-              <div className="w-full bg-white/95 p-2.5 border border-black">
-                <p className="text-[10px] text-black/70 font-mono-tj mb-2 text-center uppercase tracking-wider">
-                  Hover to preview
-                </p>
-                <div className="grid grid-cols-4 gap-2">
-                  {gallery.slice(0, 4).map((sideImg, i) => (
-                    <button
-                      key={sideImg + i}
-                      type="button"
-                      onMouseEnter={e => { e.preventDefault(); setHoverImg(sideImg); }}
-                      onFocus={() => setHoverImg(sideImg)}
-                      onClick={e => { e.preventDefault(); setSelectedImg(sideImg); }}
-                      className={`overflow-hidden border ${
-                        activeImg === sideImg ? 'border-black' : 'border-black/15 hover:border-black'
-                      }`}
-                    >
-                      <img
-                        src={sideImg}
-                        alt={`${product.name} view ${i + 1}`}
-                        className="w-full aspect-square object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </Link>
 
         <div className="pt-4 flex-1 flex flex-col">

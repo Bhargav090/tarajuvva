@@ -9,6 +9,13 @@ import { NAV_LINKS } from '../../utils/constants';
 import UserAvatar from '../ui/UserAvatar';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
+const VERTICAL_NAV_COLORS = {
+  Shop: 'var(--tj-shop-deep)',
+  Reimagine: 'var(--tj-reimagine)',
+  Repair: 'var(--tj-repair)',
+  Donate: 'var(--tj-donate)',
+};
+
 export default function Header({ hasTicker = false }) {
   const { totalItems, openCart } = useCart();
   const { user, logout }         = useAuth();
@@ -53,7 +60,18 @@ export default function Header({ hasTicker = false }) {
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-7">
               {NAV_LINKS.map(l => (
-                <NavLink key={l.to} to={l.to} className={navLinkClass}>{l.label}</NavLink>
+                <NavLink
+                  key={l.to}
+                  to={l.to}
+                  className={navLinkClass}
+                  style={({ isActive }) => {
+                    const c = VERTICAL_NAV_COLORS[l.label];
+                    if (!c) return undefined;
+                    return { color: isActive ? c : `color-mix(in srgb, ${c} 68%, #000 32%)` };
+                  }}
+                >
+                  {l.label}
+                </NavLink>
               ))}
             </nav>
 
@@ -168,6 +186,11 @@ export default function Header({ hasTicker = false }) {
                         isActive ? 'bg-[#a8c74a] text-[#241621]' : 'text-[#241621] hover:bg-[#241621]/6'
                       }`
                     }
+                    style={({ isActive }) => {
+                      const c = VERTICAL_NAV_COLORS[l.label];
+                      if (!c || isActive) return undefined;
+                      return { color: `color-mix(in srgb, ${c} 72%, #000 28%)` };
+                    }}
                   >
                     {l.label}
                   </NavLink>

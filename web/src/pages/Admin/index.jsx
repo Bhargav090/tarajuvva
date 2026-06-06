@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Key, Tag,
+  LogOut, TrendingUp, Package, Key, Tag, ImageIcon, Sparkles,
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -23,6 +23,8 @@ import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
 import { ORDER_STATUSES, REIMAGINE_STATUSES } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
+import HeroImagesTab from './HeroImagesTab';
+import ReimaginePresetsTab from './ReimaginePresetsTab';
 import { uploadUrl } from '../../utils/uploadUrl';
 import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
 
@@ -64,6 +66,8 @@ const TABS = [
   { id: 'reimagine', label: 'Reimagine',          icon: Scissors       },
   { id: 'waitlist',  label: 'Waitlist',           icon: Users          },
   { id: 'products',  label: 'Products',           icon: Tag            },
+  { id: 'hero',             label: 'Hero image',       icon: ImageIcon },
+  { id: 'reimagine-images', label: 'Reimagine images', icon: Sparkles },
 ];
 
 function AdminChangePasswordModal({ open, onClose }) {
@@ -162,7 +166,9 @@ export default function Admin() {
       <AnimatePresence>
         {(sidebar || true) && (
           <motion.aside
-            className={`fixed inset-y-0 left-0 z-40 flex h-screen w-56 shrink-0 flex-col overflow-hidden bg-[#241621] transition-transform duration-300 lg:relative lg:translate-x-0 ${sidebar ? 'translate-x-0' : '-translate-x-full'}`}
+            className={`fixed inset-y-0 left-0 z-40 flex h-screen w-56 shrink-0 flex-col overflow-hidden bg-[#241621] transition-transform duration-300 ${
+              sidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            }`}
           >
             <div className="flex justify-center py-6 border-b border-[#eef4d1]/10">
               <img src={darkBrandIcon} alt="Tarajuvva" className="w-24 h-auto object-contain" />
@@ -196,8 +202,8 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
-      {/* Main */}
-      <div className="flex-1 min-w-0">
+      {/* Main — offset fixed sidebar on desktop */}
+      <div className="flex-1 min-w-0 lg:ml-56">
         {/* Mobile topbar */}
         <div className="lg:hidden flex items-center gap-4 px-4 py-4 bg-white border-b border-[#241621]/8 sticky top-0 z-20">
           <button onClick={() => setSidebar(true)} className="p-2 rounded-xl hover:bg-gray-50">
@@ -212,6 +218,8 @@ export default function Admin() {
           {tab === 'reimagine' && <ReimagineTab />}
           {tab === 'waitlist' && <WaitlistTab />}
           {tab === 'products' && <ProductConfiguratorTab />}
+          {tab === 'hero' && <HeroImagesTab />}
+          {tab === 'reimagine-images' && <ReimaginePresetsTab />}
         </div>
       </div>
     </div>

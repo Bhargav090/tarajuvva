@@ -131,26 +131,31 @@ export const REIMAGINE_PRESETS = [
 ];
 
 export const TRANSFORMATION_META = {
-  'Dress':              { display: 'Dress', blurb: 'One piece. Many moods.' },
-  'Co-ord Set':         { display: 'Co-ord Set', blurb: 'Matched set. Zero effort.' },
-  'Blouse + Skirt':     { display: 'Blouse + Skirt', blurb: 'Two pieces from six yards.' },
-  'Cape + Palazzos':    { display: 'Cape + Palazzos', blurb: 'Drama meets ease.' },
-  'Skirt':              { display: 'Skirt', blurb: 'Spin-friendly. Pocket optional.' },
-  'Halter Top':         { display: 'Racerback Halter Top', blurb: 'Backless. Strappy. Summer-coded.' },
-  'Crop Top':           { display: 'Crop Top', blurb: 'Short. Sharp. Very now.' },
-  'Peplum Top':         { display: 'Peplum Top', blurb: 'Waist definition without the work.' },
-  'Japanese Shirt':     { display: 'Japanese Shirt', blurb: 'Square cut. Dropped shoulder. Big mood.' },
-  'Corset Back':        { display: 'Corset Back', blurb: 'Structured back. Soft front.' },
-  'Tote Bag':           { display: 'Tote Bag', blurb: 'Carry the memory. Literally.' },
-  'Patchwork':          { display: 'Patchwork', blurb: 'Franken-fit. On purpose.' },
-  'Jorts (Shorts)':     { display: 'Jorts', blurb: 'Cutoffs with a conscience.' },
-  'Flared Pants':       { display: 'Flared Pants', blurb: 'Disco is dead. Long live the flare.' },
-  'Palazzo':            { display: 'Palazzo', blurb: 'Wide leg. Full breeze.' },
-  'Custom':             { display: 'Custom', blurb: 'Your brief. Our scissors.' },
+  'Dress':              { display: 'Dress', blurb: 'One piece. Many moods.', image: 'https://images.unsplash.com/photo-1595777455730-85bb253e2611?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Co-ord Set':         { display: 'Co-ord Set', blurb: 'Matched set. Zero effort.', image: 'https://images.unsplash.com/photo-1496747611176-043222598a21?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Blouse + Skirt':     { display: 'Blouse + Skirt', blurb: 'Two pieces from six yards.', image: 'https://images.unsplash.com/photo-1583496664630-893a1907744a?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Cape + Palazzos':    { display: 'Cape + Palazzos', blurb: 'Drama meets ease.', image: 'https://images.unsplash.com/photo-1469334031216-e3820b5feb0?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Skirt':              { display: 'Skirt', blurb: 'Spin-friendly. Pocket optional.', image: 'https://images.unsplash.com/photo-1583496664630-893a1907744a?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Halter Top':         { display: 'Racerback Halter Top', blurb: 'Backless. Strappy. Summer-coded.', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Crop Top':           { display: 'Crop Top', blurb: 'Short. Sharp. Very now.', image: 'https://images.unsplash.com/photo-1509636319191-0a6ee0c2d471?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Peplum Top':         { display: 'Peplum Top', blurb: 'Waist definition without the work.', image: 'https://images.unsplash.com/photo-1434389677669-e08f4a3a558d?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Japanese Shirt':     { display: 'Japanese Shirt', blurb: 'Square cut. Dropped shoulder. Big mood.', image: 'https://images.unsplash.com/photo-1596755094515-f0546a4179b?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Corset Back':        { display: 'Corset Back', blurb: 'Structured back. Soft front.', image: 'https://images.unsplash.com/photo-1551488831-00f20ec8561d?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Tote Bag':           { display: 'Tote Bag', blurb: 'Carry the memory. Literally.', image: 'https://images.unsplash.com/photo-1590874103328-eac95a1961f5?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Patchwork':          { display: 'Patchwork', blurb: 'Franken-fit. On purpose.', image: 'https://images.unsplash.com/photo-1558175623-7913d0a99430?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Jorts (Shorts)':     { display: 'Jorts', blurb: 'Cutoffs with a conscience.', image: 'https://images.unsplash.com/photo-1542272604-787c683553de?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Flared Pants':       { display: 'Flared Pants', blurb: 'Disco is dead. Long live the flare.', image: 'https://images.unsplash.com/photo-1473966960820-9de5768aa532?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Palazzo':            { display: 'Palazzo', blurb: 'Wide leg. Full breeze.', image: 'https://images.unsplash.com/photo-1594633312681-426c632e4204?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
+  'Custom':             { display: 'Custom', blurb: 'Your brief. Our scissors.', image: 'https://images.unsplash.com/photo-1558175623-7913d0a99430?crop=entropy&cs=srgb&fm=jpg&w=900&q=80' },
 };
 
+const TRANSFORMATION_IMAGE_FALLBACK =
+  'https://images.unsplash.com/photo-1558175623-7913d0a99430?crop=entropy&cs=srgb&fm=jpg&w=900&q=80';
+
 export function getTransformationMeta(name) {
-  return TRANSFORMATION_META[name] || { display: name, blurb: 'Made to your measurements.' };
+  const meta = TRANSFORMATION_META[name];
+  if (meta) return meta;
+  return { display: name, blurb: 'Made to your measurements.', image: TRANSFORMATION_IMAGE_FALLBACK };
 }
 
 export const REIMAGINE_STEPS = ['Garment', 'Transform', 'Details'];

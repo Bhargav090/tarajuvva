@@ -1,15 +1,143 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Trash2, ExternalLink, ImagePlus, X } from 'lucide-react';
+import { Trash2, ExternalLink, ImagePlus, X, Plus, ToggleLeft, ToggleRight, Pencil } from 'lucide-react';
 import api from '../../utils/api';
 import { Input, Textarea, Select } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import { SHOP_CATEGORIES } from '../../utils/constants';
+import { productHeroImage } from '../../utils/productImage';
 
 const CATEGORIES = SHOP_CATEGORIES.filter(c => c.value).map(c => c.value);
+
+const PRESET_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44', '46'];
+
+/** Size manager used inside the create form. */
+function SizeManager({ sizes, onChange }) {
+  const [custom, setCustom] = useState('');
+
+  const toggle = (label) => {
+    const exists = sizes.find(s => s.label === label);
+    if (exists) {
+      onChange(sizes.filter(s => s.label !== label));
+    } else {
+      onChange([...sizes, { label, available: true }]);
+    }
+  };
+
+  const addCustom = () => {
+    const label = custom.trim().toUpperCase();
+    if (!label) return;
+    if (sizes.find(s => s.label === label)) {
+      toast.error(`Size ${label} already added`);
+      return;
+    }
+    onChange([...sizes, { label, available: true }]);
+    setCustom('');
+  };
+
+  return (
+    <div>
+      <span className="block text-sm font-semibold text-[#341631] mb-2 font-display">
+        Sizes available
+        <span className="text-xs font-normal text-[#341631]/50 ml-2">click to add/remove · toggle availability after saving</span>
+      </span>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {PRESET_SIZES.map(label => {
+          const active = !!sizes.find(s => s.label === label);
+          return (
+            <button
+              key={label} type="button"
+              onClick={() => toggle(label)}
+              className={`px-3.5 py-1.5 text-xs font-bold font-display border transition-all ${
+                active
+                  ? 'bg-[#0b4722] text-white border-[#0b4722]'
+                  : 'bg-white text-[#341631]/60 border-[#341631]/20 hover:border-[#341631]/50'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={custom}
+          onChange={e => setCustom(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
+          placeholder="Custom (e.g. 34, FREE)"
+          className="px-3 py-2 text-xs border border-[#341631]/20 bg-white text-[#341631] placeholder:text-[#341631]/35 focus:outline-none focus:border-[#0b4722] w-44"
+        />
+        <button type="button" onClick={addCustom}
+          className="px-3 py-2 text-xs font-bold bg-white border border-[#341631]/20 hover:border-[#341631]/50 text-[#341631] flex items-center gap-1">
+          <Plus size={12} /> Add
+        </button>
+      </div>
+      {sizes.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {sizes.map(s => (
+            <span key={s.label} className="inline-flex items-center gap-1.5 bg-[#0b4722]/8 border border-[#0b4722]/20 px-2.5 py-1 text-xs font-bold text-[#0b4722] font-display">
+              {s.label}
+              <button type="button" onClick={() => onChange(sizes.filter(x => x.label !== s.label))} className="hover:text-[#e34334]">
+                <X size={10} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Inline size availability toggle shown in the product list. */
+function ProductSizeControls({ product, authHeader, onUpdate }) {
+  const [sizes, setSizes] = useState(product.sizes || []);
+  const [saving, setSaving] = useState(false);
+
+  const toggle = async (label) => {
+    const updated = sizes.map(s =>
+      s.label === label ? { ...s, available: !s.available } : s
+    );
+    setSizes(updated);
+    setSaving(true);
+    try {
+      await api.patch(`/shop/products/${product.id}/sizes`, { sizes: updated }, { headers: authHeader });
+      onUpdate(product.id, updated);
+      toast.success(`${label} updated`);
+    } catch {
+      toast.error('Could not update size');
+      setSizes(sizes); // revert
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (sizes.length === 0) return <p className="text-xs text-[#341631]/40 font-body">No sizes set</p>;
+
+  return (
+    <div className="flex flex-wrap gap-1.5 items-center">
+      {saving && <Spinner size={12} />}
+      {sizes.map(s => (
+        <button
+          key={s.label}
+          type="button"
+          onClick={() => toggle(s.label)}
+          title={s.available ? 'Click to mark Out of Stock' : 'Click to mark Available'}
+          className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold font-display border transition-all ${
+            s.available
+              ? 'bg-[#0b4722] text-white border-[#0b4722] hover:bg-[#e34334] hover:border-[#e34334]'
+              : 'bg-[#e34334]/10 text-[#e34334] border-[#e34334]/30 line-through hover:bg-[#0b4722]/10 hover:text-[#0b4722] hover:border-[#0b4722]/30 hover:no-underline'
+          }`}
+        >
+          {s.available ? <ToggleRight size={10} /> : <ToggleLeft size={10} />}
+          {s.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 /** ~6MB file before base64 expansion keeps payload reasonable for JSON + LONGTEXT. */
 const MAX_FILE_BYTES = 6 * 1024 * 1024;
@@ -25,6 +153,7 @@ const emptyForm = () => ({
   tagsRaw: '',
   stock: '100',
   featured: false,
+  sizes: [],
 });
 
 function linesToList(raw) {
@@ -53,10 +182,13 @@ function readFileAsDataUrl(file) {
 export default function ProductConfiguratorTab() {
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
   const fileInputRef = useRef(null);
+  const formRef = useRef(null);
   const [form, setForm] = useState(emptyForm);
+  const [sizes, setSizes] = useState([]);
   const [imageDataUrls, setImageDataUrls] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [products, setProducts] = useState([]);
   const [loadingList, setLoadingList] = useState(true);
   const [deleteId, setDeleteId] = useState(null);
@@ -126,8 +258,29 @@ export default function ProductConfiguratorTab() {
   };
 
   const resetAll = () => {
+    setEditingId(null);
     setForm(emptyForm());
     setImageDataUrls([]);
+    setSizes([]);
+  };
+
+  const startEdit = (p) => {
+    setEditingId(p.id);
+    setForm({
+      name: p.name,
+      price: String(p.price),
+      original_price: p.original_price != null ? String(p.original_price) : '',
+      category: p.category,
+      description: p.description || '',
+      waysRaw: (p.ways_to_wear || []).join('\n'),
+      tagsRaw: (p.tags || []).join(', '),
+      stock: String(p.stock ?? 100),
+      featured: !!p.featured,
+      sizes: [],
+    });
+    setImageDataUrls(p.images || []);
+    setSizes(p.sizes || []);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   const onSubmit = async (e) => {
@@ -145,27 +298,31 @@ export default function ProductConfiguratorTab() {
 
     setSubmitting(true);
     try {
-      await api.post(
-        '/shop/products',
-        {
-          name: form.name.trim(),
-          price,
-          original_price: original,
-          category: form.category.trim(),
-          description: form.description.trim() || null,
-          ways_to_wear,
-          images: imageDataUrls,
-          tags,
-          stock: stock || 100,
-          featured: !!form.featured,
-        },
-        { headers: authHeader }
-      );
-      toast.success('Product created');
+      const payload = {
+        name: form.name.trim(),
+        price,
+        original_price: original,
+        category: form.category.trim(),
+        description: form.description.trim() || null,
+        ways_to_wear,
+        images: imageDataUrls,
+        tags,
+        stock: stock || 100,
+        sizes,
+        featured: !!form.featured,
+      };
+
+      if (editingId) {
+        await api.put(`/shop/products/${editingId}`, payload, { headers: authHeader });
+        toast.success('Product updated');
+      } else {
+        await api.post('/shop/products', payload, { headers: authHeader });
+        toast.success('Product created');
+      }
       resetAll();
       loadProducts();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not create product');
+      toast.error(err.response?.data?.message || 'Could not save product');
     } finally {
       setSubmitting(false);
     }
@@ -192,7 +349,17 @@ export default function ProductConfiguratorTab() {
         Images are read in the browser and sent as <strong>base64 data URLs</strong> (<code className="text-xs">data:image/…;base64,…</code>) in the JSON payload, then stored in the database. Legacy catalog items that still use https URLs continue to work in the shop.
       </p>
 
-      <form onSubmit={onSubmit} className="bg-white rounded-2xl p-6 sm:p-8 border border-[#341631]/8 mb-10 space-y-5 max-w-3xl">
+      <form ref={formRef} onSubmit={onSubmit} className="bg-white rounded-2xl p-6 sm:p-8 border border-[#341631]/8 mb-10 space-y-5 max-w-3xl">
+        {editingId && (
+          <div className="flex items-center justify-between pb-3 border-b border-[#341631]/8">
+            <span className="text-sm font-bold text-[#341631] font-display flex items-center gap-2">
+              <Pencil size={14} className="text-[#0b4722]" /> Editing product
+            </span>
+            <button type="button" onClick={resetAll} className="text-xs text-[#e34334] font-semibold hover:underline font-display">
+              Cancel edit
+            </button>
+          </div>
+        )}
         <div className="grid sm:grid-cols-2 gap-5">
           <Input label="Product name" name="name" value={form.name} onChange={onChange} required placeholder="e.g. Indigo Block Print Kurta" />
           <Select label="Category" name="category" value={form.category} onChange={onChange} required>
@@ -292,16 +459,17 @@ export default function ProductConfiguratorTab() {
           placeholder={'Pair with palazzo pants…\nTuck into high-waisted jeans…'}
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
+        <SizeManager sizes={sizes} onChange={setSizes} />
         <label className="flex items-center gap-3 cursor-pointer select-none">
           <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#0b4722] focus:ring-[#0b4722]" />
           <span className="text-sm font-semibold text-[#341631] font-display">Featured product</span>
         </label>
         <div className="flex flex-wrap gap-3 pt-2">
           <Button type="submit" variant="primary" loading={submitting}>
-            Save to catalog
+            {editingId ? 'Update product' : 'Save to catalog'}
           </Button>
           <Button type="button" variant="ghost" onClick={resetAll}>
-            Reset form
+            {editingId ? 'Cancel edit' : 'Reset form'}
           </Button>
         </div>
       </form>
@@ -316,32 +484,63 @@ export default function ProductConfiguratorTab() {
       ) : (
         <div className="space-y-2 max-w-3xl">
           {products.map((p) => (
-            <div key={p.id} className="bg-white rounded-xl px-4 py-3 border border-[#341631]/8 flex flex-wrap items-center gap-3 justify-between">
-              <div className="min-w-0">
-                <p className="font-semibold text-[#341631] font-display text-sm truncate">{p.name}</p>
-                <p className="text-xs text-[#341631]/45 font-body">
-                  {p.category} · ₹{Number(p.price).toLocaleString('en-IN')}
-                  {p.stock != null && ` · Stock ${p.stock}`}
-                  {p.featured ? ' · Featured' : ''}
-                </p>
+            <div key={p.id} className="bg-white rounded-xl border border-[#341631]/8 overflow-hidden">
+              <div className="px-4 py-3 flex items-center gap-3">
+                <img
+                  src={productHeroImage(p.images)}
+                  alt={p.name}
+                  className="w-14 h-[4.5rem] rounded-lg object-cover border border-[#341631]/10 shrink-0 bg-[#341631]/3"
+                />
+                <div className="flex-1 min-w-0 flex flex-wrap items-center gap-3 justify-between">
+                <div className="min-w-0">
+                  <p className="font-semibold text-[#341631] font-display text-sm truncate">{p.name}</p>
+                  <p className="text-xs text-[#341631]/45 font-body">
+                    {p.category} · ₹{Number(p.price).toLocaleString('en-IN')}
+                    {p.stock != null && ` · Stock ${p.stock}`}
+                    {p.featured ? ' · Featured' : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(p)}
+                    className="p-2 rounded-lg text-[#0b4722]/80 hover:bg-[#0b4722]/10 transition-colors"
+                    aria-label="Edit product"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <Link
+                    to={`/shop/${p.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0b4722] font-display hover:underline"
+                  >
+                    View <ExternalLink size={12} />
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteId(p.id)}
+                    className="p-2 rounded-lg text-[#e34334]/80 hover:bg-[#e34334]/10 transition-colors"
+                    aria-label="Delete product"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Link
-                  to={`/shop/${p.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#0b4722] font-display hover:underline"
-                >
-                  View <ExternalLink size={12} />
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setDeleteId(p.id)}
-                  className="p-2 rounded-lg text-[#e34334]/80 hover:bg-[#e34334]/10 transition-colors"
-                  aria-label="Delete product"
-                >
-                  <Trash2 size={16} />
-                </button>
+              <div className="px-4 pb-3 border-t border-[#341631]/6 pt-2.5">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#341631]/40 font-display mb-2">
+                  Sizes · click to toggle availability
+                </p>
+                <ProductSizeControls
+                  product={p}
+                  authHeader={authHeader}
+                  onUpdate={(id, updated) =>
+                    setProducts(prev =>
+                      prev.map(x => x.id === id ? { ...x, sizes: updated } : x)
+                    )
+                  }
+                />
               </div>
             </div>
           ))}

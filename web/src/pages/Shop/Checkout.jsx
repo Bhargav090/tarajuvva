@@ -113,12 +113,14 @@ export default function Checkout() {
             <h2 className="text-lg font-bold text-[#241621] font-display mb-5">Order Summary</h2>
             <div className="space-y-3 mb-5">
               {items.map(item => (
-                <div key={item.id} className="flex gap-3 items-center">
+                <div key={item.ck} className="flex gap-3 items-center">
                   <img src={productHeroImage(item.images)} alt={item.name}
                     className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#241621] font-display truncate">{item.name}</p>
-                    <p className="text-xs text-[#241621]/45 font-body">Qty {item.qty}</p>
+                    <p className="text-xs text-[#241621]/45 font-body">
+                      Qty {item.qty}{item.size ? ` · Size ${item.size}` : ''}
+                    </p>
                   </div>
                   <span className="text-sm font-bold text-[#a8c74a] font-display">₹{(item.price * item.qty).toLocaleString('en-IN')}</span>
                 </div>

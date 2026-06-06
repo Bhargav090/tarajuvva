@@ -192,7 +192,40 @@ async function initializeDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS hero_images (
+      id VARCHAR(36) PRIMARY KEY,
+      image_path VARCHAR(512) NOT NULL,
+      width INT NOT NULL,
+      height INT NOT NULL,
+      aspect_label VARCHAR(16) NOT NULL,
+      is_active TINYINT(1) DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS reimagine_images (
+      id VARCHAR(36) PRIMARY KEY,
+      garment_type VARCHAR(32) NOT NULL,
+      transformation VARCHAR(128) NOT NULL DEFAULT '',
+      image_path VARCHAR(512) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_reimagine_image (garment_type, transformation)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
   await ensureDefaultAdmin();
+
+  // Add sizes column to products (idempotent — skipped if already present).
+  try {
+    await pool.execute('ALTER TABLE products ADD COLUMN sizes TEXT AFTER stock');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] products.sizes column add skipped:', e.message);
+    }
+  }
 
   // Allow large base64 data URLs in product images (existing DBs may still have TEXT).
   try {

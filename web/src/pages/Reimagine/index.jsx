@@ -9,6 +9,7 @@ import {
   getTransformationMeta,
 } from '../../utils/constants';
 import { useReimagineSubmit } from '../../hooks/useReimagineSubmit';
+import { useReimagineImages } from '../../hooks/useReimagineImages';
 
 const FIELD =
   'w-full px-4 py-3 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm';
@@ -35,13 +36,22 @@ function displayStepNum(step) {
 
 export default function Reimagine() {
   const {
-    step, setStep,
-    garment, setGarment,
-    transformation, setTransformation,
-    details, setDetails,
-    files, addFiles, removeFile,
-    onSubmit, loading, done,
+    step,
+    goBack,
+    garment,
+    setGarment,
+    transformation,
+    setTransformation,
+    details,
+    setDetails,
+    files,
+    addFiles,
+    removeFile,
+    onSubmit,
+    loading,
+    done,
   } = useReimagineSubmit();
+  const { garmentImage, presetImage } = useReimagineImages();
 
   const garmentLabel = GARMENTS.find(g => g.id === garment)?.label ?? '';
   const transformMeta = getTransformationMeta(transformation);
@@ -118,12 +128,12 @@ export default function Reimagine() {
                     key={g.id}
                     type="button"
                     data-testid={`segment-${g.id}`}
-                    onClick={() => { setGarment(g.id); setStep(1); }}
+                    onClick={() => setGarment(g.id)}
                     className="text-left tj-card group hover:-translate-y-1 transition-transform overflow-hidden"
                   >
                     <div className="aspect-square overflow-hidden bg-[var(--tj-bg-soft)]">
                       <img
-                        src={g.image}
+                        src={garmentImage(g.id, g.image)}
                         alt={g.label}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -149,28 +159,47 @@ export default function Reimagine() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -16 }}
               >
-                <div className="grid sm:grid-cols-2 gap-3 max-w-3xl">
-                  {(TRANSFORMATIONS[garment] || []).map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => { setTransformation(t); setStep(3); }}
-                      className={`flex items-center justify-between p-5 border text-left transition-all hover:-translate-y-0.5 ${
-                        transformation === t
-                          ? 'border-black bg-black text-white'
-                          : 'border-black/20 hover:border-black'
-                      }`}
-                    >
-                      <span className="font-display font-bold">
-                        {getTransformationMeta(t).display}
-                      </span>
-                      <ArrowRight size={16} className="opacity-40" />
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 max-w-4xl">
+                  {(TRANSFORMATIONS[garment] || []).map(t => {
+                    const meta = getTransformationMeta(t);
+                    const selected = transformation === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setTransformation(t)}
+                        className={`text-left tj-card group overflow-hidden transition-transform hover:-translate-y-1 ${
+                          selected ? 'ring-2 ring-black ring-offset-2' : ''
+                        }`}
+                      >
+                        <div className="aspect-square overflow-hidden bg-[var(--tj-bg-soft)] relative">
+                          <img
+                            src={presetImage(garment, t, meta.image)}
+                            alt={meta.display}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          {selected && (
+                            <span className="absolute top-3 right-3 w-7 h-7 bg-black text-white flex items-center justify-center rounded-full">
+                              <CheckCircle size={16} />
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-4 md:p-5 border-t border-black">
+                          <p className="font-display text-lg md:text-xl font-extrabold text-[#0a0a0a] leading-tight">
+                            {meta.display}
+                          </p>
+                          <p className="text-sm text-black/60 mt-1 leading-snug">{meta.blurb}</p>
+                          <span className="mt-3 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/70 group-hover:text-black">
+                            Pick this <ArrowRight size={12} />
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
                 <button
                   type="button"
-                  onClick={() => setStep(0)}
+                  onClick={goBack}
                   className="mt-8 inline-flex items-center gap-2 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/60 hover:text-black"
                 >
                   <ArrowLeft size={14} /> Back
@@ -190,7 +219,7 @@ export default function Reimagine() {
                 <div>
                   <button
                     type="button"
-                    onClick={() => setStep(1)}
+                    onClick={goBack}
                     className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
                   >
                     <ArrowLeft size={14} /> Change preset

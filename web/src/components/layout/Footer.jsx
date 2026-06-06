@@ -47,8 +47,8 @@ export default function Footer() {
           <p className="tj-eyebrow mb-4">Reach</p>
           <ul className="space-y-2 font-display">
             <li>
-              <a href="mailto:hi@tarajuvva.in" className="hover:underline text-[#0a0a0a]">
-                hi@tarajuvva.in
+              <a href="mailto:contact@tarajuvva.com" className="hover:underline text-[#0a0a0a]">
+                contact@tarajuvva.com
               </a>
             </li>
           </ul>

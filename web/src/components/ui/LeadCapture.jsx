@@ -29,9 +29,7 @@ export default function LeadCapture({ type, testId, variant = 'default' }) {
   };
 
   const inputClass =
-    variant === 'hero'
-      ? 'px-4 py-3 border border-black bg-white text-sm text-[#0a0a0a] placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black rounded-none'
-      : 'flex-1 px-4 py-3 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm rounded-none';
+    'px-4 py-3 border border-black bg-white text-sm text-[#0a0a0a] placeholder:text-black/45 focus:outline-none focus:ring-2 focus:ring-black rounded-none';
 
   return (
     <form
@@ -45,18 +43,14 @@ export default function LeadCapture({ type, testId, variant = 'default' }) {
         placeholder="you@inbox.com"
         value={email}
         onChange={e => setEmail(e.target.value)}
-        className={variant === 'hero' ? `${inputClass} flex-1 min-w-0` : inputClass}
+        className={`${inputClass} flex-1 min-w-0`}
       />
       <input
         type="tel"
-        placeholder="phone (optional)"
+        placeholder="Phone (optional)"
         value={phone}
         onChange={e => setPhone(e.target.value)}
-        className={
-          variant === 'hero'
-            ? `${inputClass} w-full sm:w-44 shrink-0`
-            : 'w-full sm:w-44 px-4 py-3 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm rounded-none'
-        }
+        className={`${inputClass} w-full sm:w-44 shrink-0`}
       />
       <button
         type="submit"

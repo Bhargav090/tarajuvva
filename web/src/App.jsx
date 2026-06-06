@@ -26,7 +26,7 @@ import OrderDetail from './pages/Profile/OrderDetail';
 /** Must match fixed header row height in `Header` (px). */
 const NAV_BAR_PX = 64;
 /** Must match fixed ticker band height on the landing page (px). */
-const TICKER_BAR_PX = 48;
+const TICKER_BAR_PX = 32;
 
 /** Reset window scroll on forward navigations (PUSH/REPLACE). POP keeps browser scroll restore. */
 function ScrollToTop() {

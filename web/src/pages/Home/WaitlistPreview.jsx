@@ -5,6 +5,8 @@ const BLOCKS = [
     num: '03',
     action: 'Repair',
     accent: 'var(--tj-repair)',
+    bg: 'var(--tj-repair)',
+    text: '#ffffff',
     headline: 'The mend is the mood.',
     subline: "Coming soon: send in any garment, we'll mend it back to life. Visible repairs encouraged.",
     type: 'repair',
@@ -14,6 +16,8 @@ const BLOCKS = [
     num: '04',
     action: 'Donate',
     accent: 'var(--tj-donate)',
+    bg: 'var(--tj-donate)',
+    text: '#241621',
     headline: "When it's done with you.",
     subline: 'Coming soon: every donated piece finds a next person, a next project, or a next purpose.',
     type: 'donate',
@@ -26,14 +30,17 @@ export default function WaitlistPreview() {
     <section className="tj-section bg-[var(--tj-bg-soft)] border-y border-black">
       <div className="tj-container grid md:grid-cols-2 gap-px bg-black border border-black">
         {BLOCKS.map(block => (
-          <div key={block.action} className="bg-white p-10 md:p-14">
-            <p className="tj-eyebrow" style={{ color: block.accent }}>
+          <div key={block.action} className="p-10 md:p-14" style={{ background: block.bg, color: block.text }}>
+            <p className="tj-eyebrow" style={{ color: block.text === '#ffffff' ? 'rgba(255,255,255,0.75)' : '#241621' }}>
               {block.num} · {block.action}
             </p>
-            <h3 className="tj-h2 mt-3 text-3xl md:text-4xl text-[#0a0a0a]">
+            <h3 className="tj-h2 mt-3 text-3xl md:text-4xl" style={{ color: block.text }}>
               {block.headline}
             </h3>
-            <p className="text-black/65 mt-3 max-w-md leading-relaxed">
+            <p
+              className="mt-3 max-w-md leading-relaxed"
+              style={{ color: block.text === '#ffffff' ? 'rgba(255,255,255,0.85)' : 'rgba(36,22,33,0.75)' }}
+            >
               {block.subline}
             </p>
             <div className="mt-6">

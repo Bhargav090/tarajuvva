@@ -55,7 +55,7 @@ export default function CartDrawer() {
               ) : (
                 <div className="space-y-4">
                   {items.map(item => (
-                    <div key={item.id} className="flex gap-4 p-3 border border-black">
+                    <div key={item.ck} className="flex gap-4 p-3 border border-black">
                       <img
                         src={productHeroImage(item.images)}
                         alt={item.name}
@@ -63,11 +63,16 @@ export default function CartDrawer() {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-display font-bold text-sm leading-tight truncate">{item.name}</p>
+                        {item.size && (
+                          <span className="inline-block mt-0.5 text-[10px] font-bold font-display uppercase tracking-wider bg-black text-white px-2 py-0.5">
+                            Size {item.size}
+                          </span>
+                        )}
                         <p className="font-display font-bold text-sm mt-1">₹{item.price.toLocaleString('en-IN')}</p>
                         <div className="flex items-center gap-3 mt-2">
                           <button
                             type="button"
-                            onClick={() => updateQty(item.id, item.qty - 1)}
+                            onClick={() => updateQty(item.ck, item.qty - 1)}
                             className="w-7 h-7 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors"
                           >
                             <Minus size={12} />
@@ -75,7 +80,7 @@ export default function CartDrawer() {
                           <span className="font-display font-semibold text-sm w-5 text-center">{item.qty}</span>
                           <button
                             type="button"
-                            onClick={() => updateQty(item.id, item.qty + 1)}
+                            onClick={() => updateQty(item.ck, item.qty + 1)}
                             className="w-7 h-7 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors"
                           >
                             <Plus size={12} />
@@ -84,7 +89,7 @@ export default function CartDrawer() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.ck)}
                         className="text-black/30 hover:text-black transition-colors self-start"
                       >
                         <X size={16} />

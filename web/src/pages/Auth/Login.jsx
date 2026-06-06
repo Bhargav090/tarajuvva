@@ -91,7 +91,7 @@ export default function Login() {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 70%, #ffffff 0%, transparent 60%)' }} />
         <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }}>
           <Link to="/" className="flex items-center mb-16">
-            <img src={brandIcon} alt="Tarajuvva" className="w-40 h-auto object-contain" />
+            <img src={brandIcon} alt="Tarajuvva" className="w-56 xl:w-64 h-auto object-contain" />
           </Link>
           <h1 className="font-display font-black text-[#241621] leading-tight mb-6" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}>
             Your wardrobe,

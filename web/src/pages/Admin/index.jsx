@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Key, Tag, ImageIcon, Sparkles,
+  LogOut, TrendingUp, Package, Key, Tag, ImageIcon, Sparkles, MessageSquareQuote, PhoneCall,
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -25,6 +25,8 @@ import { ORDER_STATUSES, REIMAGINE_STATUSES } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
 import HeroImagesTab from './HeroImagesTab';
 import ReimaginePresetsTab from './ReimaginePresetsTab';
+import ReimagineCustomizeTab from './ReimagineCustomizeTab';
+import TestimonialsTab from './TestimonialsTab';
 import { uploadUrl } from '../../utils/uploadUrl';
 import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
 
@@ -68,6 +70,8 @@ const TABS = [
   { id: 'products',  label: 'Products',           icon: Tag            },
   { id: 'hero',             label: 'Hero image',       icon: ImageIcon },
   { id: 'reimagine-images', label: 'Reimagine images', icon: Sparkles },
+  { id: 'reimagine-customize', label: 'Customize', icon: PhoneCall },
+  { id: 'testimonials',     label: 'Testimonials',     icon: MessageSquareQuote },
 ];
 
 function AdminChangePasswordModal({ open, onClose }) {
@@ -220,6 +224,8 @@ export default function Admin() {
           {tab === 'products' && <ProductConfiguratorTab />}
           {tab === 'hero' && <HeroImagesTab />}
           {tab === 'reimagine-images' && <ReimaginePresetsTab />}
+          {tab === 'reimagine-customize' && <ReimagineCustomizeTab />}
+          {tab === 'testimonials' && <TestimonialsTab />}
         </div>
       </div>
     </div>
@@ -310,7 +316,12 @@ function ReimagineTab() {
                 <p className="font-bold text-[#241621] font-display text-lg mt-1">{r.user_name}</p>
                 <p className="text-sm text-[#4c1b1b] font-display mt-0.5">
                   {capitalize(r.garment_type)} → {r.transformation}
-                  {r.is_custom && (
+                  {r.consultation_paid && (
+                    <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#4c1b1b]/10 text-[#4c1b1b] px-2 py-0.5 rounded">
+                      Customize
+                    </span>
+                  )}
+                  {r.is_custom && !r.consultation_paid && (
                     <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#4c1b1b]/10 text-[#4c1b1b] px-2 py-0.5 rounded">
                       Custom
                     </span>

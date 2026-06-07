@@ -4,11 +4,18 @@ import { HERO_STATS } from '../../utils/constants';
 import { useHeroImage } from '../../hooks/useHeroImage';
 import { uploadUrl } from '../../utils/uploadUrl';
 
-function HeroVisual({ heroSrc, hero, heroAspect, testId }) {
+function HeroVisual({ heroSrc, hero, testId }) {
+  const width = 640;
+  const height = 560;
   return (
     <div
       className="tj-hero-visual group"
-      style={{ aspectRatio: heroAspect }}
+      style={{
+        width,
+        height,
+        maxWidth: '100%',
+        maxHeight: height,
+      }}
       data-testid={testId}
     >
       <div className="tj-hero-visual-glow" aria-hidden />
@@ -20,6 +27,7 @@ function HeroVisual({ heroSrc, hero, heroAspect, testId }) {
           alt="Tarajuvva editorial"
           width={hero?.width}
           height={hero?.height}
+          className="!object-cover !object-center"
         />
         <div className="tj-hero-visual-shimmer" aria-hidden />
       </div>
@@ -34,7 +42,6 @@ function HeroVisual({ heroSrc, hero, heroAspect, testId }) {
 export default function Hero() {
   const { hero, loading } = useHeroImage();
   const heroSrc = hero?.image_path ? uploadUrl(hero.image_path) : null;
-  const heroAspect = hero?.aspect_label === '3:4' ? '3/4' : '4/5';
   const showVisual = heroSrc && !loading;
 
   return (
@@ -77,27 +84,27 @@ export default function Hero() {
           </div>
 
           {showVisual && (
-            <div className="tj-hero-visual-slot hidden md:flex justify-end pr-2 lg:pr-6 pb-4">
-              <HeroVisual heroSrc={heroSrc} hero={hero} heroAspect={heroAspect} testId="hero-image" />
+            <div className="tj-hero-visual-slot hidden md:flex justify-end lg:justify-end">
+              <HeroVisual heroSrc={heroSrc} hero={hero} testId="hero-image" />
             </div>
           )}
         </div>
 
         {showVisual && (
           <div className="md:hidden tj-hero-visual-slot flex justify-center px-2">
-            <HeroVisual heroSrc={heroSrc} hero={hero} heroAspect={heroAspect} testId="hero-image-mobile" />
+            <HeroVisual heroSrc={heroSrc} hero={hero} testId="hero-image-mobile" />
           </div>
         )}
 
         {!showVisual && !loading && (
           <div
             aria-hidden
-            className="hidden lg:block absolute top-24 right-8 xl:right-12 w-full max-w-[360px] rounded-[1.25rem] border-2 border-dashed border-black/12 bg-black/[0.02]"
-            style={{ aspectRatio: '4/5' }}
+            className="hidden lg:block absolute top-24 right-8 xl:right-12 w-full max-w-[540px] xl:max-w-[600px] rounded-[1.25rem] border-2 border-dashed border-black/12 bg-black/[0.02]"
+            style={{ aspectRatio: '5/6' }}
           />
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px mt-10 md:mt-12 border border-black bg-black">
+        <div className="relative z-[2] grid grid-cols-2 md:grid-cols-4 gap-px mt-10 md:mt-12 border border-black bg-black">
           {HERO_STATS.map(stat => (
             <div key={stat.label} className="bg-white p-6">
               <div className="font-display text-4xl md:text-5xl font-extrabold tracking-tighter text-[#0a0a0a]">

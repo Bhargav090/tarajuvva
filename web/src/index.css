@@ -174,6 +174,28 @@
     color: rgba(255, 255, 255, 0.55);
   }
 
+  .tj-vertical-hero--dark {
+    color: #0a0a0a;
+  }
+  .tj-vertical-hero--dark .tj-vertical-hero-title,
+  .tj-vertical-hero--dark h1.tj-vertical-hero-title {
+    color: #0a0a0a;
+  }
+  .tj-vertical-hero--dark .tj-eyebrow {
+    color: rgba(10, 10, 10, 0.55);
+  }
+
+  .tj-vertical-hero-highlight {
+    display: inline;
+    background: #0a0a0a;
+    color: #ffffff;
+    padding: 0.06em 0.55em 0.1em;
+    font-style: italic;
+    font-weight: 800;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
   .tj-vertical-hero-title {
     font-family: 'Cabinet Grotesk', var(--font-display);
     font-weight: 800;
@@ -275,27 +297,39 @@
 
   .tj-hero-visual-slot {
     margin-top: 1.75rem;
+    min-width: 0;
   }
   @media (min-width: 640px) {
     .tj-hero-visual-slot { margin-top: 2rem; }
   }
-  @media (min-width: 1024px) {
+  @media (min-width: 768px) {
     .tj-hero-visual-slot {
-      position: absolute;
-      top: 0;
-      right: 0;
-      z-index: 1;
-      width: min(400px, 38%);
       margin-top: 0;
+      align-self: start;
     }
   }
 
   .tj-hero-stage {
     position: relative;
   }
+  @media (min-width: 768px) {
+    .tj-hero-stage--has-visual {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 640px);
+      gap: 1.5rem 2rem;
+      align-items: start;
+    }
+  }
   @media (min-width: 1024px) {
     .tj-hero-stage--has-visual {
-      padding-right: min(420px, 40%);
+      grid-template-columns: minmax(0, 1fr) minmax(380px, 640px);
+      gap: 2rem 2.5rem;
+    }
+  }
+  @media (min-width: 1280px) {
+    .tj-hero-stage--has-visual {
+      grid-template-columns: minmax(0, 0.95fr) minmax(420px, 660px);
+      gap: 2rem 3rem;
     }
   }
 
@@ -453,20 +487,11 @@
     pointer-events: none;
   }
 
-  /* Homepage hero — editorial image frame */
+  /* Homepage hero — editorial image frame (height capped in Hero.jsx) */
   .tj-hero-visual {
     position: relative;
-    width: 100%;
-    max-width: 280px;
-  }
-  @media (min-width: 640px) {
-    .tj-hero-visual { max-width: 320px; }
-  }
-  @media (min-width: 1024px) {
-    .tj-hero-visual { max-width: 360px; }
-  }
-  @media (min-width: 1280px) {
-    .tj-hero-visual { max-width: 400px; }
+    margin-left: auto;
+    flex-shrink: 0;
   }
 
   .tj-hero-visual-glow {

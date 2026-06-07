@@ -1,7 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
-import ReimagineStepBar from '../../components/ui/ReimagineStepBar';
-import DropZone from '../../components/ui/DropZone';
+import VerticalPageHero from '../../components/ui/VerticalPageHero';
+import ReimagineFormWizard from '../../components/reimagine/ReimagineFormWizard';
+import {
+  ReimagineRemakeCard,
+  ReimagineCustomizeCard,
+} from '../../components/reimagine/ReimagineSidePanel';
 import {
   GARMENTS,
   TRANSFORMATIONS,
@@ -10,34 +14,15 @@ import {
 } from '../../utils/constants';
 import { useReimagineSubmit } from '../../hooks/useReimagineSubmit';
 import { useReimagineImages } from '../../hooks/useReimagineImages';
-
-const FIELD =
-  'w-full px-4 py-3 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm';
-
-function FieldWrap({ label, required, children }) {
-  return (
-    <div>
-      {label && (
-        <label className="block text-xs font-mono-tj uppercase tracking-[0.18em] text-black/60 mb-2">
-          {label}{required && ' *'}
-        </label>
-      )}
-      {children}
-    </div>
-  );
-}
-
-function displayStepNum(step) {
-  if (step === 0) return '01';
-  if (step === 1) return '02';
-  if (step === 3) return '03';
-  return '01';
-}
+import { useReimagineCustomizeSettings } from '../../hooks/useReimagineCustomize';
 
 export default function Reimagine() {
   const {
     step,
+    isCustomize,
     goBack,
+    startCustomize,
+    exitCustomize,
     garment,
     setGarment,
     transformation,
@@ -52,8 +37,9 @@ export default function Reimagine() {
     done,
   } = useReimagineSubmit();
   const { garmentImage, presetImage } = useReimagineImages();
+  const { settings: customizeSettings } = useReimagineCustomizeSettings();
 
-  const garmentLabel = GARMENTS.find(g => g.id === garment)?.label ?? '';
+  const garmentLabel = GARMENTS.find((g) => g.id === garment)?.label ?? '';
   const transformMeta = getTransformationMeta(transformation);
 
   if (done) {
@@ -85,230 +71,206 @@ export default function Reimagine() {
 
   return (
     <div className="min-h-screen bg-white">
-      <section className="border-b border-black bg-[var(--tj-reimagine)] text-white" data-testid="reimagine-hero">
-        <div className="tj-container py-14 md:py-20 lg:py-24">
-          <p className="tj-eyebrow text-white/60">02 · Reimagine</p>
-          <h1 className="tj-h1 mt-3 text-white">
-            Send the old.
-            <br />
-            <span className="italic font-light">Get the new.</span>
-          </h1>
-          <p className="text-white/75 text-lg md:text-xl max-w-2xl mt-6 leading-relaxed">
-            Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour.
-          </p>
-        </div>
-      </section>
-
-      <ReimagineStepBar currentStep={step} />
+      <VerticalPageHero
+        bgVar="--tj-reimagine"
+        eyebrow="02 · Reimagine"
+        headline={['Send the old.', 'Get the new.']}
+        subtext="Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour."
+        testId="reimagine-hero"
+      />
 
       <section className="border-b border-black bg-white">
-        <div className="tj-container py-12 md:py-16 lg:py-20 pb-20">
-          {step !== 3 && (
-            <>
-              <p className="tj-eyebrow mb-3">Step {displayStepNum(step)}</p>
-              {stepHeading && (
-                <h2 className="tj-h2 text-[#0a0a0a] mb-10 md:mb-12 max-w-3xl">
-                  {stepHeading}
-                </h2>
-              )}
-            </>
-          )}
-
+        <div className="tj-container py-10 md:py-14 lg:py-16">
           <AnimatePresence mode="wait">
-            {step === 0 && (
+            {isCustomize ? (
               <motion.div
-                key="s0"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5"
+                key="customize"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                className="max-w-5xl w-full"
               >
-                {GARMENTS.map(g => (
-                  <button
-                    key={g.id}
-                    type="button"
-                    data-testid={`segment-${g.id}`}
-                    onClick={() => setGarment(g.id)}
-                    className="text-left tj-card group hover:-translate-y-1 transition-transform overflow-hidden"
-                  >
-                    <div className="aspect-square overflow-hidden bg-[var(--tj-bg-soft)]">
-                      <img
-                        src={garmentImage(g.id, g.image)}
-                        alt={g.label}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="p-4 md:p-5 border-t border-black">
-                      <p className="font-display text-xl md:text-2xl font-extrabold text-[#0a0a0a] leading-tight">
-                        {g.label}
-                      </p>
-                      <p className="text-sm text-black/60 mt-1 leading-snug">{g.desc}</p>
-                      <span className="mt-3 md:mt-4 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/70 group-hover:text-black">
-                        Pick this <ArrowRight size={12} />
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </motion.div>
-            )}
-
-            {step === 1 && (
-              <motion.div
-                key="s1"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-              >
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 max-w-4xl">
-                  {(TRANSFORMATIONS[garment] || []).map(t => {
-                    const meta = getTransformationMeta(t);
-                    const selected = transformation === t;
-                    return (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setTransformation(t)}
-                        className={`text-left tj-card group overflow-hidden transition-transform hover:-translate-y-1 ${
-                          selected ? 'ring-2 ring-black ring-offset-2' : ''
-                        }`}
-                      >
-                        <div className="aspect-square overflow-hidden bg-[var(--tj-bg-soft)] relative">
-                          <img
-                            src={presetImage(garment, t, meta.image)}
-                            alt={meta.display}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                          {selected && (
-                            <span className="absolute top-3 right-3 w-7 h-7 bg-black text-white flex items-center justify-center rounded-full">
-                              <CheckCircle size={16} />
-                            </span>
-                          )}
-                        </div>
-                        <div className="p-4 md:p-5 border-t border-black">
-                          <p className="font-display text-lg md:text-xl font-extrabold text-[#0a0a0a] leading-tight">
-                            {meta.display}
-                          </p>
-                          <p className="text-sm text-black/60 mt-1 leading-snug">{meta.blurb}</p>
-                          <span className="mt-3 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/70 group-hover:text-black">
-                            Pick this <ArrowRight size={12} />
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
                 <button
                   type="button"
-                  onClick={goBack}
-                  className="mt-8 inline-flex items-center gap-2 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/60 hover:text-black"
+                  onClick={exitCustomize}
+                  className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
                 >
-                  <ArrowLeft size={14} /> Back
+                  <ArrowLeft size={14} /> Back to presets
                 </button>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div
-                key="s3"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -16 }}
-                className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start"
-              >
-                {/* Left — context */}
-                <div>
-                  <button
-                    type="button"
-                    onClick={goBack}
-                    className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
-                  >
-                    <ArrowLeft size={14} /> Change preset
-                  </button>
-                  <p className="tj-eyebrow mt-8 mb-3">Step 03</p>
-                  <h2 className="tj-h2 text-[#0a0a0a]">Tell us where to send it.</h2>
-                  <div className="tj-card p-5 md:p-6 mt-8">
-                    <p className="text-xs font-mono-tj uppercase tracking-[0.18em] text-[var(--tj-reimagine)]">
-                      Your remake
-                    </p>
-                    <p className="font-display text-xl md:text-2xl font-extrabold text-[#0a0a0a] mt-2 leading-snug">
-                      {garmentLabel} → {transformMeta.display}
-                    </p>
-                    <p className="text-sm text-black/60 mt-2">{transformMeta.blurb}</p>
-                  </div>
+                <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl">Your vision. Our craft.</h2>
+                <div className="mt-5 grid sm:grid-cols-2 gap-8 md:gap-12 lg:gap-14 items-start">
+                  <ReimagineCustomizeCard
+                    price={customizeSettings.price}
+                    feature={customizeSettings.feature}
+                    description={customizeSettings.description}
+                  />
+                  <ReimagineFormWizard
+                    details={details}
+                    setDetails={setDetails}
+                    files={files}
+                    addFiles={addFiles}
+                    removeFile={removeFile}
+                    onSubmit={onSubmit}
+                    loading={loading}
+                    submitLabel="Submit customize request"
+                  />
                 </div>
-
-                {/* Right — form */}
-                <form onSubmit={onSubmit} className="space-y-5">
-                  <FieldWrap label="Full name" required>
-                    <input
-                      name="user_name"
-                      value={details.user_name}
-                      onChange={e => setDetails(p => ({ ...p, user_name: e.target.value }))}
-                      required
-                      className={FIELD}
-                    />
-                  </FieldWrap>
-                  <FieldWrap label="Email">
-                    <input
-                      name="user_email"
-                      type="email"
-                      value={details.user_email}
-                      onChange={e => setDetails(p => ({ ...p, user_email: e.target.value }))}
-                      className={FIELD}
-                    />
-                  </FieldWrap>
-                  <FieldWrap label="Phone" required>
-                    <input
-                      name="user_phone"
-                      type="tel"
-                      value={details.user_phone}
-                      onChange={e => setDetails(p => ({ ...p, user_phone: e.target.value }))}
-                      required
-                      className={FIELD}
-                    />
-                  </FieldWrap>
-                  <FieldWrap label="Pickup / delivery address" required>
-                    <textarea
-                      name="address"
-                      value={details.address}
-                      onChange={e => setDetails(p => ({ ...p, address: e.target.value }))}
-                      required
-                      rows={2}
-                      className={`${FIELD} resize-none`}
-                    />
-                  </FieldWrap>
-                  <FieldWrap label="Upload a photo of the garment">
-                    <DropZone
-                      files={files}
-                      onAdd={addFiles}
-                      onRemove={removeFile}
-                      variant="compact"
-                    />
-                  </FieldWrap>
-                  <FieldWrap label="Notes (optional)">
-                    <textarea
-                      name="notes"
-                      value={details.notes}
-                      onChange={e => setDetails(p => ({ ...p, notes: e.target.value }))}
-                      rows={4}
-                      placeholder="Any specifics? Sentimental value? Don't touch the buttons?"
-                      className={`${FIELD} resize-none`}
-                    />
-                  </FieldWrap>
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full tj-btn-reimagine justify-center disabled:opacity-60"
-                    >
-                      {loading ? 'Submitting…' : 'Submit remake request'}
-                    </button>
-                    <p className="text-xs text-black/45 mt-3 text-center">
-                      We&apos;ll respond within 24 hours with a quote and timeline.
-                    </p>
-                  </div>
-                </form>
               </motion.div>
+            ) : (
+              <>
+                {step !== 3 && stepHeading && (
+                  <h2 className="tj-h2 text-[#0a0a0a] mb-8 md:mb-10 max-w-3xl">
+                    {stepHeading}
+                  </h2>
+                )}
+
+                {step === 0 && (
+                  <motion.div
+                    key="s0"
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -16 }}
+                  >
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                      {GARMENTS.map((g) => (
+                        <button
+                          key={g.id}
+                          type="button"
+                          data-testid={`segment-${g.id}`}
+                          onClick={() => setGarment(g.id)}
+                          className="text-left tj-card group hover:-translate-y-1 transition-transform overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,0.08)] hover:shadow-[6px_6px_0_0_rgba(110,14,26,0.5)]"
+                        >
+                          <div className="aspect-[4/5] overflow-hidden bg-[var(--tj-bg-soft)]">
+                            <img
+                              src={garmentImage(g.id, g.image)}
+                              alt={g.label}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+                          <div className="p-4 md:p-5 border-t border-black">
+                            <p className="font-display text-xl md:text-2xl font-extrabold text-[#0a0a0a] leading-tight">
+                              {g.label}
+                            </p>
+                            <p className="text-sm text-black/60 mt-1 leading-snug">{g.desc}</p>
+                            <span className="mt-3 md:mt-4 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/70 group-hover:text-black">
+                              Pick this <ArrowRight size={12} />
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="mt-10 md:mt-12 flex flex-col items-center gap-3">
+                      <p className="text-sm text-black/50">Have something else in mind?</p>
+                      <button
+                        type="button"
+                        onClick={startCustomize}
+                        className="tj-btn-reimagine min-w-[220px] justify-center shadow-[4px_4px_0_0_rgba(0,0,0,0.15)] hover:shadow-[6px_6px_0_0_rgba(110,14,26,0.6)]"
+                        data-testid="reimagine-customize-cta"
+                      >
+                        Customize
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {step === 1 && (
+                  <motion.div
+                    key="s1"
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -16 }}
+                  >
+                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 max-w-4xl">
+                      {(TRANSFORMATIONS[garment] || []).map((t) => {
+                        const meta = getTransformationMeta(t);
+                        const selected = transformation === t;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setTransformation(t)}
+                            className={`text-left tj-card group overflow-hidden transition-transform hover:-translate-y-1 ${
+                              selected ? 'ring-2 ring-black ring-offset-2' : ''
+                            }`}
+                          >
+                            <div className="aspect-square overflow-hidden bg-[var(--tj-bg-soft)] relative">
+                              <img
+                                src={presetImage(garment, t, meta.image)}
+                                alt={meta.display}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                              {selected && (
+                                <span className="absolute top-3 right-3 w-7 h-7 bg-black text-white flex items-center justify-center rounded-full">
+                                  <CheckCircle size={16} />
+                                </span>
+                              )}
+                            </div>
+                            <div className="p-4 md:p-5 border-t border-black">
+                              <p className="font-display text-lg md:text-xl font-extrabold text-[#0a0a0a] leading-tight">
+                                {meta.display}
+                              </p>
+                              <p className="text-sm text-black/60 mt-1 leading-snug">{meta.blurb}</p>
+                              <span className="mt-3 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/70 group-hover:text-black">
+                                Pick this <ArrowRight size={12} />
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={goBack}
+                      className="mt-8 inline-flex items-center gap-2 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/60 hover:text-black"
+                    >
+                      <ArrowLeft size={14} /> Back
+                    </button>
+                  </motion.div>
+                )}
+
+                {step === 3 && (
+                  <motion.div
+                    key="s3"
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -16 }}
+                    className="max-w-5xl w-full"
+                  >
+                    <button
+                      type="button"
+                      onClick={goBack}
+                      className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
+                    >
+                      <ArrowLeft size={14} /> Change preset
+                    </button>
+                    <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl">
+                      Tell us where to send it.
+                    </h2>
+                    <div className="mt-5 grid sm:grid-cols-2 gap-8 md:gap-12 lg:gap-14 items-start">
+                      <ReimagineRemakeCard
+                        garmentLabel={garmentLabel}
+                        transformLabel={transformMeta.display}
+                        blurb={transformMeta.blurb}
+                        fromImage={garmentImage(
+                          garment,
+                          GARMENTS.find((g) => g.id === garment)?.image
+                        )}
+                        toImage={presetImage(garment, transformation, transformMeta.image)}
+                      />
+                      <ReimagineFormWizard
+                        details={details}
+                        setDetails={setDetails}
+                        files={files}
+                        addFiles={addFiles}
+                        removeFile={removeFile}
+                        onSubmit={onSubmit}
+                        loading={loading}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </>
             )}
           </AnimatePresence>
         </div>

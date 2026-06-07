@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const VALID_STEPS = [0, 1, 3];
 
@@ -10,28 +11,46 @@ function parseStep(raw) {
   return VALID_STEPS.includes(n) ? n : 0;
 }
 
-export function useReimagineSubmit() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-
-  const step = parseStep(searchParams.get('step'));
-  const garment = searchParams.get('garment') || '';
-  const transformation = searchParams.get('transformation') || '';
-
-  const [files, setFiles] = useState([]);
-  const [details, setDetails] = useState({
+function emptyDetails() {
+  return {
     user_name: '',
     user_phone: '',
     user_email: '',
     address: '',
     notes: '',
-  });
+  };
+}
+
+export function useReimagineSubmit() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const isCustomize = searchParams.get('mode') === 'customize';
+  const step = isCustomize ? 3 : parseStep(searchParams.get('step'));
+  const garment = searchParams.get('garment') || '';
+  const transformation = searchParams.get('transformation') || '';
+
+  const [files, setFiles] = useState([]);
+  const [details, setDetails] = useState(emptyDetails);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
 
-  // Guard invalid deep-links (e.g. step=3 without prior selections).
   useEffect(() => {
-    if (done) return;
+    if (prefilled || !user) return;
+    setDetails((p) => ({
+      ...p,
+      user_name: p.user_name || user.name || '',
+      user_email: p.user_email || user.email || '',
+      user_phone: p.user_phone || user.phone || '',
+      address: p.address || user.address || '',
+    }));
+    setPrefilled(true);
+  }, [user, prefilled]);
+
+  useEffect(() => {
+    if (done || isCustomize) return;
     if (step === 1 && !garment) {
       setSearchParams({}, { replace: true });
     } else if (step === 3 && (!garment || !transformation)) {
@@ -42,11 +61,12 @@ export function useReimagineSubmit() {
       }
       setSearchParams(params, { replace: true });
     }
-  }, [step, garment, transformation, done, setSearchParams]);
+  }, [step, garment, transformation, done, isCustomize, setSearchParams]);
 
   const goToStep = useCallback(
     (newStep, extra = {}, { replace = false } = {}) => {
       const params = new URLSearchParams(searchParams);
+      params.delete('mode');
       params.set('step', String(newStep));
 
       if ('garment' in extra) {
@@ -63,9 +83,21 @@ export function useReimagineSubmit() {
     [searchParams, setSearchParams],
   );
 
+  const startCustomize = useCallback(() => {
+    setSearchParams({ mode: 'customize' }, { replace: false });
+  }, [setSearchParams]);
+
+  const exitCustomize = useCallback(() => {
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
   const goBack = useCallback(() => {
+    if (isCustomize) {
+      exitCustomize();
+      return;
+    }
     navigate(-1);
-  }, [navigate]);
+  }, [navigate, isCustomize, exitCustomize]);
 
   const setGarment = useCallback(
     (id) => goToStep(1, { garment: id }),
@@ -80,15 +112,11 @@ export function useReimagineSubmit() {
   const addFiles = (newFiles) => setFiles((p) => [...p, ...newFiles]);
   const removeFile = (idx) => setFiles((p) => p.filter((_, i) => i !== idx));
 
-  const onSubmit = async (e) => {
-    e?.preventDefault();
+  const submitRequest = async (payload) => {
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append('garment_type', garment);
-      fd.append('transformation', transformation);
-      fd.append('is_custom', transformation === 'Custom' ? '1' : '0');
-      Object.entries(details).forEach(([k, v]) => fd.append(k, v ?? ''));
+      Object.entries(payload.fields).forEach(([k, v]) => fd.append(k, v ?? ''));
       files.forEach((f) => fd.append('images', f));
 
       await api.post('/reimagine/requests', fd, {
@@ -104,9 +132,38 @@ export function useReimagineSubmit() {
     }
   };
 
+  const onSubmit = async (e) => {
+    e?.preventDefault();
+
+    if (isCustomize) {
+      await submitRequest({
+        fields: {
+          garment_type: 'customize',
+          transformation: 'Customize Consultation',
+          is_consultation: '1',
+          is_custom: '1',
+          ...details,
+        },
+      });
+      return;
+    }
+
+    await submitRequest({
+      fields: {
+        garment_type: garment,
+        transformation,
+        is_custom: transformation === 'Custom' ? '1' : '0',
+        ...details,
+      },
+    });
+  };
+
   return {
     step,
+    isCustomize,
     goToStep,
+    startCustomize,
+    exitCustomize,
     goBack,
     garment,
     setGarment,

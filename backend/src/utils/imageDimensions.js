@@ -56,14 +56,13 @@ function readImageDimensions(buffer) {
   return null;
 }
 
-/** Accepted hero aspect ratios (width ÷ height). */
+/** Matches homepage hero frame (640×560px display). */
 const HERO_ASPECT_RATIOS = [
-  { label: '4:5', ratio: 4 / 5, tolerance: 0.04 },
-  { label: '3:4', ratio: 3 / 4, tolerance: 0.04 },
+  { label: '8:7', ratio: 8 / 7, tolerance: 0.04 },
 ];
 
-const MIN_HERO_WIDTH = 800;
-const MIN_HERO_HEIGHT = 1000;
+const MIN_HERO_WIDTH = 1280;
+const MIN_HERO_HEIGHT = 1120;
 
 function matchHeroAspect(width, height) {
   if (!width || !height) return null;
@@ -94,7 +93,7 @@ function validateHeroImage(buffer) {
     const actual = (width / height).toFixed(3);
     return {
       ok: false,
-      message: `Invalid aspect ratio (${width}×${height}, ≈${actual}). Only portrait 4:5 or 3:4 accepted (±4%).`,
+      message: `Invalid aspect ratio (${width}×${height}, ≈${actual}). Only 8:7 accepted (640×560 display, ±4%).`,
       width,
       height,
     };

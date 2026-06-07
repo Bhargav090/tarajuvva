@@ -1,42 +1,42 @@
 import { useState } from 'react';
 import { Filter, ChevronDown } from 'lucide-react';
 import ProductCard from '../../components/ui/ProductCard';
+import VerticalPageHero from '../../components/ui/VerticalPageHero';
 import { ProductGridSkeleton } from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
 import { useProducts } from '../../hooks/useProducts';
-import { SHOP_CATEGORIES, SORT_OPTIONS } from '../../utils/constants';
+import { SHOP_CATEGORIES, SORT_OPTIONS, SALE_CATEGORY_VALUE } from '../../utils/constants';
+import { isSaleProduct, productDiscountPercent } from '../../utils/productSale';
 
 export default function Shop() {
   const [category, setCategory] = useState(SHOP_CATEGORIES[0]);
   const [sort, setSort] = useState('newest');
-  const { products, loading } = useProducts({ category: category.value });
+  const isSaleFilter = category.value === SALE_CATEGORY_VALUE;
+  const { products, loading } = useProducts({
+    category: isSaleFilter ? null : category.value,
+  });
 
-  const sorted = [...products].sort((a, b) => {
-    if (sort === 'price_asc')  return a.price - b.price;
+  const showSaleOnly = isSaleFilter || sort === 'sale';
+
+  const visible = showSaleOnly ? products.filter((p) => isSaleProduct(p)) : products;
+
+  const sorted = [...visible].sort((a, b) => {
+    if (sort === 'sale') return productDiscountPercent(b) - productDiscountPercent(a);
+    if (sort === 'price_asc') return a.price - b.price;
     if (sort === 'price_desc') return b.price - a.price;
     return 0;
   });
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Hero */}
-      <section className="border-b border-black" data-testid="shop-header">
-        <div className="tj-container py-12 md:py-20 grid md:grid-cols-12 gap-6 items-end">
-          <div className="md:col-span-8">
-            <p className="tj-eyebrow">01 · Shop</p>
-            <h1 className="tj-h1 mt-3 text-[#0a0a0a]">
-              Ten pieces.
-              <br />
-              <span className="italic font-light bg-[var(--tj-shop)] px-3">
-                A hundred outfits.
-              </span>
-            </h1>
-          </div>
-          <p className="md:col-span-4 text-black/65 text-base md:text-lg leading-relaxed">
-            Built modular. Designed to remix. Priced honestly. No hidden synthetics, no half-truths.
-          </p>
-        </div>
-      </section>
+      <VerticalPageHero
+        bgVar="--tj-shop"
+        tone="dark"
+        eyebrow="01 · Shop"
+        headline={['Ten pieces.', 'A hundred outfits.']}
+        subtext="Built modular. Designed to remix. Priced honestly. No hidden synthetics, no half-truths."
+        testId="shop-header"
+      />
 
       {/* Filters */}
       <div className="sticky top-16 z-30 bg-white/90 backdrop-blur-xl border-b border-black/10">
@@ -82,8 +82,8 @@ export default function Shop() {
         ) : sorted.length === 0 ? (
           <EmptyState
             icon={Filter}
-            title="Nothing in this category yet."
-            desc="Try Everything or another filter."
+            title={showSaleOnly ? 'No sale items right now.' : 'Nothing in this category yet.'}
+            desc={showSaleOnly ? 'Check back soon — we only list 50% off and deeper here.' : 'Try Everything or another filter.'}
           />
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

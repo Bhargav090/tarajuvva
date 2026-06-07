@@ -1,18 +1,17 @@
 /** Hero image upload requirements — shared by admin UI and client-side validation. */
 export const HERO_IMAGE_REQUIREMENTS = {
-  aspectRatios: ['4:5', '3:4'],
+  aspectRatios: ['8:7'],
   aspectTolerance: 0.04,
-  minWidth: 800,
-  minHeight: 1000,
+  minWidth: 1280,
+  minHeight: 1120,
+  displayWidth: 640,
+  displayHeight: 560,
   maxFileSizeMb: 8,
   formats: ['image/jpeg', 'image/png', 'image/webp'],
   formatLabels: ['JPEG', 'PNG', 'WebP'],
 };
 
-const RATIO_SPECS = [
-  { label: '4:5', ratio: 4 / 5 },
-  { label: '3:4', ratio: 3 / 4 },
-];
+const RATIO_SPECS = [{ label: '8:7', ratio: 8 / 7 }];
 
 export function matchHeroAspect(width, height) {
   if (!width || !height) return null;

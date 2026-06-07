@@ -25,7 +25,8 @@ export default function HeroImagesTab() {
   const [pendingFile, setPendingFile] = useState(null);
   const [validating, setValidating] = useState(false);
 
-  const { aspectRatios, minWidth, minHeight, maxFileSizeMb, formatLabels } = HERO_IMAGE_REQUIREMENTS;
+  const { aspectRatios, minWidth, minHeight, displayWidth, displayHeight, maxFileSizeMb, formatLabels } =
+    HERO_IMAGE_REQUIREMENTS;
   const active = images.find((img) => img.is_active);
 
   const clearPending = () => {
@@ -75,7 +76,8 @@ export default function HeroImagesTab() {
     <div className="max-w-4xl">
       <h1 className="text-2xl font-black text-[#241621] font-display mb-1">Homepage hero image</h1>
       <p className="text-sm text-[#241621]/55 font-body mb-8">
-        Upload a portrait image for the hero section. Only matching aspect ratios are accepted.
+        Upload for the homepage hero beside the headline. Display frame is{' '}
+        <strong>{displayWidth}×{displayHeight}px</strong> (8:7).
       </p>
 
       {/* Requirements */}
@@ -86,11 +88,15 @@ export default function HeroImagesTab() {
         <ul className="space-y-2 text-sm text-[#241621]/75 font-body">
           <li>
             <strong className="text-[#241621]">Aspect ratio:</strong>{' '}
-            Portrait <strong>{aspectRatios.join(' or ')}</strong> only (±4% tolerance)
+            <strong>{aspectRatios.join(' or ')}</strong> only (±4% tolerance)
           </li>
           <li>
             <strong className="text-[#241621]">Minimum size:</strong>{' '}
-            {minWidth}×{minHeight}px
+            {minWidth}×{minHeight}px (2× display)
+          </li>
+          <li>
+            <strong className="text-[#241621]">Display size:</strong>{' '}
+            {displayWidth}×{displayHeight}px on homepage
           </li>
           <li>
             <strong className="text-[#241621]">Formats:</strong> {formatLabels.join(', ')}
@@ -100,7 +106,7 @@ export default function HeroImagesTab() {
           </li>
         </ul>
         <p className="mt-3 text-xs text-[#241621]/50 font-body">
-          Tip: export at exactly 1200×1500px (4:5) or 1200×1600px (3:4) for best results.
+          Tip: export at exactly {minWidth}×{minHeight}px (8:7) — e.g. 1920×1680px for extra sharpness.
         </p>
       </div>
 

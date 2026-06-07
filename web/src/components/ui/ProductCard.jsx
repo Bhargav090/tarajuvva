@@ -4,10 +4,12 @@ import { motion } from 'framer-motion';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { productHeroImage } from '../../utils/productImage';
+import { productDiscountPercent } from '../../utils/productSale';
 
 export default function ProductCard({ product }) {
   const { addItem } = useCart();
   const [hovering, setHovering] = useState(false);
+  const discount = productDiscountPercent(product);
   const img = productHeroImage(product.images);
   const gallery =
     Array.isArray(product.images) && product.images.length > 0
@@ -59,6 +61,11 @@ export default function ProductCard({ product }) {
           <span className="absolute top-2 left-2 z-[1] bg-[var(--tj-shop)] text-black text-[10px] font-mono-tj uppercase tracking-wider px-2 py-1">
             Modular
           </span>
+          {discount > 0 && (
+            <span className="absolute top-2 right-2 z-[1] bg-black text-white text-[10px] font-mono-tj uppercase tracking-wider px-2 py-1">
+              -{discount}%
+            </span>
+          )}
         </Link>
 
         <div className="pt-4 flex-1 flex flex-col">

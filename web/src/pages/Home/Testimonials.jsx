@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
-import { TESTIMONIALS } from '../../utils/constants';
+import { useTestimonials } from '../../hooks/useTestimonials';
+import { Spinner } from '../../components/ui/Skeleton';
 
 const GOOGLE_REVIEWS_URL =
   import.meta.env.VITE_GOOGLE_REVIEWS_URL || 'https://www.google.com/search?q=Tarajuvva+reviews';
@@ -17,10 +18,27 @@ function initials(name) {
 }
 
 export default function Testimonials() {
+  const { testimonials, loading } = useTestimonials();
   const [index, setIndex] = useState(0);
-  const current = TESTIMONIALS[index];
-  const next = () => setIndex((p) => (p + 1) % TESTIMONIALS.length);
-  const prev = () => setIndex((p) => (p - 1 + TESTIMONIALS.length) % TESTIMONIALS.length);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [testimonials.length]);
+
+  if (loading) {
+    return (
+      <section className="tj-section border-y border-black bg-white flex justify-center">
+        <Spinner size={32} />
+      </section>
+    );
+  }
+
+  if (testimonials.length === 0) return null;
+
+  const current = testimonials[index];
+  const reviewUrl = current.googleReviewUrl || GOOGLE_REVIEWS_URL;
+  const next = () => setIndex((p) => (p + 1) % testimonials.length);
+  const prev = () => setIndex((p) => (p - 1 + testimonials.length) % testimonials.length);
 
   return (
     <section className="tj-section border-y border-black bg-white" data-testid="social-proof">
@@ -46,17 +64,16 @@ export default function Testimonials() {
           <div className="relative min-h-[280px] sm:min-h-[260px]">
             <AnimatePresence mode="wait">
               <motion.blockquote
-                key={current.name}
+                key={current.id || current.name}
                 initial={{ opacity: 0, x: 24 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -24 }}
                 transition={{ duration: 0.25 }}
                 className="p-6 sm:p-8 md:p-10"
               >
-                <div className="flex items-start gap-4 mb-6">
-                  {/* Image placeholder (can be swapped with real review photo). */}
-                  <div className="w-14 h-14 rounded-full border border-black/20 bg-white shrink-0 flex items-center justify-center">
-                    <span className="font-display font-bold text-sm text-[#0a0a0a]">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-6 mb-6">
+                  <div className="w-[88px] h-[88px] sm:w-24 sm:h-24 rounded-full border-2 border-black/15 bg-white shrink-0 flex items-center justify-center">
+                    <span className="font-display font-bold text-base text-[#0a0a0a]">
                       {initials(current.name)}
                     </span>
                   </div>
@@ -66,7 +83,7 @@ export default function Testimonials() {
                       {current.city}
                     </p>
                     <a
-                      href={GOOGLE_REVIEWS_URL}
+                      href={reviewUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.14em] text-black/60 hover:text-black"
@@ -79,15 +96,32 @@ export default function Testimonials() {
                 <p className="text-lg md:text-xl text-black/80 leading-relaxed max-w-3xl">
                   &ldquo;{current.quote}&rdquo;
                 </p>
+
+                {current.images?.length > 0 && (
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    {current.images.map((src, i) => (
+                      <div
+                        key={`${current.id}-review-${i}`}
+                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-black/15 overflow-hidden bg-white shadow-sm"
+                      >
+                        <img
+                          src={src}
+                          alt={`Review photo ${i + 1} from ${current.name}`}
+                          className="w-full h-full object-cover object-center"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.blockquote>
             </AnimatePresence>
           </div>
 
           <div className="border-t border-black bg-white px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {TESTIMONIALS.map((t, i) => (
+              {testimonials.map((t, i) => (
                 <button
-                  key={t.name}
+                  key={t.id || t.name}
                   type="button"
                   onClick={() => setIndex(i)}
                   className={`h-2.5 rounded-full transition-all ${

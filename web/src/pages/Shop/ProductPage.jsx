@@ -285,20 +285,13 @@ export default function ProductPage() {
             )}
 
             {/* CTA */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                variant="primary" size="xl" fullWidth icon={ShoppingBag}
-                onClick={handleAdd} loading={adding}
-                disabled={product.stock === 0}
-              >
-                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-              </Button>
-              <Link to="/reimagine" className="flex-1">
-                <Button variant="outline-burgundy" size="xl" fullWidth icon={Sparkles} className="whitespace-nowrap min-w-[190px]">
-                  Reimagine&nbsp;It
-                </Button>
-              </Link>
-            </div>
+            <Button
+              variant="primary" size="xl" fullWidth icon={ShoppingBag}
+              onClick={handleAdd} loading={adding}
+              disabled={product.stock === 0}
+            >
+              {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+            </Button>
 
             {/* Assurance */}
             <div className="mt-6 grid grid-cols-3 gap-3">

@@ -216,7 +216,54 @@ async function initializeDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS testimonials (
+      id VARCHAR(36) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      city VARCHAR(128) NOT NULL,
+      quote TEXT NOT NULL,
+      image_path VARCHAR(512) NULL,
+      image_paths TEXT NULL,
+      google_review_url VARCHAR(512) NULL,
+      sort_order INT DEFAULT 0,
+      is_active TINYINT(1) DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      setting_key VARCHAR(64) PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
   await ensureDefaultAdmin();
+
+  try {
+    await pool.execute('ALTER TABLE testimonials ADD COLUMN image_paths TEXT NULL AFTER image_path');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] testimonials.image_paths column add skipped:', e.message);
+    }
+  }
+
+  const legacyImages = await all('SELECT id, image_path, image_paths FROM testimonials');
+  for (const row of legacyImages) {
+    if (row.image_path && !row.image_paths) {
+      await run('UPDATE testimonials SET image_paths = ? WHERE id = ?', [
+        JSON.stringify([row.image_path]),
+        row.id,
+      ]);
+    }
+  }
+
+  await ensureDefaultTestimonials();
+
+  const { ensureDefaultReimagineCustomizeSettings } = require('../utils/siteSettings');
+  await ensureDefaultReimagineCustomizeSettings();
 
   // Add sizes column to products (idempotent — skipped if already present).
   try {
@@ -239,6 +286,51 @@ async function initializeDatabase() {
   const row = await get('SELECT COUNT(*) AS count FROM products');
   const productCount = Number(row.count);
   if (productCount === 0) await seedProducts();
+}
+
+const DEFAULT_TESTIMONIALS = [
+  {
+    id: 'testimonial-default-bengaluru',
+    name: 'Ananya R.',
+    city: 'Bengaluru',
+    quote: 'I sent in three sarees. Got back two dresses and a co-ord. My mum cried. Good cry.',
+    sort_order: 0,
+  },
+  {
+    id: 'testimonial-default-hyderabad',
+    name: 'Arjun M.',
+    city: 'Hyderabad',
+    quote: 'Reimagine turnaround was quick. Old kurti is now my favourite co-ord set — wears everywhere in Hyderabad heat.',
+    sort_order: 1,
+  },
+  {
+    id: 'testimonial-default-vijayawada',
+    name: 'Lakshmi P.',
+    city: 'Vijayawada',
+    quote: 'First brand here that actually took my old pieces seriously. Already planning what to send next.',
+    sort_order: 2,
+  },
+];
+
+/** Keep exactly 3 curated defaults; remove ad-hoc rows; preserve admin-uploaded review images on defaults. */
+async function ensureDefaultTestimonials() {
+  const ids = DEFAULT_TESTIMONIALS.map((t) => t.id);
+  const placeholders = ids.map(() => '?').join(', ');
+  await run(`DELETE FROM testimonials WHERE id NOT IN (${placeholders})`, ids);
+
+  for (const t of DEFAULT_TESTIMONIALS) {
+    await run(
+      `INSERT INTO testimonials (id, name, city, quote, image_paths, google_review_url, sort_order, is_active)
+       VALUES (?, ?, ?, ?, NULL, NULL, ?, 1)
+       ON DUPLICATE KEY UPDATE
+         name = VALUES(name),
+         city = VALUES(city),
+         quote = VALUES(quote),
+         sort_order = VALUES(sort_order),
+         is_active = 1`,
+      [t.id, t.name, t.city, t.quote, t.sort_order]
+    );
+  }
 }
 
 async function seedProducts() {

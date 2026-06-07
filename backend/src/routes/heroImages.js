@@ -34,6 +34,8 @@ router.get('/requirements', (req, res) => {
       aspectRatios: HERO_ASPECT_RATIOS.map((r) => r.label),
       minWidth: MIN_HERO_WIDTH,
       minHeight: MIN_HERO_HEIGHT,
+      displayWidth: 640,
+      displayHeight: 560,
       maxFileSizeMb: 8,
       formats: ['JPEG', 'PNG', 'WebP'],
     },

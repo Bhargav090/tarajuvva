@@ -41,6 +41,8 @@ app.use('/api/admin',     require('./src/routes/admin'));
 app.use('/api/settings',  require('./src/routes/settings'));
 app.use('/api/admin/hero-images', require('./src/routes/heroImages'));
 app.use('/api/admin/reimagine-images', require('./src/routes/reimagineImages'));
+app.use('/api/admin/testimonials', require('./src/routes/testimonials'));
+app.use('/api/admin/settings', require('./src/routes/adminSettings'));
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -54,14 +54,14 @@ export const TESTIMONIALS = [
     city: 'Bengaluru',
   },
   {
-    quote: "Their shirt has lasted three years and I've worn it as a top, jacket, and dress. Math checks out.",
-    name: 'Vikram T.',
-    city: 'Mumbai',
+    quote: 'Reimagine turnaround was quick. Old kurti is now my favourite co-ord set — wears everywhere in Hyderabad heat.',
+    name: 'Arjun M.',
+    city: 'Hyderabad',
   },
   {
-    quote: "First fashion brand that didn't try to lecture me. They just made the cool thing.",
-    name: 'Saanvi M.',
-    city: 'Delhi',
+    quote: 'First brand here that actually took my old pieces seriously. Already planning what to send next.',
+    name: 'Lakshmi P.',
+    city: 'Vijayawada',
   },
 ];
 
@@ -74,13 +74,17 @@ export const SHOP_CATEGORIES = [
   { label: 'Bottoms',    value: 'Bottoms' },
   { label: 'Sets',       value: 'Co-ords' },
   { label: 'Dresses',    value: 'Dresses' },
+  { label: 'Sale',       value: '__sale__' },
 ];
 
 export const SORT_OPTIONS = [
   { value: 'newest',     label: 'Sort: newest' },
   { value: 'price_asc',  label: 'Price: low → high' },
   { value: 'price_desc', label: 'Price: high → low' },
+  { value: 'sale',       label: 'Sale now' },
 ];
+
+export const SALE_CATEGORY_VALUE = '__sale__';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // REIMAGINE
@@ -117,10 +121,10 @@ export const GARMENTS = [
 ];
 
 export const TRANSFORMATIONS = {
-  saree: ['Dress', 'Co-ord Set', 'Blouse + Skirt', 'Cape + Palazzos', 'Custom'],
-  kurti: ['Skirt', 'Halter Top', 'Crop Top', 'Peplum Top', 'Custom'],
-  shirt: ['Japanese Shirt', 'Corset Back', 'Tote Bag', 'Patchwork', 'Custom'],
-  pant:  ['Jorts (Shorts)', 'Flared Pants', 'Skirt', 'Palazzo', 'Custom'],
+  saree: ['Dress', 'Co-ord Set', 'Blouse + Skirt', 'Custom'],
+  kurti: ['Skirt', 'Halter Top', 'Crop Top', 'Custom'],
+  shirt: ['Japanese Shirt', 'Corset Back', 'Tote Bag', 'Custom'],
+  pant:  ['Jorts (Shorts)', 'Flared Pants', 'Skirt', 'Custom'],
 };
 
 export const REIMAGINE_PRESETS = [

@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { parseImages, pickStorableImage, enrichOrderItems } = require('../lib/orderItems');
+const { notifyOrder } = require('../utils/notifyEmail');
 
 /** Max serialized length per image string (base64 data URLs can be large). */
 const MAX_IMAGE_STRING = 20 * 1024 * 1024;
@@ -255,6 +256,7 @@ router.post('/orders', authenticateUser, async (req, res) => {
 
   const row = await get('SELECT * FROM orders WHERE id=?', [id]);
   const itemsWithImages = await enrichOrderItems(orderItems, get);
+  notifyOrder(row).catch(() => {});
   res.status(201).json({
     success: true,
     message: 'Thank you for shopping with Tarajuvva. Your order is being processed and will be dispatched soon.',

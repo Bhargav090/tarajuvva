@@ -1,0 +1,5 @@
+# SSH keys — never commit
+*.pem
+
+# OS
+.DS_Store

@@ -27,8 +27,10 @@ fi
 echo "==> Frontend: install, build, deploy"
 npm install
 npm run build
-sudo rm -rf "$WEB_OUT"/*
+sudo mkdir -p "$WEB_OUT"
+sudo find "$WEB_OUT" -mindepth 1 -delete
 sudo cp -r dist/* "$WEB_OUT"/
+sudo chown -R www-data:www-data "$WEB_OUT" 2>/dev/null || sudo chown -R root:root "$WEB_OUT"
 
 if [[ -f "$REPO_ROOT/deploy/nginx/tarajuvva.conf" ]]; then
   echo "==> Nginx: sync site config (www → apex redirect, uploads, api)"

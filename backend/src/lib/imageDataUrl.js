@@ -76,6 +76,18 @@ function parseJsonArray(raw, fallback = '[]') {
   }
 }
 
+/** Parse `data:image/...;base64,...` into mime + buffer. */
+function parseDataUrl(dataUrl) {
+  const v = String(dataUrl || '').trim();
+  const match = v.match(/^data:(image\/[^;]+);base64,([\s\S]+)$/i);
+  if (!match) return null;
+  try {
+    return { mime: match[1], buffer: Buffer.from(match[2], 'base64') };
+  } catch {
+    return null;
+  }
+}
+
 module.exports = {
   MAX_IMAGE_STRING,
   DATA_URL_RE,
@@ -89,4 +101,5 @@ module.exports = {
   readFileToDataUrl,
   pathRefToDataUrl,
   parseJsonArray,
+  parseDataUrl,
 };

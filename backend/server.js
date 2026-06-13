@@ -47,6 +47,7 @@ if (!fs.existsSync(uploadsDir)) {
 app.use('/uploads', express.static(uploadsDir));
 
 // Routes
+app.use('/api/media', require('./src/routes/media'));
 app.use('/api/auth',      require('./src/routes/auth'));
 app.use('/api/users',     require('./src/routes/users'));
 app.use('/api/shop',      require('./src/routes/shop'));

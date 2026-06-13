@@ -6,6 +6,7 @@ const { get, all, run } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
 const { allSlots, isValidSlot } = require('../lib/reimaginePresets');
 const { bufferToDataUrl } = require('../lib/imageDataUrl');
+const { reimagineMediaUrl } = require('../lib/mediaUrls');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -21,7 +22,7 @@ router.use(authenticateAdmin);
 /** All garment + preset slots with any uploaded image. */
 router.get('/', async (req, res) => {
   const rows = await all(
-    `SELECT id, garment_type, transformation, image_path, updated_at
+    `SELECT id, garment_type, transformation, updated_at
      FROM reimagine_images ORDER BY garment_type, transformation`
   );
   const { garments, presets } = allSlots();
@@ -32,7 +33,7 @@ router.get('/', async (req, res) => {
     return {
       ...slot,
       id: row?.id || null,
-      image_path: row?.image_path || null,
+      image_path: row?.id ? reimagineMediaUrl(row.id) : null,
       updated_at: row?.updated_at || null,
     };
   };
@@ -79,8 +80,14 @@ router.post('/', (req, res, next) => {
       'UPDATE reimagine_images SET image_path = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [imagePath, existing.id]
     );
-    const row = await get('SELECT * FROM reimagine_images WHERE id = ?', [existing.id]);
-    return res.json({ success: true, image: row });
+    const row = await get(
+      'SELECT id, garment_type, transformation, updated_at FROM reimagine_images WHERE id = ?',
+      [existing.id]
+    );
+    return res.json({
+      success: true,
+      image: { ...row, image_path: reimagineMediaUrl(row.id) },
+    });
   }
 
   const id = uuidv4();
@@ -88,8 +95,14 @@ router.post('/', (req, res, next) => {
     `INSERT INTO reimagine_images (id, garment_type, transformation, image_path) VALUES (?, ?, ?, ?)`,
     [id, garment_type, transformation, imagePath]
   );
-  const row = await get('SELECT * FROM reimagine_images WHERE id = ?', [id]);
-  res.status(201).json({ success: true, image: row });
+  const row = await get(
+    'SELECT id, garment_type, transformation, updated_at FROM reimagine_images WHERE id = ?',
+    [id]
+  );
+  res.status(201).json({
+    success: true,
+    image: { ...row, image_path: reimagineMediaUrl(row.id) },
+  });
 });
 
 /** Remove uploaded image for a slot (reverts to frontend fallback). */

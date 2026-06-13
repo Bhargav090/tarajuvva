@@ -4,7 +4,8 @@ const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
-const { bufferToDataUrl } = require('../lib/imageDataUrl');
+const { bufferToDataUrl, isDataUrl, isHttpUrl } = require('../lib/imageDataUrl');
+const { testimonialMediaUrl } = require('../lib/mediaUrls');
 
 const MAX_REVIEW_IMAGES = 3;
 
@@ -43,7 +44,7 @@ function serializeImagePaths(paths) {
   return clean.length ? JSON.stringify(clean) : null;
 }
 
-function buildImagePathsFromRequest(req) {
+function buildImagePathsFromRequest(req, existingPaths = []) {
   const paths = [];
   for (let i = 0; i < MAX_REVIEW_IMAGES; i += 1) {
     const file = req.files?.[`image_${i}`]?.[0];
@@ -55,21 +56,31 @@ function buildImagePathsFromRequest(req) {
         throw new Error(err.message || 'Image too large.');
       }
     } else if (retain) {
-      paths.push(retain);
+      if (retain.startsWith('/api/media/testimonial/')) {
+        if (existingPaths[i]) paths.push(existingPaths[i]);
+      } else if (isDataUrl(retain) || retain.startsWith('/uploads/') || isHttpUrl(retain)) {
+        paths.push(retain);
+      }
     }
   }
   return paths;
 }
 
+function testimonialImageCount(row) {
+  if (!row) return 0;
+  if (row.image_count != null) return Math.min(Number(row.image_count) || 0, MAX_REVIEW_IMAGES);
+  return parseImagePaths(row.image_paths, row.image_path).length;
+}
+
 function parseRow(row) {
   if (!row) return null;
-  const image_paths = parseImagePaths(row.image_paths, row.image_path);
+  const count = testimonialImageCount(row);
   return {
     id: row.id,
     name: row.name,
     city: row.city,
     quote: row.quote,
-    image_paths,
+    image_paths: Array.from({ length: count }, (_, i) => testimonialMediaUrl(row.id, i)),
     google_review_url: row.google_review_url || null,
     sort_order: row.sort_order ?? 0,
     is_active: !!row.is_active,
@@ -82,7 +93,13 @@ router.use(authenticateAdmin);
 
 router.get('/', async (req, res) => {
   const rows = await all(
-    `SELECT id, name, city, quote, image_path, image_paths, google_review_url, sort_order, is_active, created_at, updated_at
+    `SELECT id, name, city, quote, google_review_url, sort_order, is_active, created_at, updated_at,
+      CASE
+        WHEN image_paths IS NOT NULL AND image_paths != '' AND JSON_VALID(image_paths)
+          THEN JSON_LENGTH(image_paths)
+        WHEN image_path IS NOT NULL AND image_path != '' THEN 1
+        ELSE 0
+      END AS image_count
      FROM testimonials ORDER BY sort_order ASC, created_at DESC`
   );
   res.json({ success: true, testimonials: rows.map(parseRow) });
@@ -119,7 +136,16 @@ router.post('/', (req, res, next) => {
     [id, name, city, quote, serializeImagePaths(image_paths), google_review_url, sort_order, is_active]
   );
 
-  const row = await get('SELECT * FROM testimonials WHERE id = ?', [id]);
+  const row = await get(
+    `SELECT id, name, city, quote, google_review_url, sort_order, is_active, created_at, updated_at,
+      CASE
+        WHEN image_paths IS NOT NULL AND image_paths != '' AND JSON_VALID(image_paths)
+          THEN JSON_LENGTH(image_paths)
+        ELSE 0
+      END AS image_count
+     FROM testimonials WHERE id = ?`,
+    [id]
+  );
   res.status(201).json({ success: true, testimonial: parseRow(row) });
 });
 
@@ -145,9 +171,11 @@ router.put('/:id', (req, res, next) => {
     return res.status(400).json({ success: false, message: 'Name, city, and quote are required.' });
   }
 
+  const existingBlobPaths = parseImagePaths(existing.image_paths, existing.image_path);
+
   let image_paths;
   try {
-    image_paths = buildImagePathsFromRequest(req);
+    image_paths = buildImagePathsFromRequest(req, existingBlobPaths);
   } catch (err) {
     return res.status(400).json({ success: false, message: err.message });
   }
@@ -157,7 +185,16 @@ router.put('/:id', (req, res, next) => {
     [name, city, quote, serializeImagePaths(image_paths), google_review_url, sort_order, is_active, req.params.id]
   );
 
-  const row = await get('SELECT * FROM testimonials WHERE id = ?', [req.params.id]);
+  const row = await get(
+    `SELECT id, name, city, quote, google_review_url, sort_order, is_active, created_at, updated_at,
+      CASE
+        WHEN image_paths IS NOT NULL AND image_paths != '' AND JSON_VALID(image_paths)
+          THEN JSON_LENGTH(image_paths)
+        ELSE 0
+      END AS image_count
+     FROM testimonials WHERE id = ?`,
+    [req.params.id]
+  );
   res.json({ success: true, testimonial: parseRow(row) });
 });
 

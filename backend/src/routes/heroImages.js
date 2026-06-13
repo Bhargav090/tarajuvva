@@ -6,6 +6,7 @@ const { get, all, run } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
 const { validateHeroImage, HERO_ASPECT_RATIOS, MIN_HERO_WIDTH, MIN_HERO_HEIGHT } = require('../utils/imageDimensions');
 const { bufferToDataUrl } = require('../lib/imageDataUrl');
+const { withHeroMediaUrl } = require('../lib/mediaUrls');
 
 const VALID_CONTEXTS = ['home', 'reimagine'];
 
@@ -54,11 +55,15 @@ router.get('/requirements', (req, res) => {
 router.get('/', async (req, res) => {
   const context = parseContext(req.query.context);
   const images = await all(
-    `SELECT id, image_path, width, height, aspect_label, context, is_active, created_at
+    `SELECT id, width, height, aspect_label, context, is_active, created_at
      FROM hero_images WHERE context = ? ORDER BY created_at DESC`,
     [context]
   );
-  res.json({ success: true, context, images });
+  res.json({
+    success: true,
+    context,
+    images: images.map((row) => withHeroMediaUrl(row)),
+  });
 });
 
 /** Upload a new hero image (keeps history; does not auto-activate). Stored as base64 in DB. */
@@ -99,8 +104,11 @@ router.post('/', (req, res, next) => {
     [id, imagePath, validation.width, validation.height, validation.aspectLabel, context]
   );
 
-  const row = await get('SELECT * FROM hero_images WHERE id = ?', [id]);
-  res.status(201).json({ success: true, image: row });
+  const row = await get(
+    'SELECT id, width, height, aspect_label, context, is_active, created_at FROM hero_images WHERE id = ?',
+    [id]
+  );
+  res.status(201).json({ success: true, image: withHeroMediaUrl(row) });
 });
 
 /** Set which hero image is live for its context. */
@@ -111,8 +119,11 @@ router.patch('/:id/activate', async (req, res) => {
   await run('UPDATE hero_images SET is_active = 0 WHERE context = ?', [row.context]);
   await run('UPDATE hero_images SET is_active = 1 WHERE id = ?', [req.params.id]);
 
-  const active = await get('SELECT * FROM hero_images WHERE id = ?', [req.params.id]);
-  res.json({ success: true, image: active });
+  const active = await get(
+    'SELECT id, width, height, aspect_label, context, is_active, created_at FROM hero_images WHERE id = ?',
+    [req.params.id]
+  );
+  res.json({ success: true, image: withHeroMediaUrl(active) });
 });
 
 module.exports = router;

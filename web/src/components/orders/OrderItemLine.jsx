@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { productHeroImage } from '../../utils/productImage';
+import AsyncImage from '../ui/AsyncImage';
 
 /**
  * Single order line with thumbnail linking to the product page.
@@ -13,11 +14,12 @@ export default function OrderItemLine({ item, className = '' }) {
       to={`/shop/${item.id}`}
       className={`flex items-center gap-3 rounded-xl p-2 -mx-2 hover:bg-[#241621]/[0.03] transition-colors ${className}`}
     >
-      <img
+      <AsyncImage
         src={src}
         alt={item.name}
-        className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-[#241621]/8 bg-[#241621]/5"
-        loading="lazy"
+        className="w-14 h-14 rounded-xl flex-shrink-0 border border-[#241621]/8"
+        imgClassName="object-cover rounded-xl"
+        loadingClassName="bg-[#241621]/5 animate-pulse"
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[#241621] font-display truncate">{item.name}</p>

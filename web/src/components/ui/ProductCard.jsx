@@ -6,13 +6,14 @@ import toast from 'react-hot-toast';
 import { useCart } from '../../context/CartContext';
 import { productHeroImage } from '../../utils/productImage';
 import { productDiscountPercent } from '../../utils/productSale';
+import AsyncImage from './AsyncImage';
 
 function availableSizes(product) {
   if (!Array.isArray(product?.sizes)) return [];
   return product.sizes.filter((s) => s?.label && s.available !== false);
 }
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, disableEntrance = false }) {
   const { addItem } = useCart();
   const [hovering, setHovering] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -44,14 +45,7 @@ export default function ProductCard({ product }) {
     toast.success(`${product.name}${selectedSize ? ` (${selectedSize})` : ''} added to cart`);
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      viewport={{ once: true }}
-      className="group text-left h-full"
-    >
+  const card = (
       <div className="tj-card p-3 sm:p-4 hover:-translate-y-1 transition-transform h-full flex flex-col">
         <Link
           to={`/shop/${product.id}`}
@@ -59,23 +53,22 @@ export default function ProductCard({ product }) {
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
         >
-          <img
+          <AsyncImage
             src={primary}
             alt={product.name}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${
-              hovering && hoverImage ? 'opacity-0' : 'opacity-100'
+            fill
+            imgClassName={`transition-opacity duration-500 ease-out ${
+              hovering && hoverImage ? '!opacity-0' : ''
             }`}
-            loading="lazy"
           />
           {hoverImage && (
-            <img
+            <AsyncImage
               src={hoverImage}
               alt=""
+              fill
               aria-hidden
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-out ${
-                hovering ? 'opacity-100' : 'opacity-0'
-              }`}
-              loading="lazy"
+              loadingClassName="bg-transparent"
+              imgClassName={hovering ? '!opacity-100' : '!opacity-0'}
             />
           )}
           <span className="absolute top-2 left-2 z-[1] bg-[var(--tj-shop)] text-black text-[10px] font-mono-tj uppercase tracking-wider px-2 py-1">
@@ -159,6 +152,21 @@ export default function ProductCard({ product }) {
           </div>
         </div>
       </div>
+  );
+
+  if (disableEntrance) {
+    return <div className="group text-left h-full">{card}</div>;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      viewport={{ once: true }}
+      className="group text-left h-full"
+    >
+      {card}
     </motion.div>
   );
 }

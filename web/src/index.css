@@ -114,6 +114,59 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
+  /* Horizontal scroll hints (mobile nav, shop filters, etc.) */
+  .tj-scroll-fade,
+  .tj-mobile-nav-fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2.5rem;
+    z-index: 2;
+  }
+  .tj-scroll-fade--left,
+  .tj-mobile-nav-fade--left {
+    left: 0;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0));
+  }
+  .tj-scroll-fade--right,
+  .tj-mobile-nav-fade--right {
+    right: 0;
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0));
+  }
+  .tj-scroll-arrow,
+  .tj-mobile-nav-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    transform: translateY(-50%);
+    border-radius: 9999px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.92);
+    color: rgba(0, 0, 0, 0.45);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .tj-scroll-arrow:hover,
+  .tj-mobile-nav-arrow:hover { color: rgba(0, 0, 0, 0.75); border-color: rgba(0, 0, 0, 0.15); }
+  .tj-scroll-arrow--left,
+  .tj-mobile-nav-arrow--left { left: 0.35rem; }
+  .tj-scroll-arrow--right,
+  .tj-mobile-nav-arrow--right { right: 0.35rem; }
+  /* Inline variant — sits in flex gutters outside content (no absolute positioning). */
+  .tj-scroll-arrow--inline {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    transform: none;
+    flex-shrink: 0;
+  }
+
   /* Section spacing */
   .section { padding: 5rem 1rem; }
   @media (min-width: 640px) { .section { padding: 6rem 1.5rem; } }

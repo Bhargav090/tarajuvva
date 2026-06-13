@@ -6,8 +6,10 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useOrderSubmit } from '../../hooks/useOrderSubmit';
 import { productHeroImage } from '../../utils/productImage';
+import AsyncImage from '../../components/ui/AsyncImage';
 import { Input, Textarea } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
+import SuccessNav from '../../components/ui/SuccessNav';
 import { Spinner } from '../../components/ui/Skeleton';
 
 export default function Checkout() {
@@ -46,7 +48,13 @@ export default function Checkout() {
       <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-5">
         <ShoppingBag size={48} className="text-[#241621]/20" />
         <p className="text-[#241621] font-display font-bold text-xl">Your cart is empty.</p>
-        <Link to="/shop"><Button variant="primary">Shop Now</Button></Link>
+        <SuccessNav
+          actions={[
+            { to: '/shop', label: 'Shop Now', variant: 'primary' },
+            { to: '/', label: 'Back to Home', variant: 'outline' },
+          ]}
+          className="mt-0"
+        />
       </div>
     );
   }
@@ -67,14 +75,18 @@ export default function Checkout() {
           <p className="text-[#241621]/60 font-body text-sm leading-relaxed">
             Thank you for shopping with Tarajuvva. Your order is being processed and will be dispatched soon.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3 justify-center">
-            <Link to="/shop"><Button variant="primary">Continue Shopping</Button></Link>
-            {user && placedOrderId && (
-              <Link to={`/profile/orders/${placedOrderId}`}>
-                <Button variant="outline-green">View order</Button>
-              </Link>
-            )}
-          </div>
+          <SuccessNav
+            actions={[
+              { to: '/', label: 'Back to Home', variant: 'outline' },
+              { to: '/shop', label: 'Continue Shopping', variant: 'primary' },
+              ...(user && placedOrderId
+                ? [{ to: `/profile/orders/${placedOrderId}`, label: 'View order', variant: 'outline-green' }]
+                : []),
+              ...(user
+                ? [{ to: '/profile/orders', label: 'My Orders', variant: 'outline' }]
+                : []),
+            ]}
+          />
         </motion.div>
       </div>
     );
@@ -114,8 +126,12 @@ export default function Checkout() {
             <div className="space-y-3 mb-5">
               {items.map(item => (
                 <div key={item.ck} className="flex gap-3 items-center">
-                  <img src={productHeroImage(item.images)} alt={item.name}
-                    className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                  <AsyncImage
+                    src={productHeroImage(item.images)}
+                    alt={item.name}
+                    className="w-12 h-12 rounded-xl flex-shrink-0"
+                    imgClassName="object-cover rounded-xl"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#241621] font-display truncate">{item.name}</p>
                     <p className="text-xs text-[#241621]/45 font-body">

@@ -1,31 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
 const { validateHeroImage, HERO_ASPECT_RATIOS, MIN_HERO_WIDTH, MIN_HERO_HEIGHT } = require('../utils/imageDimensions');
+const { bufferToDataUrl } = require('../lib/imageDataUrl');
 
 const VALID_CONTEXTS = ['home', 'reimagine'];
-const uploadsDir = path.join(__dirname, '../../uploads');
 
 function parseContext(value) {
   return VALID_CONTEXTS.includes(value) ? value : 'home';
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const ctx = parseContext(req.query.context || req.body?.context);
-    const prefix = ctx === 'reimagine' ? 'hero-reimagine' : 'hero';
-    cb(null, `${prefix}-${uuidv4()}${path.extname(file.originalname).toLowerCase()}`);
-  },
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ctx = parseContext(req.query.context || req.body?.context);
@@ -35,7 +24,7 @@ const upload = multer({
       : /^image\/(jpeg|png|webp)$/i.test(file.mimetype);
     const msg = allowGif
       ? 'Only JPEG, PNG, WebP, or GIF images are allowed.'
-      : 'Only JPEG, PNG, or WebP images are allowed.';
+      : 'Only JPEG, PNG, WebP images are allowed.';
     cb(ok ? null : new Error(msg), ok);
   },
 });
@@ -72,7 +61,7 @@ router.get('/', async (req, res) => {
   res.json({ success: true, context, images });
 });
 
-/** Upload a new hero image (keeps history; does not auto-activate). */
+/** Upload a new hero image (keeps history; does not auto-activate). Stored as base64 in DB. */
 router.post('/', (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err) return res.status(400).json({ success: false, message: err.message || 'Upload failed.' });
@@ -85,24 +74,25 @@ router.post('/', (req, res, next) => {
 
   const context = parseContext(req.query.context || req.body?.context);
   const allowGif = context === 'reimagine';
-  const filePath = req.file.path;
   let validation;
   try {
-    const buffer = fs.readFileSync(filePath);
-    validation = validateHeroImage(buffer, { allowGif });
+    validation = validateHeroImage(req.file.buffer, { allowGif });
   } catch {
-    fs.unlinkSync(filePath);
     return res.status(400).json({ success: false, message: 'Could not process image file.' });
   }
 
   if (!validation.ok) {
-    fs.unlinkSync(filePath);
     return res.status(400).json({ success: false, message: validation.message });
   }
 
-  const id = uuidv4();
-  const imagePath = `/uploads/${req.file.filename}`;
+  let imagePath;
+  try {
+    imagePath = bufferToDataUrl(req.file.buffer, req.file.mimetype);
+  } catch (err) {
+    return res.status(err.status || 400).json({ success: false, message: err.message });
+  }
 
+  const id = uuidv4();
   await run(
     `INSERT INTO hero_images (id, image_path, width, height, aspect_label, context, is_active)
      VALUES (?, ?, ?, ?, ?, ?, 0)`,

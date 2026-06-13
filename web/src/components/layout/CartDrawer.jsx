@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { productHeroImage } from '../../utils/productImage';
+import AsyncImage from '../ui/AsyncImage';
 
 export default function CartDrawer() {
   const { isOpen, closeCart, items, removeItem, updateQty, total, totalItems } = useCart();
@@ -56,10 +57,11 @@ export default function CartDrawer() {
                 <div className="space-y-4">
                   {items.map(item => (
                     <div key={item.ck} className="flex gap-4 p-3 border border-black">
-                      <img
+                      <AsyncImage
                         src={productHeroImage(item.images)}
                         alt={item.name}
-                        className="w-16 h-20 object-cover flex-shrink-0"
+                        className="w-16 h-20 flex-shrink-0"
+                        imgClassName="object-cover"
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-display font-bold text-sm leading-tight truncate">{item.name}</p>

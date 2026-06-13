@@ -324,7 +324,12 @@ function ReimagineTab() {
                       Customize
                     </span>
                   )}
-                  {r.is_custom && !r.consultation_paid && (
+                  {r.callback_requested && (
+                    <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#de78a4]/15 text-[#9d4a6f] px-2 py-0.5 rounded">
+                      Callback
+                    </span>
+                  )}
+                  {r.is_custom && !r.consultation_paid && !r.callback_requested && (
                     <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#4c1b1b]/10 text-[#4c1b1b] px-2 py-0.5 rounded">
                       Custom
                     </span>
@@ -343,6 +348,12 @@ function ReimagineTab() {
                 <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Email</dt>
                 <dd className="text-[#241621] font-body break-all">{r.user_email || '—'}</dd>
               </div>
+              {r.callback_requested && (
+                <div className="sm:col-span-2">
+                  <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Consultation</dt>
+                  <dd className="text-[#9d4a6f] font-body font-medium">Callback requested — contact customer to schedule</dd>
+                </div>
+              )}
               {r.consultation_date && r.consultation_time && (
                 <div>
                   <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Consultation slot</dt>

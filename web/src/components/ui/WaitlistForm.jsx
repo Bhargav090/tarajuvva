@@ -1,7 +1,17 @@
 import { Input } from './FormField';
 import Button from './Button';
+import SuccessNav from './SuccessNav';
 
-export default function WaitlistForm({ config, form, onChange, onSubmit, loading, success }) {
+export default function WaitlistForm({
+  config,
+  form,
+  onChange,
+  onSubmit,
+  loading,
+  success,
+  backTo = '/',
+  backLabel = 'Back to Home',
+}) {
   if (success) {
     return (
       <div className="text-center py-12 px-6 bg-white rounded-2xl border border-[#241621]/10">
@@ -10,6 +20,12 @@ export default function WaitlistForm({ config, form, onChange, onSubmit, loading
         <p className="text-[#241621]/60 font-body text-sm">
           We'll notify you as soon as {config.type} goes live.
         </p>
+        <SuccessNav
+          actions={[
+            { to: backTo, label: backLabel, variant: 'primary' },
+            { to: '/', label: 'Home', variant: 'outline' },
+          ]}
+        />
       </div>
     );
   }

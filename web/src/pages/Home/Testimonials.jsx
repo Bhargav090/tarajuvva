@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { useTestimonials } from '../../hooks/useTestimonials';
 import { Spinner } from '../../components/ui/Skeleton';
+import AsyncImage from '../../components/ui/AsyncImage';
 
 const GOOGLE_REVIEWS_URL =
   import.meta.env.VITE_GOOGLE_REVIEWS_URL || 'https://www.google.com/search?q=Tarajuvva+reviews';
@@ -102,12 +103,13 @@ export default function Testimonials() {
                     {current.images.map((src, i) => (
                       <div
                         key={`${current.id}-review-${i}`}
-                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-black/15 overflow-hidden bg-white shadow-sm"
+                        className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-black/15 overflow-hidden bg-white shadow-sm"
                       >
-                        <img
+                        <AsyncImage
                           src={src}
                           alt={`Review photo ${i + 1} from ${current.name}`}
-                          className="w-full h-full object-cover object-center"
+                          fill
+                          imgClassName="object-center"
                         />
                       </div>
                     ))}

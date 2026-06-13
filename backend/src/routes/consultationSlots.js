@@ -95,12 +95,17 @@ adminRouter.delete('/:id', async (req, res) => {
 /** Dates that have at least one available slot (today onwards). */
 publicRouter.get('/dates', async (req, res) => {
   const rows = await all(
-    `SELECT DISTINCT slot_date
+    `SELECT DATE_FORMAT(slot_date, '%Y-%m-%d') AS slot_date, COUNT(*) AS open_count
      FROM consultation_slots
      WHERE is_booked = 0 AND slot_date >= CURDATE()
+     GROUP BY slot_date
+     HAVING open_count > 0
      ORDER BY slot_date ASC`
   );
-  res.json({ success: true, dates: rows.map((r) => toISODateString(r.slot_date)).filter(Boolean) });
+  res.json({
+    success: true,
+    dates: rows.map((r) => r.slot_date).filter(Boolean),
+  });
 });
 
 /** Available slots for a given date. */

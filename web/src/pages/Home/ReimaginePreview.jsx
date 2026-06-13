@@ -21,7 +21,7 @@ export default function ReimaginePreview() {
       <div className="tj-blob bg-[var(--tj-shop)] w-[360px] h-[360px] -top-24 -right-20 opacity-25" />
 
       <div className="tj-container relative">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -24 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -50,21 +50,27 @@ export default function ReimaginePreview() {
             </Link>
           </motion.div>
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 lg:gap-4 auto-rows-fr w-full max-w-md lg:max-w-none mx-auto lg:mx-0 lg:w-full">
             {REIMAGINE_PRESETS.map((p, i) => (
-              <Link key={p.from} to="/reimagine" className="block">
+              <Link key={p.from} to="/reimagine" className="block h-full min-w-0">
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
                   viewport={{ once: true }}
-                  className={`group rounded-none p-5 cursor-pointer bg-white/10 ${LOOP_HIGHLIGHT}`}
+                  className={`group h-full w-full flex flex-col gap-1.5 lg:gap-0 rounded-none p-3 sm:p-3.5 lg:p-5 cursor-pointer bg-white/10 ${LOOP_HIGHLIGHT}`}
                 >
-                  <span className="text-3xl block mb-3">{p.emoji}</span>
-                  <p className="text-white/50 text-xs font-display mb-1">{p.from}</p>
-                  <div className="flex items-center gap-1">
-                    <ArrowRight size={12} className="text-[var(--tj-shop)]" />
-                    <p className="font-bold text-sm font-display text-white">{p.to}</p>
+                  <span className="text-xl sm:text-2xl lg:text-3xl leading-none lg:mb-3">{p.emoji}</span>
+                  <p className="text-white/50 text-[10px] sm:text-xs lg:text-xs font-display lg:mb-1">{p.from}</p>
+                  <div className="flex items-start lg:items-center gap-1 min-w-0">
+                    <ArrowRight
+                      size={11}
+                      className="text-[var(--tj-shop)] shrink-0 mt-0.5 lg:mt-0 lg:w-3 lg:h-3"
+                      aria-hidden
+                    />
+                    <p className="font-bold text-[10px] sm:text-xs lg:text-sm font-display text-white leading-snug min-w-0">
+                      {p.to}
+                    </p>
                   </div>
                 </motion.div>
               </Link>

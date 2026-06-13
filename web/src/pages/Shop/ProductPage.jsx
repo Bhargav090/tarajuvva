@@ -8,6 +8,7 @@ import { useCart } from '../../context/CartContext';
 import { PRODUCT_IMAGE_PLACEHOLDER } from '../../utils/productImage';
 import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
+import AsyncImage from '../../components/ui/AsyncImage';
 
 const SIZE_CHART = [
   { size: '28', chest: '71', waist: '56', hip:  '79', length: '38' },
@@ -144,10 +145,13 @@ export default function ProductPage() {
           {/* Primary image — other views selected in Explore Garment Views */}
           <div>
             <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-white relative">
-              <img
+              <AsyncImage
                 src={gallery[activeImg]}
                 alt={`${product.name}${activeImg === 0 ? '' : ` — ${viewLabels[activeImg] || `View ${activeImg + 1}`}`}`}
-                className="w-full h-full object-cover transition-opacity duration-200"
+                fill
+                showSpinner
+                fallbackSrc={PRODUCT_IMAGE_PLACEHOLDER}
+                imgClassName="transition-opacity duration-200"
               />
               {discount && (
                 <span className="absolute top-4 left-4 bg-[#e34334] text-white text-sm font-black rounded-full px-3 py-1 font-display">
@@ -200,7 +204,14 @@ export default function ProductPage() {
                         activeImg === i ? 'border-[#a8c74a]' : 'border-[#241621]/10 hover:border-[#a8c74a]/40'
                       }`}
                     >
-                      <img src={img} alt={`${product.name} ${viewLabels[i] || `View ${i + 1}`}`} className="w-full aspect-square object-cover" />
+                      <div className="relative w-full aspect-square">
+                        <AsyncImage
+                          src={img}
+                          alt={`${product.name} ${viewLabels[i] || `View ${i + 1}`}`}
+                          fill
+                          loadingClassName="bg-[#241621]/5 animate-pulse"
+                        />
+                      </div>
                       <span className="block px-2 py-1.5 text-[10px] font-display text-[#241621]/65 text-center">
                         {viewLabels[i] || `View ${i + 1}`}
                       </span>

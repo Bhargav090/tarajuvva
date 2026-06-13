@@ -23,8 +23,6 @@ import Register   from './pages/Auth/Register';
 import Profile    from './pages/Profile';
 import OrderDetail from './pages/Profile/OrderDetail';
 
-/** Must match fixed header row height in `Header` (px). */
-const NAV_BAR_PX = 64;
 /** Must match fixed ticker band height on the landing page (px). */
 const TICKER_BAR_PX = 32;
 
@@ -49,8 +47,8 @@ function Layout({ children }) {
 
   return (
     <div
+      className="[--nav-h:6.75rem] md:[--nav-h:4rem]"
       style={{
-        '--nav-h': `${NAV_BAR_PX}px`,
         '--ticker-h': isHome ? `${TICKER_BAR_PX}px` : '0px',
       }}
     >

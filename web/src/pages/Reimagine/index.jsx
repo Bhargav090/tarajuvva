@@ -1,6 +1,9 @@
+import { useLayoutEffect, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowRight, ArrowLeft, CheckCircle, PhoneCall } from 'lucide-react';
 import VerticalPageHero from '../../components/ui/VerticalPageHero';
+import SuccessNav from '../../components/ui/SuccessNav';
 import ReimagineFormWizard from '../../components/reimagine/ReimagineFormWizard';
 import CustomizeFormWizard from '../../components/reimagine/CustomizeFormWizard';
 import {
@@ -14,17 +17,23 @@ import {
   getTransformationMeta,
 } from '../../utils/constants';
 import { useReimagineSubmit } from '../../hooks/useReimagineSubmit';
+import { useAuth } from '../../context/AuthContext';
 import { useReimagineImages } from '../../hooks/useReimagineImages';
 import { useReimagineCustomizeSettings } from '../../hooks/useReimagineCustomize';
 import { useReimagineHeroImage } from '../../hooks/useHeroImage';
 import { uploadUrl } from '../../utils/uploadUrl';
+import { Spinner } from '../../components/ui/Skeleton';
 
 export default function Reimagine() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const {
     step,
     isCustomize,
     goBack,
     exitCustomize,
+    startCustomize,
     garment,
     setGarment,
     transformation,
@@ -37,14 +46,39 @@ export default function Reimagine() {
     onSubmit,
     loading,
     done,
+    doneCallback,
+    resetDone,
   } = useReimagineSubmit();
   const { garmentImage, presetImage } = useReimagineImages();
   const { settings: customizeSettings } = useReimagineCustomizeSettings();
   const { hero, loading: heroLoading } = useReimagineHeroImage();
   const heroSrc = hero?.image_path ? uploadUrl(hero.image_path) : null;
 
+  useLayoutEffect(() => {
+    if (done) window.scrollTo({ top: 0, left: 0 });
+  }, [done]);
+
   const garmentLabel = GARMENTS.find((g) => g.id === garment)?.label ?? '';
   const transformMeta = getTransformationMeta(transformation);
+  const needsAuth = isCustomize || step === 3;
+
+  useEffect(() => {
+    if (authLoading || done) return;
+    if (needsAuth && !user) {
+      navigate('/login', {
+        replace: true,
+        state: { from: location.pathname + location.search },
+      });
+    }
+  }, [authLoading, user, needsAuth, done, navigate, location.pathname, location.search]);
+
+  if (needsAuth && !done && (authLoading || !user)) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Spinner size={32} />
+      </div>
+    );
+  }
 
   if (done) {
     return (
@@ -59,8 +93,20 @@ export default function Reimagine() {
           </div>
           <h2 className="tj-h2 text-3xl text-[#0a0a0a]">Request sent.</h2>
           <p className="text-black/60 mt-4 leading-relaxed">
-            Thank you for reimagining with Tarajuvva. We&apos;ll review your request and get back within 24 hours.
+            {doneCallback
+              ? 'Thank you! Our team will contact you within 24 hours to schedule your consultation.'
+              : "Thank you for reimagining with Tarajuvva. We'll review your request and get back within 24 hours."}
           </p>
+          <SuccessNav
+            actions={[
+              { to: '/', label: 'Back to Home', variant: 'outline' },
+              { label: 'Start another request', variant: 'primary', onClick: resetDone },
+              ...(user
+                ? [{ to: '/profile/reimagine', label: 'My requests', variant: 'outline-burgundy' }]
+                : []),
+              { to: '/shop', label: 'Shop', variant: 'outline' },
+            ]}
+          />
         </motion.div>
       </div>
     );
@@ -81,8 +127,9 @@ export default function Reimagine() {
         headline={['Send the old.', 'Get the new.']}
         subtext="Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour."
         testId="reimagine-hero"
-        heroSrc={!heroLoading ? heroSrc : null}
+        heroSrc={heroSrc}
         hero={hero}
+        heroLoading={heroLoading}
         visualVariant="reimagine"
       />
 
@@ -138,7 +185,7 @@ export default function Reimagine() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -16 }}
                   >
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
                       {GARMENTS.map((g) => (
                         <button
                           key={g.id}
@@ -165,6 +212,36 @@ export default function Reimagine() {
                           </div>
                         </button>
                       ))}
+
+                      <button
+                        type="button"
+                        data-testid="segment-custom"
+                        onClick={startCustomize}
+                        className="text-left tj-card group hover:-translate-y-1 transition-transform overflow-hidden shadow-[4px_4px_0_0_rgba(222,120,164,0.35)] hover:shadow-[6px_6px_0_0_rgba(222,120,164,0.65)] col-span-2 md:col-span-1"
+                      >
+                        <div className="aspect-[4/5] overflow-hidden bg-gradient-to-br from-[#fdf0f5] via-[#fce8ef] to-[#f6dce6] flex flex-col items-center justify-center p-6 text-center relative">
+                          <div className="w-14 h-14 rounded-full border-2 border-[#de78a4]/40 bg-white flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                            <PhoneCall size={26} className="text-[#de78a4]" strokeWidth={2} />
+                          </div>
+                          <p className="text-[0.65rem] font-mono-tj uppercase tracking-[0.2em] text-[#de78a4] font-bold">
+                            Consultation
+                          </p>
+                          <p className="font-display text-2xl font-extrabold text-[#0a0a0a] mt-2">
+                            ₹{Number(customizeSettings.price || 199).toLocaleString('en-IN')}
+                          </p>
+                        </div>
+                        <div className="p-4 md:p-5 border-t border-black bg-[#fdf8fa]">
+                          <p className="font-display text-xl md:text-2xl font-extrabold text-[#0a0a0a] leading-tight">
+                            Custom
+                          </p>
+                          <p className="text-sm text-black/60 mt-1 leading-snug">
+                            {customizeSettings.feature || '15 min consultation call'} — your vision, our craft.
+                          </p>
+                          <span className="mt-3 md:mt-4 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-[#de78a4] group-hover:text-[#c45d8a]">
+                            Book a slot <ArrowRight size={12} />
+                          </span>
+                        </div>
+                      </button>
                     </div>
                   </motion.div>
                 )}

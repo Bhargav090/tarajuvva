@@ -8,7 +8,27 @@ import HeroVisual from '../../components/ui/HeroVisual';
 export default function Hero() {
   const { hero, loading } = useHeroImage();
   const heroSrc = hero?.image_path ? uploadUrl(hero.image_path) : null;
-  const showVisual = heroSrc && !loading;
+  const showVisualSlot = loading || Boolean(heroSrc);
+
+  const heroSkeleton = (
+    <div
+      className="tj-hero-visual"
+      style={{ width: 640, height: 560, maxWidth: '100%', maxHeight: 560 }}
+      aria-hidden
+    >
+      <div className="tj-hero-visual-frame h-full animate-pulse bg-black/[0.04]" />
+    </div>
+  );
+
+  const mobileHeroSkeleton = (
+    <div
+      className="tj-hero-visual w-full max-w-[min(100%,360px)]"
+      style={{ aspectRatio: '5/6' }}
+      aria-hidden
+    >
+      <div className="tj-hero-visual-frame h-full animate-pulse bg-black/[0.04]" />
+    </div>
+  );
 
   return (
     <section
@@ -25,7 +45,7 @@ export default function Hero() {
           <span className="tj-hero-meta-label">ESTD. INDIA · 2025</span>
         </div>
 
-        <div className={`tj-hero-stage${showVisual ? ' tj-hero-stage--has-visual' : ''}`}>
+        <div className={`tj-hero-stage${showVisualSlot ? ' tj-hero-stage--has-visual' : ''}`}>
           <div className="tj-hero-copy">
             <h1 className="tj-h1 tj-h1-compact text-[#0a0a0a]" data-testid="hero-headline">
               <span>Fashion</span>
@@ -35,7 +55,7 @@ export default function Hero() {
               <span>end.</span>
             </h1>
 
-            <p className="tj-hero-lead">
+            <p className="tj-hero-lead hidden md:block">
               We&apos;re <strong className="text-black font-medium">Tarajuvva</strong> — a circular fashion OS, not a clothing brand pretending to care. Buy. Remake. Repair. Donate. The same garment, four chapters.
             </p>
 
@@ -49,20 +69,28 @@ export default function Hero() {
             </div>
           </div>
 
-          {showVisual && (
+          {loading ? (
+            <div className="tj-hero-visual-slot hidden md:flex justify-end lg:justify-end">
+              {heroSkeleton}
+            </div>
+          ) : heroSrc ? (
             <div className="tj-hero-visual-slot hidden md:flex justify-end lg:justify-end">
               <HeroVisual heroSrc={heroSrc} hero={hero} testId="hero-image" variant="home" />
             </div>
-          )}
+          ) : null}
         </div>
 
-        {showVisual && (
+        {loading ? (
+          <div className="md:hidden tj-hero-visual-slot flex justify-center px-2">
+            {mobileHeroSkeleton}
+          </div>
+        ) : heroSrc ? (
           <div className="md:hidden tj-hero-visual-slot flex justify-center px-2">
             <HeroVisual heroSrc={heroSrc} hero={hero} testId="hero-image-mobile" variant="home" />
           </div>
-        )}
+        ) : null}
 
-        {!showVisual && !loading && (
+        {!showVisualSlot && (
           <div
             aria-hidden
             className="hidden lg:block absolute top-24 right-8 xl:right-12 w-full max-w-[540px] xl:max-w-[600px] rounded-[1.25rem] border-2 border-dashed border-black/12 bg-black/[0.02]"

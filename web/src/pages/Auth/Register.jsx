@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
@@ -86,6 +86,12 @@ export default function Register() {
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-[#241621]/55 hover:text-[#241621] mb-6 transition-colors"
+        >
+          <ArrowLeft size={14} /> Back to Home
+        </Link>
         <Link to="/" className="flex items-center mb-10">
           <img src={brandIcon} alt="Tarajuvva" className="w-32 h-auto object-contain" />
         </Link>

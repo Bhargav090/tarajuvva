@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Clock, PhoneCall } from 'lucide-react';
 import DropZone from '../ui/DropZone';
 import { useConsultationSlotDates, useConsultationSlotsForDate } from '../../hooks/useConsultationSlots';
 import { toISODateString, formatDateLabel, formatTimeLabel } from '../../utils/dates';
@@ -19,8 +19,12 @@ const STEPS = [
     required: true,
     placeholder: 'Full address for pickup or delivery',
   },
-  { key: 'consultation_date', label: 'Pick a date', type: 'date', required: true },
-  { key: 'consultation_slot', label: 'Pick a time slot', type: 'slot', required: true },
+  {
+    key: 'consultation_schedule',
+    label: 'Book a consultation slot',
+    type: 'schedule',
+    required: true,
+  },
   { key: 'photos', label: 'Upload a photo of the garment', type: 'dropzone', required: false },
   {
     key: 'notes',
@@ -47,28 +51,43 @@ export default function CustomizeFormWizard({
   const { dates, loading: datesLoading } = useConsultationSlotDates();
   const selectedDate = details.consultation_date || '';
   const { slots, loading: slotsLoading } = useConsultationSlotsForDate(selectedDate);
+  const requestCallback = Boolean(details.request_callback);
 
   const valueFor = (key) => details[key] ?? '';
 
   useEffect(() => {
-    if (step.key === 'consultation_slot' && selectedDate && details.consultation_slot_id) {
-      const stillValid = slots.some((s) => s.id === details.consultation_slot_id);
-      if (!stillValid) {
-        setDetails((p) => ({
-          ...p,
-          consultation_slot_id: '',
-          consultation_time: '',
-          consultation_slot_label: '',
-        }));
-      }
+    if (step.key !== 'consultation_schedule' || requestCallback) return;
+    if (!selectedDate) return;
+    const selectedIso = toISODateString(selectedDate);
+    if (!dates.includes(selectedIso)) {
+      setDetails((p) => ({
+        ...p,
+        consultation_date: '',
+        consultation_slot_id: '',
+        consultation_time: '',
+        consultation_slot_label: '',
+      }));
+      return;
     }
-  }, [slots, selectedDate, details.consultation_slot_id, step.key, setDetails]);
+    if (!details.consultation_slot_id) return;
+    const stillValid = slots.some((s) => s.id === details.consultation_slot_id);
+    if (!stillValid) {
+      setDetails((p) => ({
+        ...p,
+        consultation_slot_id: '',
+        consultation_time: '',
+        consultation_slot_label: '',
+      }));
+    }
+  }, [slots, selectedDate, details.consultation_slot_id, step.key, setDetails, requestCallback, dates]);
+
+  const scheduleComplete = () =>
+    requestCallback || Boolean(valueFor('consultation_slot_id'));
 
   const canNext = () => {
     if (!step.required) return true;
     if (step.key === 'photos') return true;
-    if (step.key === 'consultation_date') return Boolean(valueFor('consultation_date'));
-    if (step.key === 'consultation_slot') return Boolean(valueFor('consultation_slot_id'));
+    if (step.key === 'consultation_schedule') return scheduleComplete();
     return String(valueFor(step.key)).trim().length > 0;
   };
 
@@ -89,6 +108,7 @@ export default function CustomizeFormWizard({
   const selectDate = (iso) => {
     setDetails((p) => ({
       ...p,
+      request_callback: false,
       consultation_date: iso,
       consultation_slot_id: '',
       consultation_time: '',
@@ -99,10 +119,26 @@ export default function CustomizeFormWizard({
   const selectSlot = (slot) => {
     setDetails((p) => ({
       ...p,
+      request_callback: false,
       consultation_slot_id: slot.id,
       consultation_time: slot.slot_time,
       consultation_slot_label: slot.label,
     }));
+  };
+
+  const enableCallback = () => {
+    setDetails((p) => ({
+      ...p,
+      request_callback: true,
+      consultation_date: '',
+      consultation_slot_id: '',
+      consultation_time: '',
+      consultation_slot_label: '',
+    }));
+  };
+
+  const clearCallback = () => {
+    setDetails((p) => ({ ...p, request_callback: false }));
   };
 
   return (
@@ -121,63 +157,119 @@ export default function CustomizeFormWizard({
 
           {step.type === 'dropzone' ? (
             <DropZone files={files} onAdd={addFiles} onRemove={removeFile} variant="compact" />
-          ) : step.type === 'date' ? (
-            datesLoading ? (
-              <p className="text-sm text-black/50">Loading available dates…</p>
-            ) : dates.length === 0 ? (
-              <p className="text-sm text-black/50">No consultation slots available yet. Please check back soon.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {dates.map((raw) => {
-                  const iso = toISODateString(raw);
-                  const selected = toISODateString(selectedDate) === iso;
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      onClick={() => selectDate(iso)}
-                      className={`text-left px-3 py-3 border text-sm transition-colors ${
-                        selected
-                          ? 'border-black bg-black text-white'
-                          : 'border-black/20 hover:border-black bg-white'
-                      }`}
-                    >
-                      <Calendar size={14} className="mb-1 opacity-70" />
-                      <span className="block font-medium">{formatDateLabel(iso)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )
-          ) : step.type === 'slot' ? (
-            !selectedDate ? (
-              <p className="text-sm text-black/50">Select a date first.</p>
-            ) : slotsLoading ? (
-              <p className="text-sm text-black/50">Loading time slots…</p>
-            ) : slots.length === 0 ? (
-              <p className="text-sm text-black/50">No slots left for this date. Pick another date.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
-                {slots.map((slot) => {
-                  const selected = valueFor('consultation_slot_id') === slot.id;
-                  return (
-                    <button
-                      key={slot.id}
-                      type="button"
-                      onClick={() => selectSlot(slot)}
-                      className={`px-3 py-2.5 border text-sm transition-colors ${
-                        selected
-                          ? 'border-[var(--tj-reimagine)] bg-[var(--tj-reimagine)] text-white'
-                          : 'border-black/20 hover:border-black bg-white'
-                      }`}
-                    >
-                      <Clock size={13} className="inline mr-1 opacity-70" />
-                      {formatTimeLabel(slot.slot_time)}
-                    </button>
-                  );
-                })}
-              </div>
-            )
+          ) : step.type === 'schedule' ? (
+            <div className="space-y-4">
+              {requestCallback ? (
+                <div className="rounded-xl border border-[#de78a4]/35 bg-[#fdf0f5] p-4">
+                  <p className="font-display font-bold text-[#0a0a0a]">We&apos;ll call you back</p>
+                  <p className="text-sm text-black/65 mt-1 leading-relaxed">
+                    Our team will contact you within 24 hours on your phone or email to find a consultation time that works.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearCallback}
+                    className="mt-3 text-xs font-mono-tj uppercase tracking-[0.14em] text-[#de78a4] hover:text-[#c45d8a] underline"
+                  >
+                    Pick a slot instead
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-[0.65rem] font-mono-tj uppercase tracking-[0.16em] text-black/45 mb-2">
+                      Available dates
+                    </p>
+                    {datesLoading ? (
+                      <p className="text-sm text-black/50">Loading available dates…</p>
+                    ) : dates.length === 0 ? (
+                      <p className="text-sm text-black/55 leading-relaxed">
+                        No open slots right now. Use the button below and we&apos;ll reach out to schedule with you.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {dates.map((raw) => {
+                          const iso = toISODateString(raw);
+                          const selected = toISODateString(selectedDate) === iso;
+                          return (
+                            <button
+                              key={iso}
+                              type="button"
+                              onClick={() => selectDate(iso)}
+                              className={`text-left px-3 py-3 border text-sm transition-colors rounded-lg ${
+                                selected
+                                  ? 'border-black bg-black text-white'
+                                  : 'border-black/20 hover:border-black bg-white'
+                              }`}
+                            >
+                              <Calendar size={14} className="mb-1 opacity-70" />
+                              <span className="block font-medium">{formatDateLabel(iso)}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedDate && (
+                    <div>
+                      <p className="text-[0.65rem] font-mono-tj uppercase tracking-[0.16em] text-black/45 mb-2">
+                        Times on {formatDateLabel(selectedDate)}
+                      </p>
+                      {slotsLoading ? (
+                        <p className="text-sm text-black/50">Loading time slots…</p>
+                      ) : slots.length === 0 ? (
+                        <p className="text-sm text-black/55">
+                          No times left on this date — try another date or request a callback below.
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-44 overflow-y-auto pr-1">
+                          {slots.map((slot) => {
+                            const selected = valueFor('consultation_slot_id') === slot.id;
+                            return (
+                              <button
+                                key={slot.id}
+                                type="button"
+                                onClick={() => selectSlot(slot)}
+                                className={`px-3 py-2.5 border text-sm transition-colors rounded-lg ${
+                                  selected
+                                    ? 'border-[var(--tj-reimagine)] bg-[var(--tj-reimagine)] text-white'
+                                    : 'border-black/20 hover:border-black bg-white'
+                                }`}
+                              >
+                                <Clock size={13} className="inline mr-1 opacity-70" />
+                                {formatTimeLabel(slot.slot_time)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {valueFor('consultation_slot_label') && (
+                    <p className="text-xs font-mono-tj uppercase tracking-[0.14em] text-[var(--tj-reimagine)]">
+                      Selected: {valueFor('consultation_slot_label')}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {!requestCallback && (
+                <div className="pt-2 border-t border-black/8">
+                  <button
+                    type="button"
+                    onClick={enableCallback}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-[#de78a4]/50 rounded-xl text-sm font-display font-semibold text-[#0a0a0a] bg-[#fdf8fa] hover:border-[#de78a4] hover:bg-[#fdf0f5] transition-colors"
+                  >
+                    <PhoneCall size={16} className="text-[#de78a4]" />
+                    Can&apos;t find a slot? Request a callback
+                  </button>
+                  <p className="text-[0.65rem] text-black/45 mt-2 text-center leading-relaxed">
+                    Our team will contact you to arrange a consultation time.
+                  </p>
+                </div>
+              )}
+            </div>
           ) : step.type === 'textarea' ? (
             <textarea
               name={step.key}
@@ -198,12 +290,6 @@ export default function CustomizeFormWizard({
               placeholder={step.placeholder}
               className={FIELD}
             />
-          )}
-
-          {step.key === 'consultation_slot' && valueFor('consultation_slot_label') && (
-            <p className="mt-3 text-xs font-mono-tj uppercase tracking-[0.14em] text-[var(--tj-reimagine)]">
-              Selected: {valueFor('consultation_slot_label')}
-            </p>
           )}
         </motion.div>
       </AnimatePresence>
@@ -240,7 +326,9 @@ export default function CustomizeFormWizard({
 
       {isLast && (
         <p className="text-xs text-black/45 mt-3 text-center">
-          We&apos;ll confirm your consultation slot within 24 hours.
+          {requestCallback
+            ? 'We&apos;ll reach out within 24 hours to schedule your call.'
+            : 'We&apos;ll confirm your consultation slot within 24 hours.'}
         </p>
       )}
     </form>

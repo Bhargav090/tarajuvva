@@ -67,6 +67,8 @@ router.get('/me/reimagine', authenticateUser, async (req, res) => {
     return {
       ...normalized,
       is_custom: Boolean(r.is_custom),
+      callback_requested: Boolean(r.callback_requested),
+      consultation_paid: Boolean(r.consultation_paid),
       images: JSON.parse(r.images || '[]'),
     };
   });

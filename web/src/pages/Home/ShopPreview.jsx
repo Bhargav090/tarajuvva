@@ -1,12 +1,32 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '../../components/ui/ProductCard';
 import { useProducts } from '../../hooks/useProducts';
 
-const AUTO_SLIDE_MS = 4500;
+const AUTO_SLIDE_MS = 5000;
 const SWIPE_THRESHOLD_PX = 48;
+
+const slideTransition = {
+  duration: 0.58,
+  ease: [0.22, 1, 0.36, 1],
+};
+
+const slideVariants = {
+  enter: (direction) => ({
+    x: direction > 0 ? '100%' : '-100%',
+    zIndex: 1,
+  }),
+  center: {
+    x: 0,
+    zIndex: 1,
+  },
+  exit: (direction) => ({
+    x: direction > 0 ? '-100%' : '100%',
+    zIndex: 0,
+  }),
+};
 
 function MobileProductSkeleton() {
   return (
@@ -27,21 +47,26 @@ function MobileProductSlider({ products }) {
   const didSwipe = useRef(false);
   const timerRef = useRef(null);
 
+  const resetAutoSlide = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (products.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setDirection(1);
+      setIndex((prev) => (prev + 1) % products.length);
+    }, AUTO_SLIDE_MS);
+  }, [products.length]);
+
   const goNext = useCallback(() => {
     setDirection(1);
     setIndex((prev) => (prev + 1) % products.length);
-  }, [products.length]);
+    resetAutoSlide();
+  }, [products.length, resetAutoSlide]);
 
   const goPrev = useCallback(() => {
     setDirection(-1);
     setIndex((prev) => (prev - 1 + products.length) % products.length);
-  }, [products.length]);
-
-  const resetAutoSlide = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (products.length <= 1) return;
-    timerRef.current = setInterval(goNext, AUTO_SLIDE_MS);
-  }, [products.length, goNext]);
+    resetAutoSlide();
+  }, [products.length, resetAutoSlide]);
 
   useEffect(() => {
     setIndex(0);
@@ -56,6 +81,7 @@ function MobileProductSlider({ products }) {
   }, [resetAutoSlide]);
 
   const goTo = (i) => {
+    if (i === index) return;
     setDirection(i > index ? 1 : -1);
     setIndex(i);
     resetAutoSlide();
@@ -72,12 +98,8 @@ function MobileProductSlider({ products }) {
     touchStartX.current = null;
     if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return;
     didSwipe.current = true;
-    if (delta < 0) {
-      goNext();
-    } else {
-      goPrev();
-    }
-    resetAutoSlide();
+    if (delta < 0) goNext();
+    else goPrev();
   };
 
   const onClickCapture = (e) => {
@@ -89,42 +111,77 @@ function MobileProductSlider({ products }) {
   };
 
   const current = products[index];
-  const slideX = direction > 0 ? 20 : -20;
 
   return (
     <div className="md:hidden">
-      <div
-        className="overflow-hidden touch-pan-y"
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-        onClickCapture={onClickCapture}
-      >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={current.id}
-            initial={{ opacity: 0, x: slideX }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -slideX }}
-            transition={{ duration: 0.3 }}
+      <div className="relative w-full">
+        {products.length > 1 && (
+          <div
+            className="absolute left-3 right-3 top-3 aspect-[3/4] pointer-events-none z-10"
           >
-            <ProductCard product={current} />
-          </motion.div>
-        </AnimatePresence>
+            <button
+              type="button"
+              onClick={goPrev}
+              className="tj-scroll-arrow absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 pointer-events-auto"
+              aria-label="Previous product"
+            >
+              <ChevronLeft size={16} strokeWidth={2.5} />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              className="tj-scroll-arrow absolute right-0 top-1/2 translate-x-full -translate-y-1/2 pointer-events-auto"
+              aria-label="Next product"
+            >
+              <ChevronRight size={16} strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
+
+        <div
+          className="relative w-full overflow-hidden touch-pan-y"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          onClickCapture={onClickCapture}
+        >
+          <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
+            <AnimatePresence initial={false} custom={direction} mode="sync">
+              <motion.div
+                key={current.id}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={slideTransition}
+                className="col-start-1 row-start-1 w-full will-change-transform"
+              >
+                <ProductCard product={current} disableEntrance />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
 
       {products.length > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-5">
-          {products.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => goTo(i)}
-              className={`h-2.5 rounded-full transition-all ${
-                i === index ? 'w-7 bg-black' : 'w-2.5 bg-black/25'
-              }`}
-              aria-label={`View product ${i + 1}`}
-            />
-          ))}
+        <div className="mt-5 flex items-center justify-center gap-3">
+          <div className="flex items-center gap-2">
+            {products.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => goTo(i)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  i === index ? 'w-7 bg-black' : 'w-2.5 bg-black/25 hover:bg-black/45'
+                }`}
+                aria-label={`View product ${i + 1}`}
+                aria-current={i === index ? 'true' : undefined}
+              />
+            ))}
+          </div>
+          <span className="text-[10px] font-mono-tj uppercase tracking-[0.14em] text-black/45 tabular-nums">
+            {index + 1}/{products.length}
+          </span>
         </div>
       )}
     </div>
@@ -156,11 +213,15 @@ export default function ShopPreview() {
         {loading ? (
           <>
             <div className="md:hidden">
-              <MobileProductSkeleton />
-              <div className="flex items-center justify-center gap-2 mt-5">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <span key={i} className="h-2.5 w-2.5 rounded-full bg-black/15" />
-                ))}
+              <div className="relative w-full">
+                <MobileProductSkeleton />
+              </div>
+              <div className="mt-5 flex items-center justify-center gap-3">
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <span key={i} className="h-2.5 w-2.5 rounded-full bg-black/15" />
+                  ))}
+                </div>
               </div>
             </div>
             <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Package, Scissors, LogOut, Edit2, Save, X, Clock } from 'lucide-react';
+import { User, Package, Scissors, LogOut, Edit2, Save, X, Clock, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { Badge } from '../../components/ui/Badge';
@@ -91,6 +91,12 @@ export default function Profile() {
     <>
     <div className="min-h-screen bg-white pt-4 pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-[#241621]/55 hover:text-[#a8c74a] font-display mb-6 transition-colors"
+        >
+          <ArrowLeft size={15} /> Back to Home
+        </Link>
         {/* Header */}
         <div className="flex items-center gap-5 mb-10 p-6 bg-[#a8c74a] rounded-3xl">
           <UserAvatar

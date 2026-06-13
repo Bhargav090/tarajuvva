@@ -1,3 +1,5 @@
+import AsyncImage from './AsyncImage';
+
 const VARIANTS = {
   home: {
     tag: 'New season · Editorial',
@@ -43,12 +45,14 @@ export default function HeroVisual({
       <div className="tj-hero-visual-accent tj-hero-visual-accent--secondary" aria-hidden />
       <div className="tj-hero-visual-accent" aria-hidden />
       <div className="tj-hero-visual-frame">
-        <img
+        <AsyncImage
           src={heroSrc}
           alt=""
+          fill
           width={hero?.width}
           height={hero?.height}
-          className="!object-cover !object-center"
+          showSpinner
+          imgClassName="!object-cover !object-center"
         />
         <div className="tj-hero-visual-shimmer" aria-hidden />
       </div>

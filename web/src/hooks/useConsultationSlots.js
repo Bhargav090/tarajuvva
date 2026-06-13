@@ -8,7 +8,13 @@ export function useConsultationSlotDates() {
 
   useEffect(() => {
     api.get('/settings/consultation-slots/dates')
-      .then((r) => setDates((r.data.dates || []).map(toISODateString).filter(Boolean)))
+      .then((r) => {
+        const configured = (r.data.dates || [])
+          .map(toISODateString)
+          .filter(Boolean);
+        // Only dates returned by admin-configured slots (no inferred ranges).
+        setDates([...new Set(configured)]);
+      })
       .catch(() => setDates([]))
       .finally(() => setLoading(false));
   }, []);

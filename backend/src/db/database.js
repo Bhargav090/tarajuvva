@@ -91,6 +91,8 @@ async function initializeDatabase() {
     connectionLimit: Number(process.env.MYSQL_CONNECTION_LIMIT || 10),
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
+    // Return DATE/DATETIME as strings — avoids IST/UTC off-by-one in slot calendars.
+    dateStrings: true,
   });
 
   await pool.execute(`
@@ -283,6 +285,13 @@ async function initializeDatabase() {
       console.warn('[db] reimagine_requests.consultation_time add skipped:', e.message);
     }
   }
+  try {
+    await pool.execute('ALTER TABLE reimagine_requests ADD COLUMN callback_requested TINYINT(1) DEFAULT 0 AFTER consultation_time');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] reimagine_requests.callback_requested add skipped:', e.message);
+    }
+  }
 
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS site_settings (
@@ -332,6 +341,22 @@ async function initializeDatabase() {
   } catch (e) {
     if (e.code !== 'ER_BAD_FIELD_ERROR' && e.errno !== 1054) {
       console.warn('[db] products.images column alter skipped:', e.message);
+    }
+  }
+
+  // Widen image columns for base64 storage (idempotent).
+  const imageColumnAlters = [
+    'ALTER TABLE hero_images MODIFY COLUMN image_path LONGTEXT NOT NULL',
+    'ALTER TABLE reimagine_images MODIFY COLUMN image_path LONGTEXT NOT NULL',
+    'ALTER TABLE testimonials MODIFY COLUMN image_path LONGTEXT NULL',
+    'ALTER TABLE testimonials MODIFY COLUMN image_paths LONGTEXT NULL',
+    'ALTER TABLE reimagine_requests MODIFY COLUMN images LONGTEXT NULL',
+  ];
+  for (const sql of imageColumnAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      console.warn('[db] image column widen skipped:', e.message);
     }
   }
 

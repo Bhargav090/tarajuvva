@@ -116,6 +116,7 @@ export default function OrderDetail() {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-3">
+          <Link to="/"><Button variant="outline">Home</Button></Link>
           <Link to="/shop"><Button variant="primary">Continue Shopping</Button></Link>
           <Link to="/profile/orders"><Button variant="outline-green">All orders</Button></Link>
         </div>

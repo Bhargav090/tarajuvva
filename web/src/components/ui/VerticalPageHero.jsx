@@ -16,10 +16,31 @@ export default function VerticalPageHero({
   children,
   heroSrc = null,
   hero = null,
+  heroLoading = false,
   visualVariant = 'reimagine',
 }) {
   const isDarkTone = tone === 'dark';
-  const showVisual = Boolean(heroSrc);
+  const showVisualSlot = heroLoading || Boolean(heroSrc);
+
+  const sideSkeleton = (
+    <div
+      className="tj-hero-visual tj-hero-visual--side"
+      style={{ width: 440, height: 385, maxWidth: '100%', maxHeight: 385 }}
+      aria-hidden
+    >
+      <div className="tj-hero-visual-frame h-full animate-pulse bg-white/10" />
+    </div>
+  );
+
+  const mobileSideSkeleton = (
+    <div
+      className="tj-hero-visual tj-hero-visual--side w-full max-w-[360px]"
+      style={{ height: 315 }}
+      aria-hidden
+    >
+      <div className="tj-hero-visual-frame h-full animate-pulse bg-white/10" />
+    </div>
+  );
 
   const blobClass =
     blobPosition === 'bottom'
@@ -30,7 +51,7 @@ export default function VerticalPageHero({
     <section
       className={`tj-vertical-hero border-b border-black relative overflow-hidden ${
         isDarkTone ? 'tj-vertical-hero--dark' : ''
-      } ${tall ? 'min-h-[80vh] flex items-center' : ''} ${showVisual ? 'tj-vertical-hero--has-visual' : ''}`}
+      } ${tall ? 'min-h-[80vh] flex items-center' : ''} ${showVisualSlot ? 'tj-vertical-hero--has-visual' : ''}`}
       style={{ background: `var(${bgVar})` }}
       data-testid={testId}
     >
@@ -43,7 +64,7 @@ export default function VerticalPageHero({
         className={`relative w-full ${tall ? 'py-14 md:py-20' : 'py-14 md:py-20 lg:py-24'} w-full`}
       >
         <div className="tj-container md:pl-[clamp(2rem,11vw,12rem)] relative">
-          <div className={`tj-vertical-hero-stage${showVisual ? ' tj-vertical-hero-stage--has-visual' : ''}`}>
+          <div className={`tj-vertical-hero-stage${showVisualSlot ? ' tj-vertical-hero-stage--has-visual' : ''}`}>
             <div className="max-w-xl lg:max-w-2xl">
               <p className="tj-eyebrow">{eyebrow}</p>
               <h1 className="tj-vertical-hero-title mt-4">
@@ -74,7 +95,11 @@ export default function VerticalPageHero({
             </div>
           </div>
 
-          {showVisual && (
+          {heroLoading ? (
+            <div className="tj-vertical-hero-visual-float hidden lg:block">
+              {sideSkeleton}
+            </div>
+          ) : heroSrc ? (
             <div className="tj-vertical-hero-visual-float hidden lg:block">
               <HeroVisual
                 heroSrc={heroSrc}
@@ -84,9 +109,13 @@ export default function VerticalPageHero({
                 size="side"
               />
             </div>
-          )}
+          ) : null}
 
-          {showVisual && (
+          {heroLoading ? (
+            <div className="lg:hidden tj-vertical-hero-visual-slot flex justify-center mt-6 px-2">
+              {mobileSideSkeleton}
+            </div>
+          ) : heroSrc ? (
             <div className="lg:hidden tj-vertical-hero-visual-slot flex justify-center mt-6 px-2">
               <HeroVisual
                 heroSrc={heroSrc}
@@ -98,7 +127,7 @@ export default function VerticalPageHero({
                 height={315}
               />
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </section>

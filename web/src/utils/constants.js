@@ -128,10 +128,10 @@ export const TRANSFORMATIONS = {
 };
 
 export const REIMAGINE_PRESETS = [
-  { from: 'Saree', to: 'Dress / Co-ord',    emoji: '🥻', color: BRAND.burgundy },
-  { from: 'Shirt', to: 'Corset / Japanese', emoji: '👔', color: BRAND.green    },
-  { from: 'Kurti', to: 'Skirt / Halter',    emoji: '👗', color: BRAND.red      },
-  { from: 'Pant',  to: 'Jorts / Flare',     emoji: '👖', color: BRAND.blue     },
+  { from: 'Saree', to: 'Dress · Co-ord',    emoji: '🥻', color: BRAND.burgundy },
+  { from: 'Shirt', to: 'Corset · Japanese', emoji: '👔', color: BRAND.green    },
+  { from: 'Kurti', to: 'Skirt · Halter',    emoji: '👗', color: BRAND.red      },
+  { from: 'Pant',  to: 'Jorts · Flare',     emoji: '👖', color: BRAND.blue     },
 ];
 
 export const TRANSFORMATION_META = {

@@ -2,18 +2,21 @@ const express = require('express');
 const router  = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const multer  = require('multer');
-const path    = require('path');
 const { run, all, get } = require('../db/database');
-const { authenticateAdmin, optionalAuth } = require('../middleware/auth');
+const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { notifyReimagineRequest } = require('../utils/notifyEmail');
 const { getReimagineCustomizeSettings } = require('../utils/siteSettings');
 const { formatSlotLabel, toISODateString, toTimeString, normalizeReimagineRequest } = require('../utils/consultationSlots');
+const { bufferToDataUrl } = require('../lib/imageDataUrl');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
-  filename:    (req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`),
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = /^image\/(jpeg|png|webp|gif)$/i.test(file.mimetype);
+    cb(ok ? null : new Error('Only JPEG, PNG, WebP, or GIF images are allowed.'), ok);
+  },
 });
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const TRANSFORMATION_MAP = {
   saree: ['Dress', 'Co-ord Set', 'Blouse + Skirt'],
@@ -28,7 +31,7 @@ router.get('/transformations/:garment', (req, res) => {
   res.json({ success: true, transformations: t });
 });
 
-router.post('/requests', optionalAuth, upload.array('images', 5), async (req, res) => {
+router.post('/requests', authenticateUser, upload.array('images', 5), async (req, res) => {
   const {
     user_name,
     user_phone,
@@ -40,6 +43,7 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
     is_custom,
     is_consultation,
     consultation_slot_id,
+    request_callback,
   } = req.body;
 
   if (!user_name?.trim() || !user_phone?.trim() || !garment_type?.trim() || !transformation?.trim()) {
@@ -49,13 +53,32 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
     return res.status(400).json({ success: false, message: 'Pickup / delivery address is required' });
   }
 
-  const images = req.files?.map((f) => `/uploads/${f.filename}`) || [];
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ success: false, message: 'Sign in with a customer account to submit requests' });
+  }
+
+  const dbUser = await get('SELECT id FROM users WHERE id = ?', [req.user.id]);
+  if (!dbUser) {
+    return res.status(401).json({ success: false, message: 'Account not found. Please sign in again.' });
+  }
+
+  let images = [];
+  try {
+    images = (req.files || []).map((f) => bufferToDataUrl(f.buffer, f.mimetype));
+  } catch (err) {
+    return res.status(err.status || 400).json({ success: false, message: err.message || 'Image too large.' });
+  }
+
   const id = uuidv4();
-  const user_id = req.user?.id || null;
+  const user_id = dbUser.id;
+  const callbackRequested =
+    request_callback === '1' || request_callback === 1 || request_callback === true;
   const consultation =
-    is_consultation === '1' || is_consultation === 1 || is_consultation === true;
+    !callbackRequested &&
+    (is_consultation === '1' || is_consultation === 1 || is_consultation === true);
   const custom =
     consultation ||
+    callbackRequested ||
     is_custom === '1' ||
     is_custom === 1 ||
     is_custom === true ||
@@ -86,8 +109,12 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
     slotId = slot.id;
   }
 
+  const transformationLabel = callbackRequested
+    ? 'Customize Consultation — Callback requested'
+    : transformation.trim();
+
   await run(
-    `INSERT INTO reimagine_requests (id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,notes,images,status,is_custom,consultation_paid,consultation_slot_id,consultation_date,consultation_time) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO reimagine_requests (id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,notes,images,status,is_custom,consultation_paid,consultation_slot_id,consultation_date,consultation_time,callback_requested) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id,
       user_id,
@@ -96,7 +123,7 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
       user_email?.trim() || null,
       address.trim(),
       garment_type.trim(),
-      transformation.trim(),
+      transformationLabel,
       notes?.trim() || null,
       JSON.stringify(images),
       'pending_review',
@@ -105,6 +132,7 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
       slotId,
       consultationDate,
       consultationTime,
+      callbackRequested ? 1 : 0,
     ]
   );
 
@@ -124,6 +152,7 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
     ...row,
     is_custom: custom,
     consultation_paid: consultation,
+    callback_requested: callbackRequested,
     consultation_price: consultationPrice,
     consultation_slot_label: consultation && consultationDate && consultationTime
       ? formatSlotLabel(consultationDate, consultationTime)
@@ -133,8 +162,11 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
 
   res.status(201).json({
     success: true,
-    message: "Thank you for reimagining with Tarajuvva. We'll review your request and get back within 24 hours.",
+    message: callbackRequested
+      ? "Thank you! Our team will contact you within 24 hours to schedule your consultation."
+      : "Thank you for reimagining with Tarajuvva. We'll review your request and get back within 24 hours.",
     requestId: id,
+    callback_requested: callbackRequested,
   });
 });
 
@@ -153,6 +185,7 @@ router.get('/requests', authenticateAdmin, async (req, res) => {
         ...normalized,
         is_custom: Boolean(r.is_custom),
         consultation_paid: Boolean(r.consultation_paid),
+        callback_requested: Boolean(r.callback_requested),
         images: JSON.parse(r.images || '[]'),
       };
     }),

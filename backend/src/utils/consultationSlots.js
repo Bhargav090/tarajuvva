@@ -13,9 +13,9 @@ function toISODateString(value) {
     return match ? match[1] : '';
   }
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    const y = value.getUTCFullYear();
-    const m = String(value.getUTCMonth() + 1).padStart(2, '0');
-    const d = String(value.getUTCDate()).padStart(2, '0');
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, '0');
+    const d = String(value.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
   return '';
@@ -113,6 +113,7 @@ function normalizeReimagineRequest(row) {
     ...row,
     consultation_date: row.consultation_date ? toISODateString(row.consultation_date) : null,
     consultation_time: row.consultation_time ? toTimeString(row.consultation_time) : null,
+    callback_requested: Boolean(row.callback_requested),
   };
 }
 

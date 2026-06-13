@@ -1,4 +1,4 @@
-const DATA_URL_RE = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/i;
+const { DATA_URL_RE } = require('../lib/imageDataUrl');
 const LEGACY_SRC_RE = /^(https?:\/\/|\/uploads\/)/i;
 
 function parseImages(raw) {
@@ -10,7 +10,7 @@ function parseImages(raw) {
   }
 }
 
-/** Small URL safe to persist on the order row (not base64). */
+/** Small reference safe to persist on the order row (URL only — not full base64). */
 function pickStorableImage(images) {
   for (const s of images) {
     const t = String(s || '').trim();

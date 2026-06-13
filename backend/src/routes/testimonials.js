@@ -1,23 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
+const { bufferToDataUrl } = require('../lib/imageDataUrl');
 
-const uploadsDir = path.join(__dirname, '../../uploads');
 const MAX_REVIEW_IMAGES = 3;
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) =>
-    cb(null, `testimonial-${uuidv4()}${path.extname(file.originalname).toLowerCase()}`),
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 4 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ok = /^image\/(jpeg|png|webp)$/i.test(file.mimetype);
@@ -30,16 +22,6 @@ const imageFields = [
   { name: 'image_1', maxCount: 1 },
   { name: 'image_2', maxCount: 1 },
 ];
-
-function unlinkIfLocal(imagePath) {
-  if (!imagePath || !imagePath.startsWith('/uploads/')) return;
-  const full = path.join(uploadsDir, path.basename(imagePath));
-  try {
-    if (fs.existsSync(full)) fs.unlinkSync(full);
-  } catch {
-    /* ignore */
-  }
-}
 
 function parseImagePaths(raw, legacyPath) {
   if (raw) {
@@ -61,24 +43,22 @@ function serializeImagePaths(paths) {
   return clean.length ? JSON.stringify(clean) : null;
 }
 
-function buildImagePathsFromRequest(req, existingPaths = []) {
+function buildImagePathsFromRequest(req) {
   const paths = [];
   for (let i = 0; i < MAX_REVIEW_IMAGES; i += 1) {
     const file = req.files?.[`image_${i}`]?.[0];
     const retain = String(req.body[`retain_${i}`] || '').trim();
     if (file) {
-      paths.push(`/uploads/${file.filename}`);
+      try {
+        paths.push(bufferToDataUrl(file.buffer, file.mimetype));
+      } catch (err) {
+        throw new Error(err.message || 'Image too large.');
+      }
     } else if (retain) {
       paths.push(retain);
     }
   }
   return paths;
-}
-
-function cleanupRemovedImages(previousPaths, nextPaths) {
-  for (const p of previousPaths) {
-    if (!nextPaths.includes(p)) unlinkIfLocal(p);
-  }
 }
 
 function parseRow(row) {
@@ -122,13 +102,17 @@ router.post('/', (req, res, next) => {
   const is_active = req.body.is_active === '0' || req.body.is_active === false ? 0 : 1;
 
   if (!name || !city || !quote) {
-    Object.values(req.files || {}).flat().forEach((f) => fs.unlinkSync(f.path));
     return res.status(400).json({ success: false, message: 'Name, city, and quote are required.' });
   }
 
-  const image_paths = buildImagePathsFromRequest(req);
-  const id = uuidv4();
+  let image_paths;
+  try {
+    image_paths = buildImagePathsFromRequest(req);
+  } catch (err) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
 
+  const id = uuidv4();
   await run(
     `INSERT INTO testimonials (id, name, city, quote, image_paths, google_review_url, sort_order, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -147,7 +131,6 @@ router.put('/:id', (req, res, next) => {
 }, async (req, res) => {
   const existing = await get('SELECT * FROM testimonials WHERE id = ?', [req.params.id]);
   if (!existing) {
-    Object.values(req.files || {}).flat().forEach((f) => fs.unlinkSync(f.path));
     return res.status(404).json({ success: false, message: 'Not found.' });
   }
 
@@ -159,16 +142,18 @@ router.put('/:id', (req, res, next) => {
   const is_active = req.body.is_active === '0' || req.body.is_active === false ? 0 : 1;
 
   if (!name || !city || !quote) {
-    Object.values(req.files || {}).flat().forEach((f) => fs.unlinkSync(f.path));
     return res.status(400).json({ success: false, message: 'Name, city, and quote are required.' });
   }
 
-  const previousPaths = parseImagePaths(existing.image_paths, existing.image_path);
-  const image_paths = buildImagePathsFromRequest(req, previousPaths);
-  cleanupRemovedImages(previousPaths, image_paths);
+  let image_paths;
+  try {
+    image_paths = buildImagePathsFromRequest(req);
+  } catch (err) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
 
   await run(
-    `UPDATE testimonials SET name=?, city=?, quote=?, image_paths=?, google_review_url=?, sort_order=?, is_active=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+    `UPDATE testimonials SET name=?, city=?, quote=?, image_paths=?, image_path=NULL, google_review_url=?, sort_order=?, is_active=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
     [name, city, quote, serializeImagePaths(image_paths), google_review_url, sort_order, is_active, req.params.id]
   );
 
@@ -179,7 +164,6 @@ router.put('/:id', (req, res, next) => {
 router.delete('/:id', async (req, res) => {
   const existing = await get('SELECT * FROM testimonials WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ success: false, message: 'Not found.' });
-  parseImagePaths(existing.image_paths, existing.image_path).forEach(unlinkIfLocal);
   await run('DELETE FROM testimonials WHERE id = ?', [req.params.id]);
   res.json({ success: true });
 });

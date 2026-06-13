@@ -49,6 +49,8 @@ function formatReimagineRequestEmail(r) {
     `Garment: ${r.garment_type}`,
     `Transformation: ${r.transformation}`,
     r.consultation_paid ? `Consultation price: ₹${r.consultation_price || '—'}` : null,
+    r.callback_requested ? 'Callback requested: Yes — team to contact customer' : null,
+    r.consultation_slot_label ? `Consultation slot: ${r.consultation_slot_label}` : null,
     `Custom: ${r.is_custom ? 'Yes' : 'No'}`,
     '',
     `Address:\n${r.address || '—'}`,

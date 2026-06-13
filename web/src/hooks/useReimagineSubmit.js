@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
@@ -22,13 +22,24 @@ function emptyDetails() {
     consultation_slot_id: '',
     consultation_time: '',
     consultation_slot_label: '',
+    request_callback: false,
   };
 }
 
 export function useReimagineSubmit() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+
+  const authReturnTo = location.pathname + location.search;
+
+  const redirectToLogin = useCallback(
+    (from = authReturnTo) => {
+      navigate('/login', { replace: true, state: { from } });
+    },
+    [navigate, authReturnTo],
+  );
 
   const isCustomize = searchParams.get('mode') === 'customize';
   const step = isCustomize ? 3 : parseStep(searchParams.get('step'));
@@ -39,6 +50,7 @@ export function useReimagineSubmit() {
   const [details, setDetails] = useState(emptyDetails);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [doneCallback, setDoneCallback] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
 
   useEffect(() => {
@@ -88,8 +100,12 @@ export function useReimagineSubmit() {
   );
 
   const startCustomize = useCallback(() => {
+    if (!user) {
+      redirectToLogin('/reimagine?mode=customize');
+      return;
+    }
     setSearchParams({ mode: 'customize' }, { replace: false });
-  }, [setSearchParams]);
+  }, [setSearchParams, user, redirectToLogin]);
 
   const exitCustomize = useCallback(() => {
     setSearchParams({}, { replace: true });
@@ -109,14 +125,30 @@ export function useReimagineSubmit() {
   );
 
   const setTransformation = useCallback(
-    (t) => goToStep(3, { transformation: t }),
-    [goToStep],
+    (t) => {
+      const params = new URLSearchParams(searchParams);
+      params.delete('mode');
+      params.set('step', '3');
+      if (garment) params.set('garment', garment);
+      params.set('transformation', t);
+      if (!user) {
+        redirectToLogin(`/reimagine?${params.toString()}`);
+        return;
+      }
+      goToStep(3, { transformation: t });
+    },
+    [goToStep, user, redirectToLogin, garment, searchParams],
   );
 
   const addFiles = (newFiles) => setFiles((p) => [...p, ...newFiles]);
   const removeFile = (idx) => setFiles((p) => p.filter((_, i) => i !== idx));
 
   const submitRequest = async (payload) => {
+    if (!user) {
+      redirectToLogin();
+      toast.error('Please sign in to submit your request.');
+      return;
+    }
     setLoading(true);
     try {
       const fd = new FormData();
@@ -127,7 +159,14 @@ export function useReimagineSubmit() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setDone(true);
+      setDoneCallback(Boolean(payload.fields?.request_callback === '1'));
     } catch (err) {
+      const status = err.response?.status;
+      if (status === 401 || status === 403) {
+        redirectToLogin();
+        toast.error(err.response?.data?.message || 'Please sign in to submit your request.');
+        return;
+      }
       toast.error(
         err.response?.data?.message || 'Could not submit your request. Please try again.',
       );
@@ -136,18 +175,32 @@ export function useReimagineSubmit() {
     }
   };
 
+  const resetDone = useCallback(() => {
+    setDone(false);
+    setDoneCallback(false);
+    setFiles([]);
+    setDetails(emptyDetails());
+    setPrefilled(false);
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
   const onSubmit = async (e) => {
     e?.preventDefault();
 
     if (isCustomize) {
+      const callback = details.request_callback;
+      const { request_callback: _rc, ...detailFields } = details;
       await submitRequest({
         fields: {
           garment_type: 'customize',
-          transformation: 'Customize Consultation',
-          is_consultation: '1',
+          transformation: callback
+            ? 'Customize Consultation — Callback requested'
+            : 'Customize Consultation',
+          is_consultation: callback ? '0' : '1',
           is_custom: '1',
-          consultation_slot_id: details.consultation_slot_id,
-          ...details,
+          request_callback: callback ? '1' : '0',
+          consultation_slot_id: callback ? '' : details.consultation_slot_id,
+          ...detailFields,
         },
       });
       return;
@@ -182,5 +235,7 @@ export function useReimagineSubmit() {
     onSubmit,
     loading,
     done,
+    doneCallback,
+    resetDone,
   };
 }

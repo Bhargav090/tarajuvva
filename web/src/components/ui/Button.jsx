@@ -9,8 +9,8 @@ import { motion } from 'framer-motion';
 
 const VARIANTS = {
   primary: {
-    base:  'bg-[#a8c74a] text-[#241621] font-bold',
-    hover: 'hover:bg-[#96b01e] hover:shadow-[0_8px_24px_rgba(168,196,34,0.35)]',
+    base:  'bg-[var(--tj-shop)] text-black font-bold',
+    hover: 'hover:bg-[var(--tj-shop-deep)] hover:shadow-[0_8px_24px_rgba(200,255,46,0.35)]',
   },
   burgundy: {
     base:  'bg-[#4c1b1b] text-[#eef4d1] font-bold',
@@ -33,8 +33,8 @@ const VARIANTS = {
     hover: 'hover:border-[#241621]/50 hover:bg-[#241621]/5',
   },
   'outline-green': {
-    base:  'border-2 border-[#a8c74a] text-[#a8c74a] font-semibold bg-transparent',
-    hover: 'hover:bg-[#a8c74a]/8',
+    base:  'border-2 border-[var(--tj-shop)] text-[var(--tj-shop-deep)] font-semibold bg-transparent',
+    hover: 'hover:bg-[var(--tj-shop)]/10',
   },
   'outline-burgundy': {
     base:  'border-2 border-[#4c1b1b] text-[#4c1b1b] font-semibold bg-transparent',

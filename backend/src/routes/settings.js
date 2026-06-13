@@ -7,7 +7,16 @@ const { getReimagineCustomizeSettings } = require('../utils/siteSettings');
 router.get('/hero', async (req, res) => {
   const hero = await get(
     `SELECT id, image_path, width, height, aspect_label, created_at
-     FROM hero_images WHERE is_active = 1 ORDER BY created_at DESC LIMIT 1`
+     FROM hero_images WHERE context = 'home' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
+  );
+  res.json({ success: true, hero: hero || null });
+});
+
+/** Public — active hero image / GIF for the Reimagine page. */
+router.get('/reimagine-hero', async (req, res) => {
+  const hero = await get(
+    `SELECT id, image_path, width, height, aspect_label, created_at
+     FROM hero_images WHERE context = 'reimagine' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
   );
   res.json({ success: true, hero: hero || null });
 });
@@ -71,5 +80,8 @@ router.get('/reimagine-customize', async (req, res) => {
   const settings = await getReimagineCustomizeSettings();
   res.json({ success: true, settings });
 });
+
+const { publicRouter: consultationSlotsPublic } = require('./consultationSlots');
+router.use('/consultation-slots', consultationSlotsPublic);
 
 module.exports = router;

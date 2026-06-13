@@ -28,6 +28,7 @@ import ReimaginePresetsTab from './ReimaginePresetsTab';
 import ReimagineCustomizeTab from './ReimagineCustomizeTab';
 import TestimonialsTab from './TestimonialsTab';
 import { uploadUrl } from '../../utils/uploadUrl';
+import { formatConsultationSlot } from '../../utils/dates';
 import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
 
 function formatDate(value) {
@@ -69,6 +70,7 @@ const TABS = [
   { id: 'waitlist',  label: 'Waitlist',           icon: Users          },
   { id: 'products',  label: 'Products',           icon: Tag            },
   { id: 'hero',             label: 'Hero image',       icon: ImageIcon },
+  { id: 'reimagine-hero',   label: 'Reimagine hero',   icon: ImageIcon },
   { id: 'reimagine-images', label: 'Reimagine images', icon: Sparkles },
   { id: 'reimagine-customize', label: 'Customize', icon: PhoneCall },
   { id: 'testimonials',     label: 'Testimonials',     icon: MessageSquareQuote },
@@ -222,7 +224,8 @@ export default function Admin() {
           {tab === 'reimagine' && <ReimagineTab />}
           {tab === 'waitlist' && <WaitlistTab />}
           {tab === 'products' && <ProductConfiguratorTab />}
-          {tab === 'hero' && <HeroImagesTab />}
+          {tab === 'hero' && <HeroImagesTab context="home" />}
+          {tab === 'reimagine-hero' && <HeroImagesTab context="reimagine" />}
           {tab === 'reimagine-images' && <ReimaginePresetsTab />}
           {tab === 'reimagine-customize' && <ReimagineCustomizeTab />}
           {tab === 'testimonials' && <TestimonialsTab />}
@@ -340,6 +343,14 @@ function ReimagineTab() {
                 <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Email</dt>
                 <dd className="text-[#241621] font-body break-all">{r.user_email || '—'}</dd>
               </div>
+              {r.consultation_date && r.consultation_time && (
+                <div>
+                  <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Consultation slot</dt>
+                  <dd className="text-[#241621] font-body">
+                    {formatConsultationSlot(r.consultation_date, r.consultation_time)}
+                  </dd>
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Pickup / delivery address</dt>
                 <dd className="text-[#241621] font-body whitespace-pre-wrap">{r.address || '—'}</dd>

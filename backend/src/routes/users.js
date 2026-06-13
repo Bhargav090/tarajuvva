@@ -3,6 +3,7 @@ const router  = express.Router();
 const { authenticateAdmin } = require('../middleware/auth');
 const { get, run, all } = require('../db/database');
 const { enrichOrderItems } = require('../lib/orderItems');
+const { normalizeReimagineRequest } = require('../utils/consultationSlots');
 
 // ── AUTH MIDDLEWARE (user-level) ──────────────────────────────────────────────
 const jwt = require('jsonwebtoken');
@@ -61,11 +62,14 @@ router.get('/me/orders/:id', authenticateUser, async (req, res) => {
 // ── MY REIMAGINE REQUESTS ─────────────────────────────────────────────────────
 router.get('/me/reimagine', authenticateUser, async (req, res) => {
   const requests = await all('SELECT * FROM reimagine_requests WHERE user_id = ? ORDER BY created_at DESC', [req.user.id]);
-  const parsed = requests.map(r => ({
-    ...r,
-    is_custom: Boolean(r.is_custom),
-    images: JSON.parse(r.images || '[]'),
-  }));
+  const parsed = requests.map((r) => {
+    const normalized = normalizeReimagineRequest(r);
+    return {
+      ...normalized,
+      is_custom: Boolean(r.is_custom),
+      images: JSON.parse(r.images || '[]'),
+    };
+  });
   res.json({ success: true, requests: parsed });
 });
 

@@ -204,6 +204,24 @@ async function initializeDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  try {
+    await pool.execute(
+      "ALTER TABLE hero_images ADD COLUMN context VARCHAR(32) NOT NULL DEFAULT 'home' AFTER aspect_label"
+    );
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] hero_images.context add skipped:', e.message);
+    }
+  }
+
+  try {
+    await pool.execute('CREATE INDEX idx_hero_images_context ON hero_images (context, is_active)');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_KEYNAME' && e.errno !== 1061) {
+      console.warn('[db] hero_images context index skipped:', e.message);
+    }
+  }
+
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS reimagine_images (
       id VARCHAR(36) PRIMARY KEY,
@@ -231,6 +249,40 @@ async function initializeDatabase() {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS consultation_slots (
+      id VARCHAR(36) PRIMARY KEY,
+      slot_date DATE NOT NULL,
+      slot_time TIME NOT NULL,
+      is_booked TINYINT(1) DEFAULT 0,
+      booked_request_id VARCHAR(36) NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_consultation_slot_datetime (slot_date, slot_time)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  try {
+    await pool.execute('ALTER TABLE reimagine_requests ADD COLUMN consultation_slot_id VARCHAR(36) NULL AFTER consultation_paid');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] reimagine_requests.consultation_slot_id add skipped:', e.message);
+    }
+  }
+  try {
+    await pool.execute('ALTER TABLE reimagine_requests ADD COLUMN consultation_date DATE NULL AFTER consultation_slot_id');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] reimagine_requests.consultation_date add skipped:', e.message);
+    }
+  }
+  try {
+    await pool.execute('ALTER TABLE reimagine_requests ADD COLUMN consultation_time TIME NULL AFTER consultation_date');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] reimagine_requests.consultation_time add skipped:', e.message);
+    }
+  }
 
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS site_settings (

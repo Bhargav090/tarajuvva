@@ -7,6 +7,7 @@ const { run, all, get } = require('../db/database');
 const { authenticateAdmin, optionalAuth } = require('../middleware/auth');
 const { notifyReimagineRequest } = require('../utils/notifyEmail');
 const { getReimagineCustomizeSettings } = require('../utils/siteSettings');
+const { formatSlotLabel, toISODateString, toTimeString, normalizeReimagineRequest } = require('../utils/consultationSlots');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads')),
@@ -15,10 +16,10 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 const TRANSFORMATION_MAP = {
-  saree: ['Dress', 'Co-ord Set', 'Blouse + Skirt', 'Custom'],
-  kurti: ['Skirt', 'Halter Top', 'Crop Top', 'Custom'],
-  shirt: ['Japanese Shirt', 'Corset Back', 'Tote Bag', 'Custom'],
-  pant:  ['Jorts (Shorts)', 'Flared Pants', 'Skirt', 'Custom'],
+  saree: ['Dress', 'Co-ord Set', 'Blouse + Skirt'],
+  kurti: ['Skirt', 'Halter Top', 'Crop Top'],
+  shirt: ['Japanese Shirt', 'Corset Back', 'Tote Bag'],
+  pant:  ['Jorts (Shorts)', 'Flared Pants', 'Skirt'],
 };
 
 router.get('/transformations/:garment', (req, res) => {
@@ -38,6 +39,7 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
     notes,
     is_custom,
     is_consultation,
+    consultation_slot_id,
   } = req.body;
 
   if (!user_name?.trim() || !user_phone?.trim() || !garment_type?.trim() || !transformation?.trim()) {
@@ -60,13 +62,32 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
     transformation === 'Custom';
 
   let consultationPrice = null;
+  let consultationDate = null;
+  let consultationTime = null;
+  let slotId = null;
+
   if (consultation) {
+    if (!consultation_slot_id?.trim()) {
+      return res.status(400).json({ success: false, message: 'Please select a consultation time slot.' });
+    }
+
+    const slot = await get(
+      'SELECT * FROM consultation_slots WHERE id = ? AND is_booked = 0',
+      [consultation_slot_id.trim()]
+    );
+    if (!slot) {
+      return res.status(400).json({ success: false, message: 'Selected time slot is no longer available.' });
+    }
+
     const settings = await getReimagineCustomizeSettings();
     consultationPrice = settings.price;
+    consultationDate = toISODateString(slot.slot_date);
+    consultationTime = toTimeString(slot.slot_time);
+    slotId = slot.id;
   }
 
   await run(
-    `INSERT INTO reimagine_requests (id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,notes,images,status,is_custom,consultation_paid) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO reimagine_requests (id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,notes,images,status,is_custom,consultation_paid,consultation_slot_id,consultation_date,consultation_time) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id,
       user_id,
@@ -81,8 +102,22 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
       'pending_review',
       custom ? 1 : 0,
       consultation ? 1 : 0,
+      slotId,
+      consultationDate,
+      consultationTime,
     ]
   );
+
+  if (consultation && slotId) {
+    const booked = await run(
+      'UPDATE consultation_slots SET is_booked = 1, booked_request_id = ? WHERE id = ? AND is_booked = 0',
+      [id, slotId]
+    );
+    if (!booked.affectedRows) {
+      await run('DELETE FROM reimagine_requests WHERE id = ?', [id]);
+      return res.status(409).json({ success: false, message: 'Selected time slot was just booked. Please pick another.' });
+    }
+  }
 
   const row = await get('SELECT * FROM reimagine_requests WHERE id = ?', [id]);
   notifyReimagineRequest({
@@ -90,6 +125,9 @@ router.post('/requests', optionalAuth, upload.array('images', 5), async (req, re
     is_custom: custom,
     consultation_paid: consultation,
     consultation_price: consultationPrice,
+    consultation_slot_label: consultation && consultationDate && consultationTime
+      ? formatSlotLabel(consultationDate, consultationTime)
+      : null,
     images,
   }).catch(() => {});
 
@@ -109,12 +147,15 @@ router.get('/requests', authenticateAdmin, async (req, res) => {
   const rows = await all(q, params);
   res.json({
     success: true,
-    requests: rows.map((r) => ({
-      ...r,
-      is_custom: Boolean(r.is_custom),
-      consultation_paid: Boolean(r.consultation_paid),
-      images: JSON.parse(r.images || '[]'),
-    })),
+    requests: rows.map((r) => {
+      const normalized = normalizeReimagineRequest(r);
+      return {
+        ...normalized,
+        is_custom: Boolean(r.is_custom),
+        consultation_paid: Boolean(r.consultation_paid),
+        images: JSON.parse(r.images || '[]'),
+      };
+    }),
   });
 });
 

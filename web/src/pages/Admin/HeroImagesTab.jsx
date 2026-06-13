@@ -2,10 +2,27 @@ import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ImagePlus, Check, Upload } from 'lucide-react';
 import { useAdminHeroImages } from '../../hooks/useHeroImage';
-import { HERO_IMAGE_REQUIREMENTS, validateHeroImageDimensions } from '../../utils/heroImage';
+import { getHeroImageRequirements, validateHeroImageDimensions } from '../../utils/heroImage';
 import { uploadUrl } from '../../utils/uploadUrl';
 import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
+
+const COPY = {
+  home: {
+    title: 'Homepage hero image',
+    description: 'Upload for the homepage hero beside the headline.',
+    activateSuccess: 'Now showing on homepage',
+    activateLabel: 'Show on homepage',
+    empty: 'No hero images yet. Upload one above.',
+  },
+  reimagine: {
+    title: 'Reimagine hero image',
+    description: 'Upload an image or GIF for the Reimagine page hero beside “Send the old. Get the new.”',
+    activateSuccess: 'Now showing on Reimagine page',
+    activateLabel: 'Show on Reimagine page',
+    empty: 'No Reimagine hero images yet. Upload one above.',
+  },
+};
 
 function formatDate(value) {
   if (!value) return '—';
@@ -18,15 +35,17 @@ function formatDate(value) {
   });
 }
 
-export default function HeroImagesTab() {
+export default function HeroImagesTab({ context = 'home' }) {
   const fileRef = useRef(null);
-  const { images, loading, uploading, upload, activate } = useAdminHeroImages();
+  const { images, loading, uploading, upload, activate } = useAdminHeroImages(context);
   const [preview, setPreview] = useState(null);
   const [pendingFile, setPendingFile] = useState(null);
   const [validating, setValidating] = useState(false);
 
+  const requirements = getHeroImageRequirements(context);
+  const copy = COPY[context] || COPY.home;
   const { aspectRatios, minWidth, minHeight, displayWidth, displayHeight, maxFileSizeMb, formatLabels } =
-    HERO_IMAGE_REQUIREMENTS;
+    requirements;
   const active = images.find((img) => img.is_active);
 
   const clearPending = () => {
@@ -41,7 +60,7 @@ export default function HeroImagesTab() {
     if (!file) return;
 
     setValidating(true);
-    const err = await validateHeroImageDimensions(file);
+    const err = await validateHeroImageDimensions(file, context);
     setValidating(false);
 
     if (err) {
@@ -68,19 +87,18 @@ export default function HeroImagesTab() {
 
   const onActivate = async (id) => {
     const result = await activate(id);
-    if (result.ok) toast.success('Now showing on homepage');
+    if (result.ok) toast.success(copy.activateSuccess);
     else toast.error(result.message);
   };
 
   return (
     <div className="max-w-4xl">
-      <h1 className="text-2xl font-black text-[#241621] font-display mb-1">Homepage hero image</h1>
+      <h1 className="text-2xl font-black text-[#241621] font-display mb-1">{copy.title}</h1>
       <p className="text-sm text-[#241621]/55 font-body mb-8">
-        Upload for the homepage hero beside the headline. Display frame is{' '}
+        {copy.description} Display frame is{' '}
         <strong>{displayWidth}×{displayHeight}px</strong> (8:7).
       </p>
 
-      {/* Requirements */}
       <div className="rounded-2xl border border-[#241621]/10 bg-[#eef4d1]/40 p-5 mb-8">
         <p className="text-xs font-bold uppercase tracking-widest text-[#241621]/45 font-display mb-3">
           Upload requirements
@@ -96,7 +114,7 @@ export default function HeroImagesTab() {
           </li>
           <li>
             <strong className="text-[#241621]">Display size:</strong>{' '}
-            {displayWidth}×{displayHeight}px on homepage
+            {displayWidth}×{displayHeight}px
           </li>
           <li>
             <strong className="text-[#241621]">Formats:</strong> {formatLabels.join(', ')}
@@ -110,12 +128,11 @@ export default function HeroImagesTab() {
         </p>
       </div>
 
-      {/* Upload */}
       <div className="rounded-2xl border border-dashed border-[#241621]/20 bg-white p-6 mb-10">
         <input
           ref={fileRef}
           type="file"
-          accept={HERO_IMAGE_REQUIREMENTS.formats.join(',')}
+          accept={requirements.formats.join(',')}
           className="hidden"
           onChange={onFilePick}
         />
@@ -137,7 +154,7 @@ export default function HeroImagesTab() {
                 <div className="text-center">
                   <p className="font-semibold text-[#241621] font-display">Choose hero image</p>
                   <p className="text-xs text-[#241621]/45 font-body mt-1">
-                    {aspectRatios.join(' or ')} portrait · min {minWidth}×{minHeight}px
+                    {aspectRatios.join(' or ')} · min {minWidth}×{minHeight}px
                   </p>
                 </div>
               </>
@@ -147,7 +164,7 @@ export default function HeroImagesTab() {
           <div className="flex flex-col sm:flex-row gap-6 items-start">
             <div
               className="w-full sm:w-48 shrink-0 rounded-xl overflow-hidden border border-[#241621]/10 bg-[#241621]/5"
-              style={{ aspectRatio: '4/5' }}
+              style={{ aspectRatio: '8/7' }}
             >
               <img src={preview} alt="Preview" className="w-full h-full object-cover" />
             </div>
@@ -174,7 +191,6 @@ export default function HeroImagesTab() {
         )}
       </div>
 
-      {/* Active preview */}
       {active && (
         <div className="mb-10">
           <p className="text-xs font-bold uppercase tracking-widest text-[#a8c74a] font-display mb-3">
@@ -183,7 +199,7 @@ export default function HeroImagesTab() {
           <div className="flex gap-4 items-start rounded-2xl border border-[#a8c74a]/30 bg-[#a8c74a]/8 p-4">
             <div
               className="w-28 shrink-0 rounded-lg overflow-hidden border border-[#241621]/10"
-              style={{ aspectRatio: '4/5' }}
+              style={{ aspectRatio: '8/7' }}
             >
               <img
                 src={uploadUrl(active.image_path)}
@@ -203,7 +219,6 @@ export default function HeroImagesTab() {
         </div>
       )}
 
-      {/* History */}
       <h2 className="text-lg font-black text-[#241621] font-display mb-4">
         Image library ({images.length})
       </h2>
@@ -211,9 +226,7 @@ export default function HeroImagesTab() {
       {loading ? (
         <div className="flex justify-center py-12"><Spinner size={28} /></div>
       ) : images.length === 0 ? (
-        <p className="text-center text-[#241621]/40 font-body py-12">
-          No hero images yet. Upload one above.
-        </p>
+        <p className="text-center text-[#241621]/40 font-body py-12">{copy.empty}</p>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {images.map((img) => (
@@ -225,7 +238,7 @@ export default function HeroImagesTab() {
                   : 'border-[#241621]/10'
               }`}
             >
-              <div className="relative bg-[#241621]/5" style={{ aspectRatio: '4/5' }}>
+              <div className="relative bg-[#241621]/5" style={{ aspectRatio: '8/7' }}>
                 <img
                   src={uploadUrl(img.image_path)}
                   alt={`Hero ${img.width}×${img.height}`}
@@ -250,7 +263,7 @@ export default function HeroImagesTab() {
                     onClick={() => onActivate(img.id)}
                     className="mt-2 w-full text-xs font-semibold font-display py-2 rounded-lg border border-[#241621]/15 hover:bg-[#241621] hover:text-[#eef4d1] hover:border-[#241621] transition-all"
                   >
-                    Show on homepage
+                    {copy.activateLabel}
                   </button>
                 )}
               </div>

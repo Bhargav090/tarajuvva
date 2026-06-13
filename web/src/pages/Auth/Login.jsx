@@ -87,7 +87,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-white flex">
       {/* Left visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#a8c74a] flex-col justify-center px-16 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[var(--tj-shop)] flex-col justify-center px-16 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 70%, #ffffff 0%, transparent 60%)' }} />
         <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }}>
           <Link to="/" className="flex items-center mb-16">
@@ -126,7 +126,7 @@ export default function Login() {
           <h2 className="text-3xl font-black text-[#241621] font-display mb-2">Welcome back</h2>
           <p className="text-[#241621]/55 font-body text-sm mb-8">
             Don't have an account?{' '}
-            <Link to="/register" className="text-[#a8c74a] font-semibold hover:underline">Sign up free</Link>
+            <Link to="/register" className="text-[var(--tj-shop-deep)] font-semibold hover:underline">Sign up free</Link>
           </p>
 
           {/* Google SSO */}
@@ -146,7 +146,7 @@ export default function Login() {
                 <input
                   name="email" type="email" value={form.email} onChange={onChange} required
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#241621]/12 rounded-xl text-[#241621] placeholder:text-[#241621]/35 font-body text-sm outline-none focus:border-[#a8c74a] focus:ring-2 focus:ring-[#a8c74a]/12"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#241621]/12 rounded-xl text-[#241621] placeholder:text-[#241621]/35 font-body text-sm outline-none focus:border-[var(--tj-shop)] focus:ring-2 focus:ring-[var(--tj-shop)]/20"
                 />
               </div>
             </div>
@@ -157,7 +157,7 @@ export default function Login() {
                 <input
                   name="password" type={showPw ? 'text' : 'password'} value={form.password} onChange={onChange} required
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-12 py-3 bg-white border border-[#241621]/12 rounded-xl text-[#241621] placeholder:text-[#241621]/35 font-body text-sm outline-none focus:border-[#a8c74a] focus:ring-2 focus:ring-[#a8c74a]/12"
+                  className="w-full pl-10 pr-12 py-3 bg-white border border-[#241621]/12 rounded-xl text-[#241621] placeholder:text-[#241621]/35 font-body text-sm outline-none focus:border-[var(--tj-shop)] focus:ring-2 focus:ring-[var(--tj-shop)]/20"
                 />
                 <button type="button" onClick={() => setShowPw(p => !p)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-[#241621]/40 hover:text-[#241621]">

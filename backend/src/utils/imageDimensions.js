@@ -53,6 +53,15 @@ function readImageDimensions(buffer) {
     }
   }
 
+  // GIF (GIF87a / GIF89a logical screen)
+  if (
+    buffer.length >= 10 &&
+    buffer.toString('ascii', 0, 3) === 'GIF' &&
+    (buffer.toString('ascii', 3, 6) === '87a' || buffer.toString('ascii', 3, 6) === '89a')
+  ) {
+    return { width: buffer.readUInt16LE(6), height: buffer.readUInt16LE(8) };
+  }
+
   return null;
 }
 
@@ -74,10 +83,11 @@ function matchHeroAspect(width, height) {
   return null;
 }
 
-function validateHeroImage(buffer) {
+function validateHeroImage(buffer, { allowGif = false } = {}) {
   const dims = readImageDimensions(buffer);
   if (!dims) {
-    return { ok: false, message: 'Could not read image dimensions. Use JPEG, PNG, or WebP.' };
+    const formats = allowGif ? 'JPEG, PNG, WebP, or GIF' : 'JPEG, PNG, or WebP';
+    return { ok: false, message: `Could not read image dimensions. Use ${formats}.` };
   }
 
   const { width, height } = dims;

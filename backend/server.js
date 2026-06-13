@@ -58,6 +58,8 @@ app.use('/api/admin/hero-images', require('./src/routes/heroImages'));
 app.use('/api/admin/reimagine-images', require('./src/routes/reimagineImages'));
 app.use('/api/admin/testimonials', require('./src/routes/testimonials'));
 app.use('/api/admin/settings', require('./src/routes/adminSettings'));
+const { adminRouter: consultationSlotsAdmin } = require('./src/routes/consultationSlots');
+app.use('/api/admin/consultation-slots', consultationSlotsAdmin);
 app.use('/api/admin',     require('./src/routes/admin'));
 
 // Health check

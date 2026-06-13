@@ -28,12 +28,12 @@ export default function LoopSection() {
       </div>
 
       <div className="tj-container relative">
-        <div className="grid lg:grid-cols-12 gap-12 items-center">
+        <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 lg:items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.55 }}
-            className="lg:col-span-5 order-2 lg:order-1"
+            className="order-1 lg:col-span-5 lg:col-start-1 lg:row-start-1"
           >
             <p className="tj-eyebrow">The system</p>
             <h2 className="tj-h2 mt-4 text-[#0a0a0a]">
@@ -41,10 +41,31 @@ export default function LoopSection() {
               <br />
               <span className="italic font-light">One closed loop.</span>
             </h2>
-            <p className="text-black/55 text-base leading-relaxed mb-8 max-w-md mt-4">
+            <p className="text-black/55 text-base leading-relaxed max-w-md mt-4">
               Tarajuvva isn&apos;t a clothing brand pretending to care. It&apos;s an operating system: every garment can be bought, remade, fixed, or donated. No exit. No landfill.
             </p>
+          </motion.div>
 
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={inView ? { opacity: 1, scale: 1 } : {}}
+            transition={{ duration: 0.55, delay: 0.1 }}
+            className="order-2 lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:row-span-2 flex justify-center lg:justify-end"
+          >
+            <FashionLoop
+              activeIndex={activeIndex}
+              onActiveChange={setActiveIndex}
+              hoverIndex={hoverIndex}
+              onHoverChange={setHoverIndex}
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.55, delay: 0.05 }}
+            className="order-3 lg:col-span-5 lg:col-start-1 lg:row-start-2"
+          >
             <motion.div
               key={active.action}
               initial={{ opacity: 0, y: 8 }}
@@ -100,20 +121,6 @@ export default function LoopSection() {
                 );
               })}
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={inView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.55, delay: 0.1 }}
-            className="lg:col-span-7 order-1 lg:order-2 flex justify-center lg:justify-end"
-          >
-            <FashionLoop
-              activeIndex={activeIndex}
-              onActiveChange={setActiveIndex}
-              hoverIndex={hoverIndex}
-              onHoverChange={setHoverIndex}
-            />
           </motion.div>
         </div>
       </div>

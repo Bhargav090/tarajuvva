@@ -121,10 +121,10 @@ export const GARMENTS = [
 ];
 
 export const TRANSFORMATIONS = {
-  saree: ['Dress', 'Co-ord Set', 'Blouse + Skirt', 'Custom'],
-  kurti: ['Skirt', 'Halter Top', 'Crop Top', 'Custom'],
-  shirt: ['Japanese Shirt', 'Corset Back', 'Tote Bag', 'Custom'],
-  pant:  ['Jorts (Shorts)', 'Flared Pants', 'Skirt', 'Custom'],
+  saree: ['Dress', 'Co-ord Set', 'Blouse + Skirt'],
+  kurti: ['Skirt', 'Halter Top', 'Crop Top'],
+  shirt: ['Japanese Shirt', 'Corset Back', 'Tote Bag'],
+  pant:  ['Jorts (Shorts)', 'Flared Pants', 'Skirt'],
 };
 
 export const REIMAGINE_PRESETS = [

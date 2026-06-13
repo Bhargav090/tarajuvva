@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import VerticalPageHero from '../../components/ui/VerticalPageHero';
 import ReimagineFormWizard from '../../components/reimagine/ReimagineFormWizard';
+import CustomizeFormWizard from '../../components/reimagine/CustomizeFormWizard';
 import {
   ReimagineRemakeCard,
   ReimagineCustomizeCard,
@@ -15,13 +16,14 @@ import {
 import { useReimagineSubmit } from '../../hooks/useReimagineSubmit';
 import { useReimagineImages } from '../../hooks/useReimagineImages';
 import { useReimagineCustomizeSettings } from '../../hooks/useReimagineCustomize';
+import { useReimagineHeroImage } from '../../hooks/useHeroImage';
+import { uploadUrl } from '../../utils/uploadUrl';
 
 export default function Reimagine() {
   const {
     step,
     isCustomize,
     goBack,
-    startCustomize,
     exitCustomize,
     garment,
     setGarment,
@@ -38,6 +40,8 @@ export default function Reimagine() {
   } = useReimagineSubmit();
   const { garmentImage, presetImage } = useReimagineImages();
   const { settings: customizeSettings } = useReimagineCustomizeSettings();
+  const { hero, loading: heroLoading } = useReimagineHeroImage();
+  const heroSrc = hero?.image_path ? uploadUrl(hero.image_path) : null;
 
   const garmentLabel = GARMENTS.find((g) => g.id === garment)?.label ?? '';
   const transformMeta = getTransformationMeta(transformation);
@@ -77,6 +81,9 @@ export default function Reimagine() {
         headline={['Send the old.', 'Get the new.']}
         subtext="Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour."
         testId="reimagine-hero"
+        heroSrc={!heroLoading ? heroSrc : null}
+        hero={hero}
+        visualVariant="reimagine"
       />
 
       <section className="border-b border-black bg-white">
@@ -104,16 +111,16 @@ export default function Reimagine() {
                     feature={customizeSettings.feature}
                     description={customizeSettings.description}
                   />
-                  <ReimagineFormWizard
-                    details={details}
-                    setDetails={setDetails}
-                    files={files}
-                    addFiles={addFiles}
-                    removeFile={removeFile}
-                    onSubmit={onSubmit}
-                    loading={loading}
-                    submitLabel="Submit customize request"
-                  />
+                <CustomizeFormWizard
+                  details={details}
+                  setDetails={setDetails}
+                  files={files}
+                  addFiles={addFiles}
+                  removeFile={removeFile}
+                  onSubmit={onSubmit}
+                  loading={loading}
+                  submitLabel="Submit customize request"
+                />
                 </div>
               </motion.div>
             ) : (
@@ -158,18 +165,6 @@ export default function Reimagine() {
                           </div>
                         </button>
                       ))}
-                    </div>
-
-                    <div className="mt-10 md:mt-12 flex flex-col items-center gap-3">
-                      <p className="text-sm text-black/50">Have something else in mind?</p>
-                      <button
-                        type="button"
-                        onClick={startCustomize}
-                        className="tj-btn-reimagine min-w-[220px] justify-center shadow-[4px_4px_0_0_rgba(0,0,0,0.15)] hover:shadow-[6px_6px_0_0_rgba(110,14,26,0.6)]"
-                        data-testid="reimagine-customize-cta"
-                      >
-                        Customize
-                      </button>
                     </div>
                   </motion.div>
                 )}

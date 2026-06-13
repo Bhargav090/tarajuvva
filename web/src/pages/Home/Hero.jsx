@@ -3,41 +3,7 @@ import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { HERO_STATS } from '../../utils/constants';
 import { useHeroImage } from '../../hooks/useHeroImage';
 import { uploadUrl } from '../../utils/uploadUrl';
-
-function HeroVisual({ heroSrc, hero, testId }) {
-  const width = 640;
-  const height = 560;
-  return (
-    <div
-      className="tj-hero-visual group"
-      style={{
-        width,
-        height,
-        maxWidth: '100%',
-        maxHeight: height,
-      }}
-      data-testid={testId}
-    >
-      <div className="tj-hero-visual-glow" aria-hidden />
-      <div className="tj-hero-visual-accent tj-hero-visual-accent--secondary" aria-hidden />
-      <div className="tj-hero-visual-accent" aria-hidden />
-      <div className="tj-hero-visual-frame">
-        <img
-          src={heroSrc}
-          alt="Tarajuvva editorial"
-          width={hero?.width}
-          height={hero?.height}
-          className="!object-cover !object-center"
-        />
-        <div className="tj-hero-visual-shimmer" aria-hidden />
-      </div>
-      <span className="tj-hero-visual-tag">New season · Editorial</span>
-      <span className="tj-hero-visual-ribbon" aria-hidden>
-        Circular fashion OS
-      </span>
-    </div>
-  );
-}
+import HeroVisual from '../../components/ui/HeroVisual';
 
 export default function Hero() {
   const { hero, loading } = useHeroImage();
@@ -85,14 +51,14 @@ export default function Hero() {
 
           {showVisual && (
             <div className="tj-hero-visual-slot hidden md:flex justify-end lg:justify-end">
-              <HeroVisual heroSrc={heroSrc} hero={hero} testId="hero-image" />
+              <HeroVisual heroSrc={heroSrc} hero={hero} testId="hero-image" variant="home" />
             </div>
           )}
         </div>
 
         {showVisual && (
           <div className="md:hidden tj-hero-visual-slot flex justify-center px-2">
-            <HeroVisual heroSrc={heroSrc} hero={hero} testId="hero-image-mobile" />
+            <HeroVisual heroSrc={heroSrc} hero={hero} testId="hero-image-mobile" variant="home" />
           </div>
         )}
 

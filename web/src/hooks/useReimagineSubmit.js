@@ -18,6 +18,10 @@ function emptyDetails() {
     user_email: '',
     address: '',
     notes: '',
+    consultation_date: '',
+    consultation_slot_id: '',
+    consultation_time: '',
+    consultation_slot_label: '',
   };
 }
 
@@ -142,6 +146,7 @@ export function useReimagineSubmit() {
           transformation: 'Customize Consultation',
           is_consultation: '1',
           is_custom: '1',
+          consultation_slot_id: details.consultation_slot_id,
           ...details,
         },
       });

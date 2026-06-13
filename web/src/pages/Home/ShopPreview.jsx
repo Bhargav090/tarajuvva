@@ -135,12 +135,12 @@ export default function ShopPreview() {
   const { products, loading } = useProducts({ limit: 4 });
 
   return (
-    <section className="tj-section border-b border-black bg-white" data-testid="shop-highlight">
+    <section className="tj-section border-b border-black bg-white !pt-8 md:!pt-10 lg:!pt-12" data-testid="shop-highlight">
       <div className="tj-container">
         <div className="flex items-end justify-between mb-10">
-          <div>
-            <p className="tj-eyebrow">01 · Shop</p>
-            <h2 className="tj-h2 mt-3 text-[#0a0a0a]">
+          <div className="flex flex-col gap-1.5">
+            <p className="tj-eyebrow m-0 leading-snug">01 · Shop</p>
+            <h2 className="tj-h2 m-0 leading-tight text-[#0a0a0a]">
               Pieces that <span className="italic font-light">do six jobs.</span>
             </h2>
           </div>

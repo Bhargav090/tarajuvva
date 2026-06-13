@@ -93,7 +93,7 @@ export default function Register() {
         <h2 className="text-3xl font-black text-[#241621] font-display mb-2">Create account</h2>
         <p className="text-[#241621]/55 font-body text-sm mb-8">
           Already have an account?{' '}
-          <Link to="/login" className="text-[#a8c74a] font-semibold hover:underline">Sign in</Link>
+          <Link to="/login" className="text-[var(--tj-shop-deep)] font-semibold hover:underline">Sign in</Link>
         </p>
 
         {/* Google SSO */}
@@ -115,7 +115,7 @@ export default function Register() {
                   type={f.type === 'password' ? (showPw ? 'text' : 'password') : f.type}
                   value={form[f.name]} onChange={onChange} required
                   placeholder={f.placeholder}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#241621]/12 rounded-xl text-[#241621] placeholder:text-[#241621]/35 font-body text-sm outline-none focus:border-[#a8c74a] focus:ring-2 focus:ring-[#a8c74a]/12"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-[#241621]/12 rounded-xl text-[#241621] placeholder:text-[#241621]/35 font-body text-sm outline-none focus:border-[var(--tj-shop)] focus:ring-2 focus:ring-[var(--tj-shop)]/20"
                 />
                 {f.type === 'password' && (
                   <button type="button" onClick={() => setShowPw(p => !p)}

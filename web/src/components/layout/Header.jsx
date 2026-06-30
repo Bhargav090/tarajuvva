@@ -46,12 +46,12 @@ export default function Header({ hasTicker = false }) {
         style={{ top: hasTicker ? 'var(--ticker-h)' : 0 }}
       >
         <div className="tj-container">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center shrink-0">
+          <div className="flex items-center justify-between min-h-[4.5rem] sm:min-h-[5rem] py-1.5">
+            <Link to="/" className="flex items-center shrink-0 min-w-0">
               <img
                 src={mainLogo}
                 alt="Tarajuvva"
-                className="h-12 sm:h-14 w-auto max-w-[200px] sm:max-w-[235px] object-contain object-left"
+                className="tj-header-logo"
               />
             </Link>
 
@@ -106,14 +106,14 @@ export default function Header({ hasTicker = false }) {
                           <Link
                             to="/profile"
                             onClick={() => setUserMenu(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-gray-50 transition-colors font-body"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8c74a] hover:bg-gray-50 transition-colors font-body"
                           >
                             <User size={15} /> My Profile
                           </Link>
                           <Link
                             to="/profile/orders"
                             onClick={() => setUserMenu(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-gray-50 transition-colors font-body"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8c74a] hover:bg-gray-50 transition-colors font-body"
                           >
                             <Package size={15} /> My Orders
                           </Link>
@@ -166,14 +166,14 @@ export default function Header({ hasTicker = false }) {
                             <Link
                               to="/profile"
                               onClick={() => setMobileUserMenu(false)}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-gray-50 transition-colors font-body"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8c74a] hover:bg-gray-50 transition-colors font-body"
                             >
                               <User size={15} /> My Profile
                             </Link>
                             <Link
                               to="/profile/orders"
                               onClick={() => setMobileUserMenu(false)}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:bg-gray-50 transition-colors font-body"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8c74a] hover:bg-gray-50 transition-colors font-body"
                             >
                               <Package size={15} /> My Orders
                             </Link>
@@ -193,7 +193,7 @@ export default function Header({ hasTicker = false }) {
               ) : (
                 <Link
                   to="/login"
-                  className="inline-flex items-center justify-center p-2 rounded-xl text-[#241621]/70 hover:text-[#241621] hover:bg-[#241621]/6 transition-colors md:px-4 md:py-2 md:text-sm md:font-semibold md:text-[#a8c74a] md:border-2 md:border-[#a8c74a] md:rounded-xl md:hover:bg-[#a8c74a] md:hover:text-[#241621] font-display"
+                  className="inline-flex items-center justify-center p-2 rounded-xl text-[#241621]/70 hover:text-[#241621] hover:bg-[#241621]/6 transition-colors md:px-4 md:py-2 md:text-sm md:font-semibold md:text-[#241621] md:border-2 md:border-[#241621] md:rounded-xl md:hover:bg-[#a8c74a] md:hover:border-[#a8c74a] md:hover:text-[#241621] font-display"
                   aria-label="Sign in"
                 >
                   <User size={20} className="md:hidden" />

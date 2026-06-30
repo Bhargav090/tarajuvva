@@ -372,22 +372,27 @@ router.post('/orders/:id/razorpay/verify', authenticateUser, async (req, res) =>
 });
 
 router.get('/orders', authenticateAdmin, async (req, res) => {
-  const { status } = req.query;
-  let q = 'SELECT * FROM orders WHERE 1=1';
-  const params = [];
-  if (status) {
-    q += ' AND status=?';
-    params.push(status);
+  try {
+    const { status } = req.query;
+    let q = 'SELECT * FROM orders WHERE 1=1';
+    const params = [];
+    if (status) {
+      q += ' AND status=?';
+      params.push(status);
+    }
+    q += ' ORDER BY created_at DESC';
+    const rows = await all(q, params);
+    const orders = await Promise.all(
+      rows.map(async (o) => ({
+        ...o,
+        items: await enrichOrderItems(JSON.parse(o.items ?? '[]'), get),
+      }))
+    );
+    res.json({ success: true, orders });
+  } catch (err) {
+    console.error('[shop] GET /orders failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to load orders' });
   }
-  q += ' ORDER BY created_at DESC';
-  const rows = await all(q, params);
-  const orders = await Promise.all(
-    rows.map(async (o) => ({
-      ...o,
-      items: await enrichOrderItems(JSON.parse(o.items), get),
-    }))
-  );
-  res.json({ success: true, orders });
 });
 
 router.patch('/orders/:id/status', authenticateAdmin, async (req, res) => {

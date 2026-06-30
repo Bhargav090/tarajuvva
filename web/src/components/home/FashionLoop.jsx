@@ -88,7 +88,7 @@ function LoopNode({ vertical, position, isHighlighted, onEnter, onLeave, onSelec
     >
       <div
         className={[
-          'w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full',
+          'w-[10.1rem] h-[10.1rem] sm:w-[13.4rem] sm:h-[13.4rem] md:w-[15.1rem] md:h-[15.1rem] rounded-full',
           'flex flex-col items-center justify-center border-2 border-black',
           'transition-all duration-300',
           isHighlighted ? 'scale-110 shadow-[6px_6px_0_0_#0a0a0a]' : 'scale-100 shadow-none',

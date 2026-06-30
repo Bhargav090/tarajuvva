@@ -1,5 +1,10 @@
+// Admin hero image routes disabled — heroes use static frontend assets
+// (Home: web/src/assets/hero-banthibhojanam-ss2026.jpeg, Reimagine: reimagine.mov).
 const express = require('express');
 const router = express.Router();
+module.exports = router;
+
+/*
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
@@ -32,7 +37,6 @@ const upload = multer({
 
 router.use(authenticateAdmin);
 
-/** Upload requirements (for admin UI). */
 router.get('/requirements', (req, res) => {
   const context = parseContext(req.query.context);
   const allowGif = context === 'reimagine';
@@ -51,7 +55,6 @@ router.get('/requirements', (req, res) => {
   });
 });
 
-/** List hero images for a context (newest first). */
 router.get('/', async (req, res) => {
   const context = parseContext(req.query.context);
   const images = await all(
@@ -66,7 +69,6 @@ router.get('/', async (req, res) => {
   });
 });
 
-/** Upload a new hero image (keeps history; does not auto-activate). Stored as base64 in DB. */
 router.post('/', (req, res, next) => {
   upload.single('image')(req, res, (err) => {
     if (err) return res.status(400).json({ success: false, message: err.message || 'Upload failed.' });
@@ -111,7 +113,6 @@ router.post('/', (req, res, next) => {
   res.status(201).json({ success: true, image: withHeroMediaUrl(row) });
 });
 
-/** Set which hero image is live for its context. */
 router.patch('/:id/activate', async (req, res) => {
   const row = await get('SELECT id, context FROM hero_images WHERE id = ?', [req.params.id]);
   if (!row) return res.status(404).json({ success: false, message: 'Image not found.' });
@@ -125,5 +126,4 @@ router.patch('/:id/activate', async (req, res) => {
   );
   res.json({ success: true, image: withHeroMediaUrl(active) });
 });
-
-module.exports = router;
+*/

@@ -150,7 +150,7 @@ export default function Login() {
           >
             <ArrowLeft size={14} /> Back to Home
           </Link>
-          <Link to="/" className="flex items-center mb-10 lg:hidden">
+          <Link to="/" className="flex items-center mb-4 lg:hidden">
             <img
               src={mainLogo}
               alt="Tarajuvva"

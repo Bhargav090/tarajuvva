@@ -29,16 +29,17 @@ function parseTestimonialPaths(row) {
   return [];
 }
 
-router.get('/hero/:id', async (req, res) => {
-  const etag = `"hero-${req.params.id}"`;
-  if (tryNotModified(req, res, etag)) return;
-
-  const row = await get('SELECT image_path FROM hero_images WHERE id = ?', [req.params.id]);
-  if (!row?.image_path) {
-    return res.status(404).json({ success: false, message: 'Image not found.' });
-  }
-  return sendStoredImage(req, res, row.image_path, etag);
-});
+// Disabled — admin hero images no longer used; heroes are static frontend assets.
+// router.get('/hero/:id', async (req, res) => {
+//   const etag = `"hero-${req.params.id}"`;
+//   if (tryNotModified(req, res, etag)) return;
+//
+//   const row = await get('SELECT image_path FROM hero_images WHERE id = ?', [req.params.id]);
+//   if (!row?.image_path) {
+//     return res.status(404).json({ success: false, message: 'Image not found.' });
+//   }
+//   return sendStoredImage(req, res, row.image_path, etag);
+// });
 
 router.get('/reimagine/:id', async (req, res) => {
   const etag = `"reimagine-${req.params.id}"`;

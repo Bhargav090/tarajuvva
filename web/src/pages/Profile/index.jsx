@@ -131,7 +131,7 @@ export default function Profile() {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold font-display whitespace-nowrap transition-all ${
                 tab === t.id
                   ? 'bg-[#a8c74a] text-[#241621]'
-                  : 'text-[#241621]/60 hover:text-[#241621] bg-white border border-[#241621]/8'
+                  : 'text-[#241621] hover:text-[#a8c74a] bg-white border border-[#241621]/8'
               }`}
             >
               <t.icon size={15} /> {t.label}

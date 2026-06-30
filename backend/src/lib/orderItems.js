@@ -31,9 +31,11 @@ function pickDisplayImage(images) {
 
 async function enrichOrderItems(items, get) {
   return Promise.all(
-    items.map(async (item) => {
+    (Array.isArray(items) ? items : []).map(async (item) => {
       if (item.image) return item;
-      const row = await get('SELECT images FROM products WHERE id = ?', [item.id]);
+      const productId = item.id ?? item.product_id;
+      if (!productId) return item;
+      const row = await get('SELECT images FROM products WHERE id = ?', [productId]);
       if (!row) return item;
       const image = pickDisplayImage(parseImages(row.images));
       return image ? { ...item, image } : item;

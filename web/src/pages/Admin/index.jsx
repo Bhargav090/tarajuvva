@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Key, Tag, ImageIcon, Sparkles, MessageSquareQuote, PhoneCall,
+  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall,
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -23,8 +23,8 @@ import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
 import { ORDER_STATUSES, REIMAGINE_STATUSES, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
-import HeroImagesTab from './HeroImagesTab';
-import ReimaginePresetsTab from './ReimaginePresetsTab';
+// import HeroImagesTab from './HeroImagesTab'; // disabled — heroes use static assets
+// import ReimaginePresetsTab from './ReimaginePresetsTab'; // disabled — reimagine images use static assets
 import ReimagineCustomizeTab from './ReimagineCustomizeTab';
 import TestimonialsTab from './TestimonialsTab';
 import { uploadUrl } from '../../utils/uploadUrl';
@@ -69,9 +69,9 @@ const TABS = [
   { id: 'reimagine', label: 'Reimagine',          icon: Scissors       },
   { id: 'waitlist',  label: 'Waitlist',           icon: Users          },
   { id: 'products',  label: 'Products',           icon: Tag            },
-  { id: 'hero',             label: 'Hero image',       icon: ImageIcon },
-  { id: 'reimagine-hero',   label: 'Reimagine hero',   icon: ImageIcon },
-  { id: 'reimagine-images', label: 'Reimagine images', icon: Sparkles },
+  // { id: 'hero',             label: 'Hero image',       icon: ImageIcon },
+  // { id: 'reimagine-hero',   label: 'Reimagine hero',   icon: ImageIcon },
+  // { id: 'reimagine-images', label: 'Reimagine images', icon: Sparkles },
   { id: 'reimagine-customize', label: 'Customize', icon: PhoneCall },
   { id: 'testimonials',     label: 'Testimonials',     icon: MessageSquareQuote },
 ];
@@ -224,9 +224,9 @@ export default function Admin() {
           {tab === 'reimagine' && <ReimagineTab />}
           {tab === 'waitlist' && <WaitlistTab />}
           {tab === 'products' && <ProductConfiguratorTab />}
-          {tab === 'hero' && <HeroImagesTab context="home" />}
-          {tab === 'reimagine-hero' && <HeroImagesTab context="reimagine" />}
-          {tab === 'reimagine-images' && <ReimaginePresetsTab />}
+          {/* {tab === 'hero' && <HeroImagesTab context="home" />} */}
+          {/* {tab === 'reimagine-hero' && <HeroImagesTab context="reimagine" />} */}
+          {/* {tab === 'reimagine-images' && <ReimaginePresetsTab />} */}
           {tab === 'reimagine-customize' && <ReimagineCustomizeTab />}
           {tab === 'testimonials' && <TestimonialsTab />}
         </div>

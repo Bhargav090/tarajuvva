@@ -1,3 +1,8 @@
+// Hero image API hooks disabled — heroes use static frontend assets.
+// Home: web/src/assets/hero-banthibhojanam-ss2026.jpeg
+// Reimagine: web/src/assets/reimagine.mov
+
+/*
 import { useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 
@@ -78,3 +83,4 @@ export function useAdminHeroImages(context = 'home') {
 
   return { images, loading, uploading, upload, activate, reload: load };
 }
+*/

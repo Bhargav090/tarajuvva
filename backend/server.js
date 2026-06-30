@@ -56,7 +56,7 @@ app.use('/api/reimagine', require('./src/routes/reimagine'));
 app.use('/api/waitlist',  require('./src/routes/waitlist'));
 app.use('/api/settings',  require('./src/routes/settings'));
 // Register specific /api/admin/* routes before the generic admin router
-app.use('/api/admin/hero-images', require('./src/routes/heroImages'));
+// app.use('/api/admin/hero-images', require('./src/routes/heroImages')); // disabled — heroes use static frontend assets
 app.use('/api/admin/reimagine-images', require('./src/routes/reimagineImages'));
 app.use('/api/admin/testimonials', require('./src/routes/testimonials'));
 app.use('/api/admin/settings', require('./src/routes/adminSettings'));

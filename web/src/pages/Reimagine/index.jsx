@@ -126,6 +126,7 @@ export default function Reimagine() {
         testId="reimagine-hero"
         heroVideo={reimagineVideo}
         visualVariant="reimagine"
+        visualAspect="3/4"
       />
 
       <section className="border-b border-black bg-white">

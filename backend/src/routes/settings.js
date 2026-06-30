@@ -2,31 +2,32 @@ const express = require('express');
 const router = express.Router();
 const { get, all } = require('../db/database');
 const { getReimagineCustomizeSettings } = require('../utils/siteSettings');
-const { heroMediaUrl, reimagineMediaUrl, testimonialMediaUrl } = require('../lib/mediaUrls');
+const { reimagineMediaUrl, testimonialMediaUrl } = require('../lib/mediaUrls');
 
-/** Public — active hero image for the landing page (metadata only; bytes at /api/media/hero/:id). */
-router.get('/hero', async (req, res) => {
-  const hero = await get(
-    `SELECT id, width, height, aspect_label, created_at
-     FROM hero_images WHERE context = 'home' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
-  );
-  res.json({
-    success: true,
-    hero: hero ? { ...hero, image_path: heroMediaUrl(hero.id) } : null,
-  });
-});
+// Disabled — homepage hero uses web/src/assets/hero-banthibhojanam-ss2026.jpeg; Reimagine uses reimagine.mov.
+// /** Public — active hero image for the landing page (metadata only; bytes at /api/media/hero/:id). */
+// router.get('/hero', async (req, res) => {
+//   const hero = await get(
+//     `SELECT id, width, height, aspect_label, created_at
+//      FROM hero_images WHERE context = 'home' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
+//   );
+//   res.json({
+//     success: true,
+//     hero: hero ? { ...hero, image_path: heroMediaUrl(hero.id) } : null,
+//   });
+// });
 
-/** Public — active hero image / GIF for the Reimagine page. */
-router.get('/reimagine-hero', async (req, res) => {
-  const hero = await get(
-    `SELECT id, width, height, aspect_label, created_at
-     FROM hero_images WHERE context = 'reimagine' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
-  );
-  res.json({
-    success: true,
-    hero: hero ? { ...hero, image_path: heroMediaUrl(hero.id) } : null,
-  });
-});
+// /** Public — active hero image / GIF for the Reimagine page. */
+// router.get('/reimagine-hero', async (req, res) => {
+//   const hero = await get(
+//     `SELECT id, width, height, aspect_label, created_at
+//      FROM hero_images WHERE context = 'reimagine' AND is_active = 1 ORDER BY created_at DESC LIMIT 1`
+//   );
+//   res.json({
+//     success: true,
+//     hero: hero ? { ...hero, image_path: heroMediaUrl(hero.id) } : null,
+//   });
+// });
 
 /** Public — reimagine garment + preset images (URLs only). */
 router.get('/reimagine-images', async (req, res) => {

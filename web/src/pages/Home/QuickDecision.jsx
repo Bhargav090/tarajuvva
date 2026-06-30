@@ -47,7 +47,7 @@ export default function QuickDecision() {
                   className="group block p-5 sm:p-6 rounded-2xl bg-white border border-[#241621]/8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full"
                 >
                   {/* Icon */}
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110 overflow-hidden rounded-xl">
+                  <div className="w-[5.9rem] h-[5.9rem] sm:w-[6.7rem] sm:h-[6.7rem] flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110 overflow-hidden rounded-xl">
                     {media.type === 'video' ? (
                       <video
                         src={media.src}
@@ -55,11 +55,11 @@ export default function QuickDecision() {
                         loop
                         muted
                         playsInline
-                        className="w-8 h-8 sm:w-9 sm:h-9 object-cover"
+                        className="w-[3.4rem] h-[3.4rem] sm:w-[3.8rem] sm:h-[3.8rem] object-cover"
                         aria-hidden
                       />
                     ) : (
-                      <img src={media.src} alt={card.action} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
+                      <img src={media.src} alt={card.action} className="w-[3.4rem] h-[3.4rem] sm:w-[3.8rem] sm:h-[3.8rem] object-contain" />
                     )}
                   </div>
                   {/* Label */}
@@ -73,7 +73,7 @@ export default function QuickDecision() {
                       {card.action}
                     </span>
                     <ArrowUpRight
-                      size={18}
+                      size={31}
                       style={{ color: card.color }}
                       className="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1 group-hover:translate-x-0 duration-200"
                     />

@@ -1,4 +1,5 @@
 import AsyncImage from './AsyncImage';
+import { sideWidthForAspect } from '../../utils/aspectRatio';
 
 const VARIANTS = {
   home: {
@@ -20,31 +21,52 @@ export default function HeroVisual({
   testId,
   variant = 'home',
   size = 'full',
+  aspectRatio,
   width,
   height,
+  fillTall = false,
 }) {
   const config = VARIANTS[variant] || VARIANTS.home;
   const isCompact = size === 'compact';
   const isSide = size === 'side';
-  const w = width ?? (isSide ? 440 : isCompact ? 280 : 640);
-  const h = height ?? (isSide ? 385 : isCompact ? 245 : 560);
+  const isFluid = size === 'fluid';
+  const w = width ?? (isSide ? sideWidthForAspect(aspectRatio) : isCompact ? 280 : 480);
+  const h = height ?? (isSide ? 385 : isCompact ? 245 : 640);
+  const ratioClass = aspectRatio ? ` tj-hero-visual--ratio-${aspectRatio.replace('/', '-')}` : '';
 
   return (
     <div
       className={`tj-hero-visual group${
-        isCompact ? ' tj-hero-visual--compact' : isSide ? ' tj-hero-visual--side' : ''
-      }`}
-      style={{
-        width: w,
-        height: h,
-        maxWidth: '100%',
-        maxHeight: h,
-      }}
+        isFluid ? ' tj-hero-visual--fluid' : ''
+      }${isCompact ? ' tj-hero-visual--compact' : ''      }${isSide ? ' tj-hero-visual--side' : ''}${
+        variant === 'reimagine' ? ' tj-hero-visual--reimagine' : ''
+      }${fillTall ? ' tj-hero-visual--fill-tall' : ''}${ratioClass}`}
+      style={
+        isFluid
+          ? undefined
+          : aspectRatio
+            ? {
+                width: w,
+                aspectRatio,
+                height: 'auto',
+                maxWidth: '100%',
+              }
+            : {
+                width: w,
+                height: h,
+                maxWidth: '100%',
+                maxHeight: h,
+              }
+      }
       data-testid={testId}
     >
       <div className="tj-hero-visual-glow" aria-hidden />
-      <div className="tj-hero-visual-accent tj-hero-visual-accent--secondary" aria-hidden />
-      <div className="tj-hero-visual-accent" aria-hidden />
+      {variant !== 'home' && (
+        <>
+          <div className="tj-hero-visual-accent tj-hero-visual-accent--secondary" aria-hidden />
+          <div className="tj-hero-visual-accent" aria-hidden />
+        </>
+      )}
       <div className="tj-hero-visual-frame">
         {heroVideo ? (
           <video
@@ -64,7 +86,7 @@ export default function HeroVisual({
             width={hero?.width}
             height={hero?.height}
             showSpinner
-            imgClassName="!object-cover !object-center"
+            imgClassName="!object-cover !object-center tj-hero-visual-media"
           />
         )}
         <div className="tj-hero-visual-shimmer" aria-hidden />

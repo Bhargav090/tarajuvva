@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import Button from '../../components/ui/Button';
-import brandIcon from '../../assets/icons/Artboard 3@2x-8.png';
+import mainLogo from '../../assets/mainlogo-removebg-preview.png';
 
 export default function Register() {
   const { login, user } = useAuth();
@@ -93,7 +93,11 @@ export default function Register() {
           <ArrowLeft size={14} /> Back to Home
         </Link>
         <Link to="/" className="flex items-center mb-10">
-          <img src={brandIcon} alt="Tarajuvva" className="w-32 h-auto object-contain" />
+          <img
+            src={mainLogo}
+            alt="Tarajuvva"
+            className="h-12 w-auto max-w-[200px] object-contain object-left"
+          />
         </Link>
 
         <h2 className="text-3xl font-black text-[#241621] font-display mb-2">Create account</h2>

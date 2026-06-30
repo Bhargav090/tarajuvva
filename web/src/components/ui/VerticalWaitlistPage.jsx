@@ -4,7 +4,7 @@ import VerticalPageHero from './VerticalPageHero';
 /**
  * Full-bleed waitlist hero — shared by Repair & Donate (matches reference layout).
  */
-export default function VerticalWaitlistPage({ config }) {
+export default function VerticalWaitlistPage({ config, heroVideo = null }) {
   return (
     <VerticalPageHero
       bgVar={config.bgVar}
@@ -14,6 +14,8 @@ export default function VerticalWaitlistPage({ config }) {
       blobPosition={config.blobPosition}
       testId={`${config.type}-page`}
       tall
+      heroVideo={heroVideo}
+      visualVariant="reimagine"
     >
       <div className="mt-8 md:mt-10 max-w-lg">
         <p className="tj-eyebrow mb-3">{config.formLabel}</p>

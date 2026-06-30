@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
@@ -6,7 +6,16 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import Button from '../../components/ui/Button';
-import brandIcon from '../../assets/icons/Artboard 3@2x-8.png';
+import mainLogo from '../../assets/mainlogo-removebg-preview.png';
+
+function getSafeLoginRedirect(from) {
+  const target = typeof from === 'string' && from.startsWith('/') ? from : '/';
+  if (target === '/login' || target === '/register') return '/';
+  const isAdminPath = target === '/admin' || target.startsWith('/admin/');
+  // Never send a customer session to /admin — that bounces back to login in a loop.
+  if (isAdminPath && !localStorage.getItem('admin_token')) return '/';
+  return target;
+}
 
 export default function Login() {
   const { login, user }    = useAuth();
@@ -17,10 +26,21 @@ export default function Login() {
   const [form, setForm]     = useState({ email: '', password: '' });
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const didRedirect = useRef(false);
+
+  const redirectAfterAuth = useCallback((fromPath) => {
+    if (didRedirect.current) return;
+    didRedirect.current = true;
+    navigate(getSafeLoginRedirect(fromPath), { replace: true });
+  }, [navigate]);
 
   useEffect(() => {
-    if (user) navigate(from, { replace: true });
-  }, [user, navigate, from]);
+    if (!user) {
+      didRedirect.current = false;
+      return;
+    }
+    redirectAfterAuth(from);
+  }, [user, from, redirectAfterAuth]);
 
   const onChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -40,7 +60,7 @@ export default function Login() {
 
         login(data.token, data.user);
         toast.success(`Welcome back, ${data.user.name}! 👋`);
-        navigate(from, { replace: true });
+        redirectAfterAuth(from);
       } else {
         toast.error(data.message || 'Login failed');
       }
@@ -57,11 +77,12 @@ export default function Login() {
       if (data.success) {
         login(data.token, data.user);
         toast.success(`Welcome, ${data.user.name}! 🎉`);
+        redirectAfterAuth(from);
       }
     } catch (err) {
       toast.error('Google sign-in failed');
     }
-  }, [login]);
+  }, [login, redirectAfterAuth, from]);
 
   useEffect(() => {
     if (!window.google) return;
@@ -91,12 +112,16 @@ export default function Login() {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 70%, #ffffff 0%, transparent 60%)' }} />
         <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }}>
           <Link to="/" className="flex items-center mb-16">
-            <img src={brandIcon} alt="Tarajuvva" className="w-56 xl:w-64 h-auto object-contain" />
+            <img
+              src={mainLogo}
+              alt="Tarajuvva"
+              className="h-[7.2rem] xl:h-[8.7rem] w-auto max-w-[490px] xl:max-w-[576px] object-contain object-left"
+            />
           </Link>
           <h1 className="font-display font-black text-[#241621] leading-tight mb-6" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}>
             Your wardrobe,
             <br />
-            <span className="text-[#4c1b1b]">reimagined.</span>
+            <span className="text-[#7A063C]">reimagined.</span>
           </h1>
           <p className="text-[#241621]/70 font-body text-lg">
             Sign in to track your orders, manage reimagine requests, and shop your next favourite piece.
@@ -126,7 +151,11 @@ export default function Login() {
             <ArrowLeft size={14} /> Back to Home
           </Link>
           <Link to="/" className="flex items-center mb-10 lg:hidden">
-            <img src={brandIcon} alt="Tarajuvva" className="w-32 h-auto object-contain" />
+            <img
+              src={mainLogo}
+              alt="Tarajuvva"
+              className="h-[5.75rem] w-auto max-w-[403px] object-contain object-left"
+            />
           </Link>
 
           <h2 className="text-3xl font-black text-[#241621] font-display mb-2">Welcome back</h2>

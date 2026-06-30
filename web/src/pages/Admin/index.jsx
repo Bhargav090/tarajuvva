@@ -21,7 +21,7 @@ import { Badge } from '../../components/ui/Badge';
 import StatusSelect from '../../components/ui/StatusSelect';
 import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
-import { ORDER_STATUSES, REIMAGINE_STATUSES } from '../../utils/constants';
+import { ORDER_STATUSES, REIMAGINE_STATUSES, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
 import HeroImagesTab from './HeroImagesTab';
 import ReimaginePresetsTab from './ReimaginePresetsTab';
@@ -258,7 +258,7 @@ function OverviewTab() {
       <h1 className="text-2xl font-black text-[#241621] font-display mb-8">Overview</h1>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#a8c74a" sub={`${stats?.orders?.pending ?? 0} pending`} />
-        <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#4c1b1b" />
+        <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#7A063C" />
         <StatCard icon={Scissors} label="Reimagine Requests" value={stats?.reimagine?.total ?? 0} color="#e34334" sub={`${stats?.reimagine?.pending ?? 0} pending`} />
         <StatCard icon={Package} label="Products" value={stats?.products ?? 0} color="#1b4e81" />
       </div>
@@ -268,6 +268,15 @@ function OverviewTab() {
       </div>
     </div>
   );
+}
+
+function formatPayment(order) {
+  const method = PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method || '—';
+  const status = PAYMENT_STATUS_LABELS[order.payment_status] || order.payment_status;
+  if (order.payment_method === 'razorpay' && order.razorpay_payment_id) {
+    return `${method} · ${status} · ${order.razorpay_payment_id.slice(0, 12)}…`;
+  }
+  return status ? `${method} · ${status}` : method;
 }
 
 function OrdersTab() {
@@ -293,6 +302,7 @@ function OrdersTab() {
             <div className="text-xs text-[#241621]/45 font-body">
               {o.items.map((it, i) => `${it.name} ×${it.qty}`).join(', ')}
             </div>
+            <p className="text-xs text-[#241621]/50 font-body mt-1">{formatPayment(o)}</p>
             <p className="text-xs text-[#241621]/35 font-body mt-1">{o.address}</p>
           </div>
         ))}
@@ -317,10 +327,10 @@ function ReimagineTab() {
                   #{r.id.slice(0, 8).toUpperCase()} · {formatDate(r.created_at)}
                 </p>
                 <p className="font-bold text-[#241621] font-display text-lg mt-1">{r.user_name}</p>
-                <p className="text-sm text-[#4c1b1b] font-display mt-0.5">
+                <p className="text-sm text-[#7A063C] font-display mt-0.5">
                   {capitalize(r.garment_type)} → {r.transformation}
                   {r.consultation_paid && (
-                    <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#4c1b1b]/10 text-[#4c1b1b] px-2 py-0.5 rounded">
+                    <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#7A063C]/10 text-[#7A063C] px-2 py-0.5 rounded">
                       Customize
                     </span>
                   )}
@@ -330,7 +340,7 @@ function ReimagineTab() {
                     </span>
                   )}
                   {r.is_custom && !r.consultation_paid && !r.callback_requested && (
-                    <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#4c1b1b]/10 text-[#4c1b1b] px-2 py-0.5 rounded">
+                    <span className="ml-2 inline-block text-[10px] font-mono-tj uppercase tracking-wider bg-[#7A063C]/10 text-[#7A063C] px-2 py-0.5 rounded">
                       Custom
                     </span>
                   )}

@@ -10,7 +10,7 @@
   --color-brand-bg:       #ffffff;
   --color-brand-bg-alt:   #f5f5f5;
   --color-brand-green:    #c8ff2e;
-  --color-brand-burgundy: #4c1b1b;
+  --color-brand-burgundy: #7A063C;
   --color-brand-pink:     #e2a3c9;
   --color-brand-red:      #e34334;
   --color-brand-blue:     #1b4e81;
@@ -30,7 +30,7 @@
     --tj-line: rgba(10, 10, 10, 0.12);
     --tj-shop: #c8ff2e;
     --tj-shop-deep: #a8e000;
-    --tj-reimagine: #6e0e1a;
+    --tj-reimagine: #7A063C;
     --tj-repair: #1a3df0;
     --tj-donate: #ff6a1a;
   }
@@ -78,7 +78,7 @@
     background-clip: text;
   }
   .text-gradient-burgundy {
-    background: linear-gradient(135deg, #4c1b1b, #3d1616);
+    background: linear-gradient(135deg, #7A063C, #5a0530);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -286,7 +286,7 @@
   }
   .tj-vertical-hero--has-visual .tj-hero-visual-tag {
     background: rgba(255, 255, 255, 0.92);
-    color: #4c1b1b;
+    color: #7A063C;
   }
   .tj-hero-visual--compact .tj-hero-visual-glow,
   .tj-hero-visual--side .tj-hero-visual-glow {
@@ -719,6 +719,20 @@
     object-position: center top;
     transform: scale(1.02);
     transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tj-hero-visual-media {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .tj-hero-visual-media--video {
+    object-fit: contain;
+    object-position: center center;
+    background: #f5f5f5;
   }
 
   .tj-hero-visual:hover img {

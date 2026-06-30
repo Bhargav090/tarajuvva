@@ -5,7 +5,7 @@ const msgs = [...TICKER_MESSAGES, ...TICKER_MESSAGES];
 /** Fixed marquee band at the very top of the landing page. */
 export default function Ticker() {
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] border-b border-black bg-black text-white py-1.5 overflow-hidden select-none">
+    <div className="fixed top-0 left-0 right-0 z-[60] h-[var(--ticker-h,32px)] flex items-center border-b border-black bg-black text-white overflow-hidden select-none">
       <div className="flex tj-marquee whitespace-nowrap gap-8">
         {msgs.map((msg, i) => (
           <span

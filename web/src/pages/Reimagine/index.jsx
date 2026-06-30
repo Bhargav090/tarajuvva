@@ -20,8 +20,7 @@ import { useReimagineSubmit } from '../../hooks/useReimagineSubmit';
 import { useAuth } from '../../context/AuthContext';
 import { useReimagineImages } from '../../hooks/useReimagineImages';
 import { useReimagineCustomizeSettings } from '../../hooks/useReimagineCustomize';
-import { useReimagineHeroImage } from '../../hooks/useHeroImage';
-import { uploadUrl } from '../../utils/uploadUrl';
+import reimagineVideo from '../../assets/reimagine.mov';
 import { Spinner } from '../../components/ui/Skeleton';
 
 export default function Reimagine() {
@@ -51,8 +50,6 @@ export default function Reimagine() {
   } = useReimagineSubmit();
   const { garmentImage, presetImage } = useReimagineImages();
   const { settings: customizeSettings } = useReimagineCustomizeSettings();
-  const { hero, loading: heroLoading } = useReimagineHeroImage();
-  const heroSrc = hero?.image_path ? uploadUrl(hero.image_path) : null;
 
   useLayoutEffect(() => {
     if (done) window.scrollTo({ top: 0, left: 0 });
@@ -127,9 +124,7 @@ export default function Reimagine() {
         headline={['Send the old.', 'Get the new.']}
         subtext="Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour."
         testId="reimagine-hero"
-        heroSrc={heroSrc}
-        hero={hero}
-        heroLoading={heroLoading}
+        heroVideo={reimagineVideo}
         visualVariant="reimagine"
       />
 
@@ -192,7 +187,7 @@ export default function Reimagine() {
                           type="button"
                           data-testid={`segment-${g.id}`}
                           onClick={() => setGarment(g.id)}
-                          className="text-left tj-card group hover:-translate-y-1 transition-transform overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,0.08)] hover:shadow-[6px_6px_0_0_rgba(110,14,26,0.5)]"
+                          className="text-left tj-card group hover:-translate-y-1 transition-transform overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,0.08)] hover:shadow-[6px_6px_0_0_rgba(122,6,60,0.5)]"
                         >
                           <div className="aspect-[4/5] overflow-hidden bg-[var(--tj-bg-soft)]">
                             <img

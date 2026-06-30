@@ -15,12 +15,13 @@ export default function VerticalPageHero({
   tone = 'light',
   children,
   heroSrc = null,
+  heroVideo = null,
   hero = null,
   heroLoading = false,
   visualVariant = 'reimagine',
 }) {
   const isDarkTone = tone === 'dark';
-  const showVisualSlot = heroLoading || Boolean(heroSrc);
+  const showVisualSlot = heroLoading || Boolean(heroSrc) || Boolean(heroVideo);
 
   const sideSkeleton = (
     <div
@@ -99,10 +100,11 @@ export default function VerticalPageHero({
             <div className="tj-vertical-hero-visual-float hidden lg:block">
               {sideSkeleton}
             </div>
-          ) : heroSrc ? (
+          ) : heroSrc || heroVideo ? (
             <div className="tj-vertical-hero-visual-float hidden lg:block">
               <HeroVisual
                 heroSrc={heroSrc}
+                heroVideo={heroVideo}
                 hero={hero}
                 testId={`${testId}-image`}
                 variant={visualVariant}
@@ -115,10 +117,11 @@ export default function VerticalPageHero({
             <div className="lg:hidden tj-vertical-hero-visual-slot flex justify-center mt-6 px-2">
               {mobileSideSkeleton}
             </div>
-          ) : heroSrc ? (
+          ) : heroSrc || heroVideo ? (
             <div className="lg:hidden tj-vertical-hero-visual-slot flex justify-center mt-6 px-2">
               <HeroVisual
                 heroSrc={heroSrc}
+                heroVideo={heroVideo}
                 hero={hero}
                 testId={`${testId}-image-mobile`}
                 variant={visualVariant}

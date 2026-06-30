@@ -194,12 +194,15 @@ export default function ShopPreview() {
   return (
     <section className="tj-section border-b border-black bg-white !pt-8 md:!pt-10 lg:!pt-12" data-testid="shop-highlight">
       <div className="tj-container">
-        <div className="flex items-end justify-between mb-10">
-          <div className="flex flex-col gap-1.5">
+        <div className="flex items-start justify-between gap-6 mb-10">
+          <div className="flex flex-col gap-1 max-w-xl">
             <p className="tj-eyebrow m-0 leading-snug">01 · Shop</p>
             <h2 className="tj-h2 m-0 leading-tight text-[#0a0a0a]">
-              Pieces that <span className="italic font-light">do six jobs.</span>
+              Garments that <span className="whitespace-nowrap">do more</span>
             </h2>
+            <p className="text-sm text-black/55 leading-snug m-0 max-w-md">
+              Durable, versatile pieces with utility at their core.
+            </p>
           </div>
           <Link
             to="/shop"

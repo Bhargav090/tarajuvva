@@ -2,7 +2,7 @@ import AsyncImage from './AsyncImage';
 
 const VARIANTS = {
   home: {
-    tag: 'New season · Editorial',
+    tag: 'Banthibhojanam collection SS2026',
     ribbon: 'Circular fashion OS',
     showRibbon: true,
   },
@@ -15,6 +15,7 @@ const VARIANTS = {
 
 export default function HeroVisual({
   heroSrc,
+  heroVideo,
   hero,
   testId,
   variant = 'home',
@@ -45,15 +46,27 @@ export default function HeroVisual({
       <div className="tj-hero-visual-accent tj-hero-visual-accent--secondary" aria-hidden />
       <div className="tj-hero-visual-accent" aria-hidden />
       <div className="tj-hero-visual-frame">
-        <AsyncImage
-          src={heroSrc}
-          alt=""
-          fill
-          width={hero?.width}
-          height={hero?.height}
-          showSpinner
-          imgClassName="!object-cover !object-center"
-        />
+        {heroVideo ? (
+          <video
+            src={heroVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="tj-hero-visual-media tj-hero-visual-media--video"
+            aria-hidden
+          />
+        ) : (
+          <AsyncImage
+            src={heroSrc}
+            alt=""
+            fill
+            width={hero?.width}
+            height={hero?.height}
+            showSpinner
+            imgClassName="!object-cover !object-center"
+          />
+        )}
         <div className="tj-hero-visual-shimmer" aria-hidden />
       </div>
       <span className="tj-hero-visual-tag">{config.tag}</span>

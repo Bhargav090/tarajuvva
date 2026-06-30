@@ -360,6 +360,22 @@ async function initializeDatabase() {
     }
   }
 
+  const orderPaymentAlters = [
+    "ALTER TABLE orders ADD COLUMN payment_status VARCHAR(32) DEFAULT 'cod' AFTER payment_method",
+    'ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(64) NULL AFTER payment_status',
+    'ALTER TABLE orders ADD COLUMN razorpay_payment_id VARCHAR(64) NULL AFTER razorpay_order_id',
+    'ALTER TABLE orders ADD COLUMN paid_at DATETIME NULL AFTER razorpay_payment_id',
+  ];
+  for (const sql of orderPaymentAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+        console.warn('[db] orders payment column add skipped:', e.message);
+      }
+    }
+  }
+
   const row = await get('SELECT COUNT(*) AS count FROM products');
   const productCount = Number(row.count);
   if (productCount === 0) await seedProducts();

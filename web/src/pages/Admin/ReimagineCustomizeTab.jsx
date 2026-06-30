@@ -159,7 +159,7 @@ export default function ReimagineCustomizeTab() {
 
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#241621]/8 space-y-5">
         <div className="flex items-center gap-2">
-          <CalendarClock size={20} className="text-[#4c1b1b]" />
+          <CalendarClock size={20} className="text-[#7A063C]" />
           <h2 className="text-lg font-bold text-[#241621] font-display">Generate consultation slots</h2>
         </div>
 

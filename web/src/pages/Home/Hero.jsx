@@ -48,15 +48,13 @@ export default function Hero() {
         <div className={`tj-hero-stage${showVisualSlot ? ' tj-hero-stage--has-visual' : ''}`}>
           <div className="tj-hero-copy">
             <h1 className="tj-h1 tj-h1-compact text-[#0a0a0a]" data-testid="hero-headline">
-              <span>Fashion</span>
               <span>
-                <span className="tj-h1-highlight">that doesn&apos;t</span>
+                <span className="tj-h1-highlight">(Fun)</span>ctional Fashion
               </span>
-              <span>end.</span>
             </h1>
 
             <p className="tj-hero-lead hidden md:block">
-              We&apos;re <strong className="text-black font-medium">Tarajuvva</strong> — a circular fashion OS, not a clothing brand pretending to care. Buy. Remake. Repair. Donate. The same garment, four chapters.
+              At Tarajuvva, we turn wardrobes into ecosystems, where pieces grow with you and outlive seasons.
             </p>
 
             <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3">

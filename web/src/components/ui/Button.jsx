@@ -13,7 +13,7 @@ const VARIANTS = {
     hover: 'hover:bg-[var(--tj-shop-deep)] hover:shadow-[0_8px_24px_rgba(200,255,46,0.35)]',
   },
   burgundy: {
-    base:  'bg-[#4c1b1b] text-[#eef4d1] font-bold',
+    base:  'bg-[#7A063C] text-[#eef4d1] font-bold',
     hover: 'hover:bg-[#7d0d25] hover:shadow-[0_8px_24px_rgba(108,11,32,0.3)]',
   },
   red: {
@@ -37,8 +37,8 @@ const VARIANTS = {
     hover: 'hover:bg-[var(--tj-shop)]/10',
   },
   'outline-burgundy': {
-    base:  'border-2 border-[#4c1b1b] text-[#4c1b1b] font-semibold bg-transparent',
-    hover: 'hover:bg-[#4c1b1b]/8',
+    base:  'border-2 border-[#7A063C] text-[#7A063C] font-semibold bg-transparent',
+    hover: 'hover:bg-[#7A063C]/8',
   },
   ghost: {
     base:  'text-[#241621]/60 font-medium bg-transparent',

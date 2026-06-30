@@ -8,11 +8,12 @@ import { useAuth } from '../../context/AuthContext';
 import { NAV_LINKS } from '../../utils/constants';
 import UserAvatar from '../ui/UserAvatar';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import mainLogo from '../../assets/mainlogo-removebg-preview.png';
 import MobileNavScroll from './MobileNavScroll';
 
 const VERTICAL_NAV_COLORS = {
   Shop: 'var(--tj-shop-deep)',
-  Reimagine: '#de78a4',
+  Reimagine: '#7A063C',
   Repair: 'var(--tj-repair)',
   Donate: 'var(--tj-donate)',
 };
@@ -41,15 +42,17 @@ export default function Header({ hasTicker = false }) {
   return (
     <>
       <header
-        className="fixed left-0 right-0 z-50 bg-white/85 backdrop-blur-xl border-b border-black/10"
+        className="fixed left-0 right-0 z-50 bg-white border-b border-black/10"
         style={{ top: hasTicker ? 'var(--ticker-h)' : 0 }}
       >
         <div className="tj-container">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-0.5 shrink-0">
-              <span className="font-display font-extrabold tracking-tighter text-2xl text-[#0a0a0a]">
-                tarajuvva<span className="text-[var(--tj-shop-deep)]">.</span>
-              </span>
+            <Link to="/" className="flex items-center shrink-0">
+              <img
+                src={mainLogo}
+                alt="Tarajuvva"
+                className="h-12 sm:h-14 w-auto max-w-[200px] sm:max-w-[235px] object-contain object-left"
+              />
             </Link>
 
             <nav className="hidden md:flex items-center gap-7">

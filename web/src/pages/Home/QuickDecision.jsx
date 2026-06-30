@@ -3,11 +3,16 @@ import { motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import { QUICK_CARDS } from '../../utils/constants';
 import shopIcon from '../../assets/icons/shop.png';
-import reimagineIcon from '../../assets/icons/reimagine.png';
-import repairIcon from '../../assets/icons/repair.png';
-import donateIcon from '../../assets/icons/donate.png';
+import reimagineVideo from '../../assets/reimagine.mov';
+import repairVideo from '../../assets/repair.tj.mp4';
+import donateVideo from '../../assets/donate.mp4';
 
-const ICONS = { ShoppingBag: shopIcon, Sparkles: reimagineIcon, Wrench: repairIcon, Heart: donateIcon };
+const MEDIA = {
+  ShoppingBag: { type: 'image', src: shopIcon },
+  Sparkles: { type: 'video', src: reimagineVideo },
+  Wrench: { type: 'video', src: repairVideo },
+  Heart: { type: 'video', src: donateVideo },
+};
 
 export default function QuickDecision() {
   return (
@@ -28,7 +33,7 @@ export default function QuickDecision() {
         {/* Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {QUICK_CARDS.map((card, i) => {
-            const iconSrc = ICONS[card.icon] || shopIcon;
+            const media = MEDIA[card.icon] || MEDIA.ShoppingBag;
             return (
               <motion.div
                 key={card.to}
@@ -42,8 +47,20 @@ export default function QuickDecision() {
                   className="group block p-5 sm:p-6 rounded-2xl bg-white border border-[#241621]/8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full"
                 >
                   {/* Icon */}
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110">
-                    <img src={iconSrc} alt={card.action} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110 overflow-hidden rounded-xl">
+                    {media.type === 'video' ? (
+                      <video
+                        src={media.src}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="w-8 h-8 sm:w-9 sm:h-9 object-cover"
+                        aria-hidden
+                      />
+                    ) : (
+                      <img src={media.src} alt={card.action} className="w-8 h-8 sm:w-9 sm:h-9 object-contain" />
+                    )}
                   </div>
                   {/* Label */}
                   <p className="text-[#241621]/55 text-xs font-display mb-1 leading-snug">{card.label}</p>

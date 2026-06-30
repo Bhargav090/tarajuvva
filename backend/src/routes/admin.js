@@ -7,7 +7,14 @@ const { authenticateAdmin } = require('../middleware/auth');
 router.get('/stats', authenticateAdmin, async (req, res) => {
   const totalOrders = Number((await get('SELECT COUNT(*) AS count FROM orders')).count);
   const pendingOrders = Number((await get("SELECT COUNT(*) AS count FROM orders WHERE status = 'received'")).count);
-  const totalRevenue = Number((await get('SELECT COALESCE(SUM(total), 0) AS total FROM orders')).total);
+  const totalRevenue = Number(
+    (await get(
+      "SELECT COALESCE(SUM(total), 0) AS total FROM orders WHERE status NOT IN ('pending_payment', 'cancelled')"
+    )).total
+  );
+  const paidOnline = Number(
+    (await get("SELECT COUNT(*) AS count FROM orders WHERE payment_status = 'paid'")).count
+  );
   const totalReimagine = Number((await get('SELECT COUNT(*) AS count FROM reimagine_requests')).count);
   const pendingReimagine = Number((await get("SELECT COUNT(*) AS count FROM reimagine_requests WHERE status = 'pending_review'")).count);
   const repairWaitlist = Number((await get("SELECT COUNT(*) AS count FROM waitlist WHERE type = 'repair'")).count);
@@ -17,7 +24,7 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
   res.json({
     success: true,
     stats: {
-      orders: { total: totalOrders, pending: pendingOrders },
+      orders: { total: totalOrders, pending: pendingOrders, paid_online: paidOnline },
       revenue: totalRevenue,
       reimagine: { total: totalReimagine, pending: pendingReimagine },
       waitlist: { repair: repairWaitlist, donate: donateWaitlist },

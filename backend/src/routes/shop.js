@@ -5,6 +5,7 @@ const { get, all, run } = require('../db/database');
 const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { parseImages, pickStorableImage, enrichOrderItems } = require('../lib/orderItems');
 const { notifyOrder } = require('../utils/notifyEmail');
+const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
 
 /** Max serialized length per image string (base64 data URLs can be large). */
 const MAX_IMAGE_STRING = 20 * 1024 * 1024;
@@ -225,6 +226,12 @@ router.patch('/products/:id/sizes', authenticateAdmin, async (req, res) => {
 });
 
 // ── ORDERS ────────────────────────────────────────────────────────────────────
+router.get('/razorpay/key', (req, res) => {
+  const cfg = getRazorpayConfig();
+  if (!cfg) return res.status(503).json({ success: false, message: 'Online payments are not configured' });
+  res.json({ success: true, key_id: cfg.key_id });
+});
+
 router.post('/orders', authenticateUser, async (req, res) => {
   const { user_name, user_email, user_phone, address, items, payment_method, notes } = req.body;
   if (!user_name || !user_phone || !address || !items)
@@ -247,11 +254,64 @@ router.post('/orders', authenticateUser, async (req, res) => {
     return res.status(err.status || 400).json({ success: false, message: err.message });
   }
 
+  const method = payment_method === 'razorpay' ? 'razorpay' : 'cod';
   const id = uuidv4();
   const user_id = dbUser.id;
+
+  if (method === 'razorpay') {
+    const rzp = getRazorpayClient();
+    if (!rzp) {
+      return res.status(503).json({ success: false, message: 'Online payments are not configured' });
+    }
+
+    await run(
+      `INSERT INTO orders (id,user_id,user_name,user_email,user_phone,address,items,total,status,payment_method,payment_status,notes)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        id, user_id, user_name, user_email || null, user_phone, address,
+        JSON.stringify(orderItems), total, 'pending_payment', 'razorpay', 'pending', notes || null,
+      ]
+    );
+
+    let rzpOrder;
+    try {
+      rzpOrder = await rzp.orders.create({
+        amount: toPaise(total),
+        currency: 'INR',
+        receipt: id.slice(0, 32),
+        notes: { order_id: id, user_id },
+      });
+    } catch (err) {
+      await run('DELETE FROM orders WHERE id = ?', [id]);
+      console.error('[razorpay] order create failed:', err);
+      return res.status(502).json({ success: false, message: 'Could not start payment. Please try again.' });
+    }
+
+    await run('UPDATE orders SET razorpay_order_id = ? WHERE id = ?', [rzpOrder.id, id]);
+
+    const row = await get('SELECT * FROM orders WHERE id=?', [id]);
+    const itemsWithImages = await enrichOrderItems(orderItems, get);
+    const cfg = getRazorpayConfig();
+
+    return res.status(201).json({
+      success: true,
+      order: { ...row, items: itemsWithImages },
+      razorpay: {
+        key_id: cfg.key_id,
+        order_id: rzpOrder.id,
+        amount: rzpOrder.amount,
+        currency: rzpOrder.currency,
+      },
+    });
+  }
+
   await run(
-    `INSERT INTO orders (id,user_id,user_name,user_email,user_phone,address,items,total,payment_method,notes) VALUES (?,?,?,?,?,?,?,?,?,?)`,
-    [id, user_id, user_name, user_email || null, user_phone, address, JSON.stringify(orderItems), total, payment_method || 'cod', notes || null]
+    `INSERT INTO orders (id,user_id,user_name,user_email,user_phone,address,items,total,status,payment_method,payment_status,notes)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [
+      id, user_id, user_name, user_email || null, user_phone, address,
+      JSON.stringify(orderItems), total, 'received', 'cod', 'cod', notes || null,
+    ]
   );
 
   const row = await get('SELECT * FROM orders WHERE id=?', [id]);
@@ -261,6 +321,53 @@ router.post('/orders', authenticateUser, async (req, res) => {
     success: true,
     message: 'Thank you for shopping with Tarajuvva. Your order is being processed and will be dispatched soon.',
     order: { ...row, items: itemsWithImages },
+  });
+});
+
+router.post('/orders/:id/razorpay/verify', authenticateUser, async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    return res.status(400).json({ success: false, message: 'Missing payment details' });
+  }
+
+  const order = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+  if (order.user_id !== req.user.id) {
+    return res.status(403).json({ success: false, message: 'Not your order' });
+  }
+  if (order.payment_method !== 'razorpay') {
+    return res.status(400).json({ success: false, message: 'Not an online payment order' });
+  }
+  if (order.payment_status === 'paid') {
+    const itemsWithImages = await enrichOrderItems(JSON.parse(order.items), get);
+    return res.json({ success: true, message: 'Payment already confirmed', order: { ...order, items: itemsWithImages } });
+  }
+  if (order.razorpay_order_id && order.razorpay_order_id !== razorpay_order_id) {
+    return res.status(400).json({ success: false, message: 'Payment order mismatch' });
+  }
+
+  if (!verifyPaymentSignature({ razorpay_order_id, razorpay_payment_id, razorpay_signature })) {
+    await run(
+      'UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      ['failed', req.params.id]
+    );
+    return res.status(400).json({ success: false, message: 'Payment verification failed' });
+  }
+
+  await run(
+    `UPDATE orders SET status = 'received', payment_status = 'paid', razorpay_order_id = ?, razorpay_payment_id = ?,
+     paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+    [razorpay_order_id, razorpay_payment_id, req.params.id]
+  );
+
+  const updated = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  const itemsWithImages = await enrichOrderItems(JSON.parse(updated.items), get);
+  notifyOrder(updated).catch(() => {});
+
+  res.json({
+    success: true,
+    message: 'Payment successful. Your order is being processed and will be dispatched soon.',
+    order: { ...updated, items: itemsWithImages },
   });
 });
 

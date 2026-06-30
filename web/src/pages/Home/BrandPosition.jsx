@@ -15,11 +15,12 @@ export default function BrandPosition() {
           transition={{ duration: 0.55 }}
           className="md:col-span-5"
         >
-          <p className="tj-eyebrow">No corporate sustainability talk.</p>
+          <p className="tj-eyebrow">No sustainability buzzwords</p>
           <h2 className="tj-h2 mt-4 text-[#0a0a0a]">
-            We&apos;re not <span className="line-through opacity-40">saving</span> the planet.
+            We&apos;re not here to save the planet.
             <br />
-            We&apos;re <span className="bg-[#c8ff2e] px-2">closing the loop.</span>
+            We&apos;re here to{' '}
+            <span className="bg-[#c8ff2e] px-2">fix fashion&apos;s waste problem.</span>
           </h2>
         </motion.div>
 
@@ -30,10 +31,7 @@ export default function BrandPosition() {
           className="md:col-span-7 md:pl-10 border-l border-black/10 space-y-6"
         >
           <p className="text-lg text-black/70 leading-relaxed">
-            Most fashion is a one-way street: buy, wear twice, throw, repeat. We built Tarajuvva because the alternative shouldn&apos;t feel like a guilt-trip Pinterest board.
-          </p>
-          <p className="text-lg text-black/70 leading-relaxed">
-            Every piece you buy here is built to come back to us — to be remade, repaired, or redirected. It&apos;s not a moodboard. It&apos;s a system.
+            Every piece is made to last + we provide pathways for repair, remaking, or responsible redirection when needed. This isn&apos;t a trend. It&apos;s a circular fashion system built to make garments last longer.
           </p>
           <Link
             to="/about"

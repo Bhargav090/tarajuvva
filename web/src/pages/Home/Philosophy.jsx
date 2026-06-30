@@ -25,7 +25,7 @@ export default function Philosophy() {
           <span style={{ color: '#a8c74a' }}> clothing problem.</span>
           <br />
           They have a
-          <span style={{ color: '#4c1b1b' }}> usage problem.</span>"
+          <span style={{ color: '#7A063C' }}> usage problem.</span>"
         </motion.blockquote>
 
         <motion.p

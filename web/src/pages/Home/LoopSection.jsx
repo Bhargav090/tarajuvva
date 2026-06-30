@@ -37,12 +37,12 @@ export default function LoopSection() {
           >
             <p className="tj-eyebrow">The system</p>
             <h2 className="tj-h2 mt-4 text-[#0a0a0a]">
-              Four verticals.
+              Four verticals
               <br />
-              <span className="italic font-light">One closed loop.</span>
+              <span className="italic font-light">One closed loop</span>
             </h2>
             <p className="text-black/55 text-base leading-relaxed max-w-md mt-4">
-              Tarajuvva isn&apos;t a clothing brand pretending to care. It&apos;s an operating system: every garment can be bought, remade, fixed, or donated. No exit. No landfill.
+              Tarajuvva is built around keeping clothes in use. Every garment is designed to be worn, reworked, repaired, and recirculated so nothing reaches the end of the line.
             </p>
           </motion.div>
 
@@ -76,7 +76,7 @@ export default function LoopSection() {
             >
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest font-display mb-3 opacity-90">
-                  {active.num} · {active.action}
+                  {active.num} · {active.cardLabel ?? active.action}
                 </p>
                 <p className="font-display font-black text-xl sm:text-2xl leading-snug">
                   {active.headline}

@@ -12,6 +12,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import api from '../../utils/api';
 import { uploadUrl } from '../../utils/uploadUrl';
+import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../../utils/constants';
 import OrderItemLine from '../../components/orders/OrderItemLine';
 
 const TABS = [
@@ -190,37 +191,64 @@ export default function Profile() {
                   Start shopping →
                 </Link>
               </div>
-            ) : orders.map(o => (
-              <div
+            ) : orders.map(o => {
+              const itemCount = o.items.reduce((n, i) => n + (i.qty || 1), 0);
+              const paymentLabel = PAYMENT_METHOD_LABELS[o.payment_method] || o.payment_method;
+              const paymentStatus = o.payment_status
+                ? PAYMENT_STATUS_LABELS[o.payment_status] || o.payment_status
+                : null;
+
+              return (
+              <article
                 key={o.id}
-                className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8"
+                className="border border-black bg-white overflow-hidden"
               >
                 <Link
                   to={`/profile/orders/${o.id}`}
-                  className="flex items-start justify-between gap-4 mb-4 group"
+                  className="flex items-start justify-between gap-4 p-4 sm:p-5 bg-[var(--tj-shop)]/20 border-b border-black/10 hover:bg-[var(--tj-shop)]/30 transition-colors"
                 >
-                  <div>
-                    <p className="text-xs text-[#241621]/40 font-body mb-1">Order #{o.id.slice(0,8).toUpperCase()}</p>
-                    <p className="text-lg font-black text-[#a8c74a] font-display">₹{o.total.toLocaleString('en-IN')}</p>
-                    <p className="text-xs text-[#241621]/45 font-body mt-0.5 flex items-center gap-1">
-                      <Clock size={11} /> {new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-black/45 font-display">
+                      Order #{o.id.slice(0, 8).toUpperCase()}
+                    </p>
+                    <p className="text-2xl font-black text-[#0a0a0a] font-display mt-1">
+                      ₹{o.total.toLocaleString('en-IN')}
+                    </p>
+                    <p className="text-xs text-black/50 font-body mt-1 flex items-center gap-1">
+                      <Clock size={11} />
+                      {new Date(o.created_at).toLocaleDateString('en-IN', {
+                        day: 'numeric', month: 'short', year: 'numeric',
+                      })}
+                      · {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                    </p>
+                    <p className="text-xs text-black/45 font-body mt-1">
+                      {paymentLabel}{paymentStatus ? ` · ${paymentStatus}` : ''}
                     </p>
                   </div>
                   <Badge status={o.status} />
                 </Link>
-                <div className="space-y-1 border-t border-[#241621]/8 pt-3">
-                  {o.items.map((item, i) => (
-                    <OrderItemLine key={`${item.id}-${i}`} item={item} />
+
+                <div className="p-4 sm:px-5 space-y-0.5">
+                  {o.items.slice(0, 3).map((item, i) => (
+                    <OrderItemLine key={`${item.id}-${i}`} item={item} compact />
                   ))}
+                  {o.items.length > 3 && (
+                    <p className="text-xs text-black/40 font-body pt-2 pl-2">
+                      +{o.items.length - 3} more item{o.items.length - 3 > 1 ? 's' : ''}
+                    </p>
+                  )}
                 </div>
-                <Link
-                  to={`/profile/orders/${o.id}`}
-                  className="mt-4 inline-block text-xs font-semibold text-[#a8c74a] font-display hover:underline"
-                >
-                  View order details →
-                </Link>
-              </div>
-            ))}
+
+                <div className="px-4 sm:px-5 pb-4">
+                  <Link
+                    to={`/profile/orders/${o.id}`}
+                    className="inline-flex items-center text-xs font-bold uppercase tracking-widest text-[#0a0a0a] font-display border-b border-black pb-0.5 hover:opacity-70 transition-opacity"
+                  >
+                    View order details →
+                  </Link>
+                </div>
+              </article>
+            );})}
           </div>
         )}
 
@@ -232,7 +260,7 @@ export default function Profile() {
               <div className="bg-white rounded-3xl p-12 text-center border border-[#241621]/8">
                 <Scissors size={40} className="text-[#241621]/20 mx-auto mb-4" />
                 <p className="text-[#241621]/50 font-body">No reimagine requests yet.</p>
-                <Link to="/reimagine" className="mt-4 inline-block text-[#4c1b1b] font-semibold text-sm font-display hover:underline">
+                <Link to="/reimagine" className="mt-4 inline-block text-[#7A063C] font-semibold text-sm font-display hover:underline">
                   Start Reimagining →
                 </Link>
               </div>
@@ -244,7 +272,7 @@ export default function Profile() {
                     <p className="font-bold text-[#241621] font-display">
                       {r.garment_type} → {r.transformation}
                       {r.is_custom && (
-                        <span className="ml-2 text-[10px] font-semibold uppercase text-[#4c1b1b]">Custom</span>
+                        <span className="ml-2 text-[10px] font-semibold uppercase text-[#7A063C]">Custom</span>
                       )}
                     </p>
                     <p className="text-xs text-[#241621]/45 font-body mt-0.5 flex items-center gap-1">
@@ -289,7 +317,7 @@ export default function Profile() {
                   </div>
                 )}
                 {r.admin_notes && (
-                  <div className="mt-4 p-3 bg-[#4c1b1b]/5 rounded-xl border border-[#4c1b1b]/10">
+                  <div className="mt-4 p-3 bg-[#7A063C]/5 rounded-xl border border-[#7A063C]/10">
                     <p className="text-xs font-bold text-[#241621]/50 mb-1 font-display">Note from team</p>
                     <p className="text-sm text-[#241621] font-body">{r.admin_notes}</p>
                   </div>

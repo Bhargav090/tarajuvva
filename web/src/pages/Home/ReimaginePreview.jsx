@@ -7,9 +7,9 @@ const LOOP_HIGHLIGHT =
   'border border-black transition-all duration-300 hover:scale-[1.02] hover:shadow-[6px_6px_0_0_#000] focus-visible:scale-[1.02] focus-visible:shadow-[6px_6px_0_0_#000] focus-visible:outline-none';
 
 const BULLETS = [
-  '12 ready-made presets across saree / kurti / shirt / pant',
-  'Custom designs from ₹199 consultation',
-  '14-day turnaround. Tracked. Documented.',
+  '12 ready-made presets across sarees, kurtis, shirts and pants',
+  'Something else in mind? Let\'s design it together from ₹199.',
+  'Ready in 14 days, with updates along the way',
 ];
 
 export default function ReimaginePreview() {
@@ -29,13 +29,11 @@ export default function ReimaginePreview() {
             viewport={{ once: true }}
           >
             <p className="tj-eyebrow !text-white/60">02 · Reimagine</p>
-            <h2 className="tj-h2 mt-4 text-white leading-tight">
-              Send us your old.
-              <br />
-              <span className="italic font-light">Get back your new.</span>
+            <h2 className="tj-h2 mt-2 text-white leading-tight">
+              Old clothes. New stories.
             </h2>
             <p className="text-white/60 text-base leading-relaxed mb-8 mt-5">
-              That saree your mum doesn&apos;t drape anymore. The shirt your ex left. The jeans you can&apos;t part with. We turn them into something you&apos;ll actually wear.
+              That saree your mum doesn&apos;t wear anymore. The shirt your ex left behind. The jeans you can&apos;t seem to let go of. We transform old clothes into custom pieces you&apos;ll actually wear again.
             </p>
             <ul className="space-y-3 mb-10">
               {BULLETS.map(item => (
@@ -46,7 +44,7 @@ export default function ReimaginePreview() {
               ))}
             </ul>
             <Link to="/reimagine" className="tj-btn-shop inline-flex">
-              <Sparkles size={16} /> Start a remake
+              <Sparkles size={16} /> Start your remake
             </Link>
           </motion.div>
 

@@ -8,13 +8,13 @@ export const BRAND = {
   bgCard:    '#ffffff',
   bgAlt:     '#f5f5f5',
   primary:   '#a8c74a',   // lime green – SHOP / primary
-  secondary: '#4c1b1b',   // burgundy – REIMAGINE
+  secondary: '#7A063C',   // burgundy – REIMAGINE
   tertiary:  '#e2a3c9',   // blush pink – accent
   red:       '#e34334',   // warm red – REPAIR
   blue:      '#1b4e81',   // navy – DONATE
   dark:      '#241621',   // plum – text / dark sections
   green:     '#a8c74a',   // alias → primary
-  burgundy:  '#4c1b1b',   // alias → secondary
+  burgundy:  '#7A063C',   // alias → secondary
   pink:      '#e2a3c9',   // alias → tertiary
   // Text
   text:      '#241621',   // main body text
@@ -37,14 +37,10 @@ export const NAV_LINKS = [
 ];
 
 export const TICKER_MESSAGES = [
-  'SHOP THE DROP',
-  '10 PIECES, 100 OUTFITS',
-  'PIECES THAT DO SIX JOBS',
-  'REIMAGINE YOUR WARDROBE',
-  'SEND US YOUR OLD — GET BACK YOUR NEW',
-  'UPCYCLE INTO MODERN PRESETS',
-  'REMAKE OVER REPLACE',
-  '2 REPAIRS FREE ON PURCHASE',
+  "Wear, Don't Waste",
+  "Rework, Don't Replace",
+  "Mend, Don't End",
+  "Share, Don't Shelve",
 ];
 
 export const TESTIMONIALS = [
@@ -185,11 +181,23 @@ export const QUICK_CARDS = [
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN
 // ─────────────────────────────────────────────────────────────────────────────
-export const ORDER_STATUSES     = ['received','processing','shipped','delivered','cancelled'];
+export const ORDER_STATUSES     = ['pending_payment','received','processing','shipped','delivered','cancelled'];
+export const PAYMENT_METHOD_LABELS = {
+  cod: 'Cash on delivery',
+  razorpay: 'Paid online (Razorpay)',
+};
+
+export const PAYMENT_STATUS_LABELS = {
+  paid: 'Paid',
+  pending: 'Payment pending',
+  failed: 'Payment failed',
+  cod: 'Pay on delivery',
+};
 export const REIMAGINE_STATUSES = ['pending_review','accepted','in_progress','completed','rejected'];
 
 export const STATUS_COLORS = {
   received:       BRAND.red,
+  pending_payment: '#e34334',
   processing:     BRAND.blue,
   shipped:        BRAND.green,
   delivered:      BRAND.green,
@@ -255,8 +263,8 @@ export const BRAND_VALUES = [
 ];
 
 export const HERO_STATS = [
-  { value: '100+', label: 'ways to wear 10 pieces' },
-  { value: '1×',   label: 'garment, 4 lifetimes' },
-  { value: '₹199', label: 'remake consult' },
-  { value: '0',    label: 'polyester, ever' },
+  { value: '100+', label: 'looks from 10 pieces' },
+  { value: '1×',   label: 'garment. many lives.' },
+  { value: '₹199', label: 'book a reimagine session' },
+  { value: '0',    label: 'waste built into the design.' },
 ];

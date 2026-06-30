@@ -7,7 +7,7 @@ export function ReimagineRemakeCard({ garmentLabel, transformLabel, blurb, fromI
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.08 }}
-      className="relative overflow-hidden border border-black bg-white shadow-[4px_4px_0_0_rgba(110,14,26,0.75)]"
+      className="relative overflow-hidden border border-black bg-white shadow-[4px_4px_0_0_rgba(122,6,60,0.75)]"
     >
       <div className="relative grid grid-cols-[1fr_auto_1fr] h-44 md:h-52 overflow-hidden">
         <div className="min-w-0 flex items-center justify-center bg-[#ebe6e6] h-full p-2 overflow-hidden">
@@ -48,7 +48,7 @@ export function ReimagineCustomizeCard({ price, feature, description }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.08 }}
-      className="relative overflow-hidden border border-black bg-white shadow-[4px_4px_0_0_rgba(110,14,26,0.75)]"
+      className="relative overflow-hidden border border-black bg-white shadow-[4px_4px_0_0_rgba(122,6,60,0.75)]"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-[#fdf4f5] via-white to-white pointer-events-none" />
 

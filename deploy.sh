@@ -9,8 +9,14 @@ echo "==> Pull latest from git"
 cd "$REPO_ROOT"
 git pull
 
-echo "==> Backend: install + restart"
+echo "==> Backend: check Razorpay secrets in backend/.env"
 cd "$REPO_ROOT/backend"
+if [[ ! -f .env ]] || ! grep -qE '^RAZORPAY_KEY_ID=.+' .env || ! grep -qE '^RAZORPAY_KEY_SECRET=.+' .env; then
+  echo "ERROR: $REPO_ROOT/backend/.env must define RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET for online checkout"
+  exit 1
+fi
+
+echo "==> Backend: install + restart"
 npm install --omit=dev
 pm2 delete backend 2>/dev/null || true
 pm2 start npm --name backend -- start

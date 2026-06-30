@@ -43,7 +43,10 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
     const orderId = data.order?.id;
     const rzp = data.razorpay;
     if (!orderId || !rzp?.order_id || !rzp?.key_id) {
-      throw new Error('Could not start payment');
+      const hint = data.order && !rzp
+        ? 'Online payment is not available on the server yet. Redeploy the latest backend and set RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET in backend/.env.'
+        : 'Could not start payment — missing payment details from server.';
+      throw new Error(hint);
     }
 
     const payment = await openRazorpayCheckout({

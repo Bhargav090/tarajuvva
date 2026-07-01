@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { NAV_LINKS } from '../../utils/constants';
+import BrandLogo from '../ui/BrandLogo';
 
 export default function Footer() {
   const verticals = NAV_LINKS.filter(l => l.to !== '/about');
@@ -9,9 +10,10 @@ export default function Footer() {
     <footer className="border-t border-black bg-white">
       <div className="tj-container py-16 md:py-20 grid md:grid-cols-12 gap-10">
         <div className="md:col-span-5">
-          <div className="font-display font-extrabold tracking-tighter text-5xl md:text-6xl leading-[0.85] text-[#0a0a0a]">
-            tarajuvva<span className="text-[var(--tj-shop-deep)]">.</span>
-          </div>
+          <BrandLogo
+            foreground="#0a0a0a"
+            className="h-[clamp(5.25rem,6vw+2.5rem,6rem)] w-auto max-w-[min(100%,330px)] object-contain object-left"
+          />
           <p className="mt-4 text-black/60 max-w-md font-display">
             A circular fashion operating system, made in India. Wear it. Remake it. Repair it. Donate it.
           </p>

@@ -1,4 +1,5 @@
 import LeadCapture from '../../components/ui/LeadCapture';
+import BrandLogo from '../../components/ui/BrandLogo';
 
 const BLOCKS = [
   {
@@ -45,6 +46,19 @@ export default function WaitlistPreview() {
             </p>
             <div className="mt-6">
               <LeadCapture type={block.type} testId={block.testId} />
+            </div>
+            <div
+              className="mt-10 pt-6"
+              style={{
+                borderTop: `1px solid ${
+                  block.text === '#ffffff' ? 'rgba(255,255,255,0.22)' : 'rgba(36,22,33,0.12)'
+                }`,
+              }}
+            >
+              <BrandLogo
+                foreground={block.text}
+                className="h-11 sm:h-12 md:h-14 w-auto max-w-[200px] object-contain object-left opacity-95"
+              />
             </div>
           </div>
         ))}

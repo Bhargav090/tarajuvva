@@ -4,6 +4,8 @@ import { SIDE_ASPECT_WIDTH, TALL_SIDE_ASPECT_WIDTH, aspectHeight } from '../../u
 /**
  * Full-bleed vertical hero — filled brand color + soft glow blob (Repair / Shop / Reimagine).
  * tone="dark" for light backgrounds (Shop lime); default "light" for deep brand colors.
+ * tall=true (Repair / Donate): grid layout with side visual from tablet up.
+ * tall=false (Reimagine): compact copy block + floating visual on desktop.
  */
 export default function VerticalPageHero({
   bgVar,
@@ -41,6 +43,10 @@ export default function VerticalPageHero({
         : 400;
   const mobileVisualHeight = visualAspect ? aspectHeight(mobileVisualWidth, visualAspect) : 315;
   const showVisualSlot = heroLoading || Boolean(heroSrc) || Boolean(heroVideo);
+  const desktopVisualBreakpoint = tall ? 'md' : 'lg';
+  const copyClassName = tall
+    ? 'tj-vertical-hero-copy max-w-xl lg:max-w-2xl min-w-0'
+    : 'max-w-xl lg:max-w-2xl min-w-0';
 
   const sideSkeleton = (
     <div
@@ -57,7 +63,15 @@ export default function VerticalPageHero({
     </div>
   );
 
-  const mobileSideSkeleton = (
+  const mobileSideSkeleton = tall ? (
+    <div
+      className="tj-hero-visual tj-hero-visual--side tj-hero-visual--fluid w-full"
+      style={visualAspect ? { aspectRatio: visualAspect } : undefined}
+      aria-hidden
+    >
+      <div className="tj-hero-visual-frame h-full animate-pulse bg-white/10" />
+    </div>
+  ) : (
     <div
       className="tj-hero-visual tj-hero-visual--side w-full"
       style={{
@@ -69,6 +83,46 @@ export default function VerticalPageHero({
     >
       <div className="tj-hero-visual-frame h-full animate-pulse bg-white/10" />
     </div>
+  );
+
+  const desktopVisual = heroLoading ? (
+    sideSkeleton
+  ) : (
+    <HeroVisual
+      heroSrc={heroSrc}
+      heroVideo={heroVideo}
+      hero={hero}
+      testId={`${testId}-image`}
+      variant={visualVariant}
+      size="side"
+      aspectRatio={visualAspect}
+      width={tall ? visualWidth : undefined}
+    />
+  );
+
+  const mobileVisual = heroLoading ? (
+    mobileSideSkeleton
+  ) : tall ? (
+    <HeroVisual
+      heroSrc={heroSrc}
+      heroVideo={heroVideo}
+      hero={hero}
+      testId={`${testId}-image-mobile`}
+      variant={visualVariant}
+      size="fluid"
+      aspectRatio={visualAspect}
+    />
+  ) : (
+    <HeroVisual
+      heroSrc={heroSrc}
+      heroVideo={heroVideo}
+      hero={hero}
+      testId={`${testId}-image-mobile`}
+      variant={visualVariant}
+      size="side"
+      aspectRatio={visualAspect}
+      width={mobileVisualWidth}
+    />
   );
 
   const blobClass =
@@ -92,9 +146,19 @@ export default function VerticalPageHero({
       <div
         className={`relative w-full ${tall ? 'py-14 md:py-20' : 'py-14 md:py-20 lg:py-24'} w-full`}
       >
-        <div className="tj-container md:pl-[clamp(2rem,11vw,12rem)] relative">
-          <div className={`tj-vertical-hero-stage${showVisualSlot ? ' tj-vertical-hero-stage--has-visual' : ''}`}>
-            <div className="max-w-xl lg:max-w-2xl">
+        <div
+          className={`tj-container relative ${
+            tall
+              ? 'md:pl-[clamp(1.5rem,5vw,4rem)] lg:pl-[clamp(2rem,11vw,12rem)]'
+              : 'md:pl-[clamp(2rem,11vw,12rem)]'
+          }`}
+        >
+          <div
+            className={`tj-vertical-hero-stage${showVisualSlot ? ' tj-vertical-hero-stage--has-visual' : ''}${
+              showVisualSlot && tall ? ` tj-vertical-hero-stage--visual-${visualPosition}` : ''
+            }`}
+          >
+            <div className={copyClassName}>
               <p className="tj-eyebrow">{eyebrow}</p>
               <h1 className="tj-vertical-hero-title mt-4">
                 {headline[0]}
@@ -122,51 +186,39 @@ export default function VerticalPageHero({
               )}
               {children}
               {afterVisual ? (
-                <div className="hidden lg:block">{afterVisual}</div>
+                <div className={`hidden ${desktopVisualBreakpoint}:block`}>{afterVisual}</div>
               ) : null}
             </div>
+
+            {showVisualSlot && tall ? (
+              <div className={`tj-vertical-hero-visual-cell hidden ${desktopVisualBreakpoint}:flex min-w-0`}>
+                {desktopVisual}
+              </div>
+            ) : null}
           </div>
 
-          {heroLoading ? (
-            <div className={`tj-vertical-hero-visual-float tj-vertical-hero-visual-float--${visualPosition} hidden lg:block`}>
-              {sideSkeleton}
-            </div>
-          ) : heroSrc || heroVideo ? (
-            <div className={`tj-vertical-hero-visual-float tj-vertical-hero-visual-float--${visualPosition} hidden lg:block`}>
-              <HeroVisual
-                heroSrc={heroSrc}
-                heroVideo={heroVideo}
-                hero={hero}
-                testId={`${testId}-image`}
-                variant={visualVariant}
-                size="side"
-                aspectRatio={visualAspect}
-                width={tall ? visualWidth : undefined}
-              />
+          {showVisualSlot && !tall ? (
+            <div
+              className={`tj-vertical-hero-visual-float tj-vertical-hero-visual-float--${visualPosition} hidden lg:block`}
+            >
+              {desktopVisual}
             </div>
           ) : null}
 
-          {heroLoading ? (
-            <div className="lg:hidden tj-vertical-hero-visual-slot flex justify-center items-center mt-6 px-4 w-full">
-              {mobileSideSkeleton}
-            </div>
-          ) : heroSrc || heroVideo ? (
-            <div className="lg:hidden tj-vertical-hero-visual-slot flex justify-center items-center mt-6 px-4 w-full">
-              <HeroVisual
-                heroSrc={heroSrc}
-                heroVideo={heroVideo}
-                hero={hero}
-                testId={`${testId}-image-mobile`}
-                variant={visualVariant}
-                size="side"
-                aspectRatio={visualAspect}
-                width={mobileVisualWidth}
-              />
+          {showVisualSlot ? (
+            <div
+              className={`${desktopVisualBreakpoint}:hidden tj-vertical-hero-visual-slot${
+                tall ? ' tj-hero-visual-slot--mobile' : ''
+              } flex justify-center items-center mt-6 w-full`}
+            >
+              {mobileVisual}
             </div>
           ) : null}
 
           {afterVisual ? (
-            <div className="lg:hidden tj-vertical-hero-after-visual w-full">{afterVisual}</div>
+            <div className={`${desktopVisualBreakpoint}:hidden tj-vertical-hero-after-visual w-full`}>
+              {afterVisual}
+            </div>
           ) : null}
         </div>
       </div>

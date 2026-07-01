@@ -46,8 +46,8 @@ export default function Header({ hasTicker = false }) {
         style={{ top: hasTicker ? 'var(--ticker-h)' : 0 }}
       >
         <div className="tj-container">
-          <div className="flex items-center justify-between min-h-[4.5rem] sm:min-h-[5rem] py-1.5">
-            <Link to="/" className="flex items-center shrink-0 min-w-0">
+          <div className="flex items-center justify-between h-16 sm:min-h-[4.5rem] sm:h-auto sm:py-1.5">
+            <Link to="/" className="flex items-center shrink-0 min-w-0 max-w-[45%] sm:max-w-none">
               <img
                 src={mainLogo}
                 alt="Tarajuvva"

@@ -106,7 +106,15 @@ export default function Login() {
   }, [onGoogleSuccess]);
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex relative">
+      <Link
+        to="/"
+        className="fixed top-5 left-5 sm:top-6 sm:left-6 z-20 inline-flex items-center gap-2 rounded-full border border-[#241621]/12 bg-white/95 px-3.5 py-2 text-sm font-semibold text-[#241621] shadow-sm backdrop-blur-sm transition-colors hover:border-[#241621]/25 hover:bg-white font-display"
+      >
+        <ArrowLeft size={16} aria-hidden />
+        Back to Home
+      </Link>
+
       {/* Left visual */}
       <div className="hidden lg:flex lg:w-1/2 bg-[var(--tj-shop)] flex-col justify-center px-16 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 70%, #ffffff 0%, transparent 60%)' }} />
@@ -143,13 +151,6 @@ export default function Login() {
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
           className="w-full max-w-md"
         >
-          {/* Mobile logo */}
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-[#241621]/55 hover:text-[#241621] mb-6 lg:hidden transition-colors"
-          >
-            <ArrowLeft size={14} /> Back to Home
-          </Link>
           <Link to="/" className="flex items-center mb-4 lg:hidden">
             <img
               src={mainLogo}

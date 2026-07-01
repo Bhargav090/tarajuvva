@@ -81,17 +81,19 @@ export default function Register() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4 py-16">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4 py-16 relative">
+      <Link
+        to="/"
+        className="fixed top-5 left-5 sm:top-6 sm:left-6 z-20 inline-flex items-center gap-2 rounded-full border border-[#241621]/12 bg-white/95 px-3.5 py-2 text-sm font-semibold text-[#241621] shadow-sm backdrop-blur-sm transition-colors hover:border-[#241621]/25 hover:bg-white font-display"
+      >
+        <ArrowLeft size={16} aria-hidden />
+        Back to Home
+      </Link>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-[#241621]/55 hover:text-[#241621] mb-6 transition-colors"
-        >
-          <ArrowLeft size={14} /> Back to Home
-        </Link>
         <Link to="/" className="flex items-center mb-10">
           <img
             src={mainLogo}

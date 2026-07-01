@@ -88,10 +88,10 @@ function LoopNode({ vertical, position, isHighlighted, onEnter, onLeave, onSelec
     >
       <div
         className={[
-          'w-[10.1rem] h-[10.1rem] sm:w-[13.4rem] sm:h-[13.4rem] md:w-[15.1rem] md:h-[15.1rem] rounded-full',
+          'w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full',
           'flex flex-col items-center justify-center border-2 border-black',
           'transition-all duration-300',
-          isHighlighted ? 'scale-110 shadow-[6px_6px_0_0_#0a0a0a]' : 'scale-100 shadow-none',
+          isHighlighted ? 'scale-105 sm:scale-110 shadow-[6px_6px_0_0_#0a0a0a]' : 'scale-100 shadow-none',
         ].join(' ')}
         style={{ background: vertical.color, color: vertical.textOnColor }}
       >
@@ -118,9 +118,9 @@ export default function FashionLoop({
   );
 
   return (
-    <div className="relative w-full max-w-[520px] aspect-square mx-auto">
+    <div className="relative w-full max-w-[min(100%,480px)] aspect-square mx-auto">
       {/* Safe gutter keeps edge nodes fully visible on mobile. */}
-      <div className="absolute inset-10 sm:inset-12 md:inset-14">
+      <div className="absolute inset-12 sm:inset-12 md:inset-14">
         {/* Outer dashed orbit — rotates */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none fashion-loop-orbit"
@@ -146,7 +146,7 @@ export default function FashionLoop({
           <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.22em] font-display text-black/40 leading-none">
             Circular Fashion
           </p>
-          <p className="font-display font-black text-5xl sm:text-6xl text-[#0a0a0a] leading-none mt-1">
+          <p className="font-display font-black text-4xl sm:text-5xl md:text-6xl text-[#0a0a0a] leading-none mt-1">
             OS
           </p>
           <p className="text-[9px] sm:text-[10px] font-mono-tj uppercase tracking-[0.18em] text-black/45 mt-1.5">

@@ -2,6 +2,30 @@ const mysql = require('mysql2/promise');
 
 let pool;
 
+/** MySQL pool connections dropped by remote server/network — safe to retry once. */
+const TRANSIENT_DB_ERRORS = new Set([
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'EPIPE',
+  'PROTOCOL_CONNECTION_LOST',
+  'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR',
+]);
+
+function isTransientDbError(err) {
+  return err && TRANSIENT_DB_ERRORS.has(err.code);
+}
+
+async function executeWithRetry(sql, params = []) {
+  try {
+    return await pool.execute(sql, params);
+  } catch (err) {
+    if (!isTransientDbError(err)) throw err;
+    // Stale pooled connection — one fresh attempt usually recovers.
+    return pool.execute(sql, params);
+  }
+}
+
 function validateDbName(name) {
   if (!/^[a-zA-Z0-9_]+$/.test(name)) {
     throw new Error('MYSQL_DATABASE must contain only letters, numbers, and underscores');
@@ -53,17 +77,17 @@ async function ensureDatabaseExists() {
 }
 
 async function get(sql, params = []) {
-  const [rows] = await pool.execute(sql, params);
+  const [rows] = await executeWithRetry(sql, params);
   return rows[0] ?? null;
 }
 
 async function all(sql, params = []) {
-  const [rows] = await pool.execute(sql, params);
+  const [rows] = await executeWithRetry(sql, params);
   return rows;
 }
 
 async function run(sql, params = []) {
-  const [result] = await pool.execute(sql, params);
+  const [result] = await executeWithRetry(sql, params);
   return result;
 }
 
@@ -89,6 +113,9 @@ async function initializeDatabase() {
     database,
     waitForConnections: true,
     connectionLimit: Number(process.env.MYSQL_CONNECTION_LIMIT || 10),
+    maxIdle: Number(process.env.MYSQL_MAX_IDLE || 5),
+    idleTimeout: Number(process.env.MYSQL_IDLE_TIMEOUT_MS || 60_000),
+    connectTimeout: Number(process.env.MYSQL_CONNECT_TIMEOUT_MS || 10_000),
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
     // Return DATE/DATETIME as strings — avoids IST/UTC off-by-one in slot calendars.

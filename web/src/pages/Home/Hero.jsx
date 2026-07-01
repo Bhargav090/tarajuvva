@@ -56,7 +56,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="lg:hidden tj-hero-visual-slot tj-hero-visual-slot--mobile flex justify-center">
+          <div className="lg:hidden tj-hero-visual-slot tj-hero-visual-slot--mobile">
             <HeroVisual
               heroSrc={homeHeroImage}
               testId="hero-image-mobile"

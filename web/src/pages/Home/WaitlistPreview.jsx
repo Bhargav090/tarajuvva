@@ -55,10 +55,10 @@ export default function WaitlistPreview() {
                 }`,
               }}
             >
-              <BrandLogo
+              {/* <BrandLogo
                 foreground={block.text}
                 className="h-11 sm:h-12 md:h-14 w-auto max-w-[200px] object-contain object-left opacity-95"
-              />
+              /> */}
             </div>
           </div>
         ))}

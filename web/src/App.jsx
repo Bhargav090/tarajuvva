@@ -47,7 +47,7 @@ function Layout({ children }) {
 
   return (
     <div
-      className="[--nav-h:7.25rem] md:[--nav-h:5rem]"
+      className="[--nav-h:7rem] md:[--nav-h:4.25rem]"
       style={{
         '--ticker-h': isHome ? `${TICKER_BAR_PX}px` : '0px',
       }}

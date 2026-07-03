@@ -6,6 +6,7 @@ const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { parseImages, pickStorableImage, enrichOrderItems } = require('../lib/orderItems');
 const { notifyOrder } = require('../utils/notifyEmail');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
+const { getAllSizeCharts, getSizeChart, chartKeyForProduct } = require('../utils/sizeCharts');
 
 /** Max serialized length per image string (base64 data URLs can be large). */
 const MAX_IMAGE_STRING = 20 * 1024 * 1024;
@@ -101,17 +102,64 @@ const parseProduct = (p) => ({
   ways_to_wear: parseJsonArray(p.ways_to_wear),
   tags: parseJsonArray(p.tags),
   sizes: parseJsonArray(p.sizes),
+  size_type: p.size_type || null,
+  garment_type: p.garment_type || null,
 });
 
+const LETTER_SIZE_RE = /^(XXS|XS|S|M|L|XL|XXL|XXXL|FREE|[A-Z]{1,4})$/i;
+const NUMERIC_SIZE_RE = /^\d{1,2}$/;
+
+function normalizeSizeType(raw) {
+  if (raw === 'letter' || raw === 'numeric') return raw;
+  return null;
+}
+
+function normalizeGarmentType(raw) {
+  if (raw === 'top' || raw === 'bottom') return raw;
+  return null;
+}
+
 /** Validate and normalise sizes array: [{label, available}]. */
-function normalizeSizes(raw) {
+function normalizeSizes(raw, sizeType = null) {
   if (!raw || !Array.isArray(raw)) return [];
-  return raw
+  const sizes = raw
     .filter((s) => s && typeof s.label === 'string' && s.label.trim())
-    .map((s) => ({ label: String(s.label).trim().toUpperCase(), available: s.available !== false }));
+    .map((s) => {
+      const labelRaw = String(s.label).trim();
+      const label = sizeType === 'numeric' ? labelRaw : labelRaw.toUpperCase();
+      return { label, available: s.available !== false };
+    });
+
+  if (sizeType === 'letter') {
+    return sizes.filter((s) => LETTER_SIZE_RE.test(s.label));
+  }
+  if (sizeType === 'numeric') {
+    return sizes.filter((s) => NUMERIC_SIZE_RE.test(s.label));
+  }
+  return sizes;
+}
+
+function validateProductSizes(sizeType, garmentType, sizes) {
+  if (!sizes.length) return;
+  if (!sizeType || !garmentType) {
+    const err = new Error('Size type and garment type are required when sizes are set');
+    err.status = 400;
+    throw err;
+  }
 }
 
 // ── PRODUCTS ──────────────────────────────────────────────────────────────────
+router.get('/size-charts', async (req, res) => {
+  const charts = await getAllSizeCharts();
+  res.json({ success: true, charts });
+});
+
+router.get('/size-charts/:key', async (req, res) => {
+  const chart = await getSizeChart(req.params.key);
+  if (!chart) return res.status(404).json({ success: false, message: 'Chart not found' });
+  res.json({ success: true, chart });
+});
+
 router.get('/products', async (req, res) => {
   const { category, featured, limit } = req.query;
   let q = 'SELECT * FROM products WHERE 1=1';
@@ -135,7 +183,13 @@ router.get('/products', async (req, res) => {
 router.get('/products/:id', async (req, res) => {
   const p = await get('SELECT * FROM products WHERE id = ?', [req.params.id]);
   if (!p) return res.status(404).json({ success: false, message: 'Not found' });
-  res.json({ success: true, product: parseProduct(p) });
+  const product = parseProduct(p);
+  const chartKey = chartKeyForProduct(product.size_type, product.garment_type);
+  let size_chart = null;
+  if (chartKey) {
+    size_chart = await getSizeChart(chartKey);
+  }
+  res.json({ success: true, product, size_chart });
 });
 
 router.post('/products', authenticateAdmin, async (req, res) => {
@@ -152,11 +206,19 @@ router.post('/products', authenticateAdmin, async (req, res) => {
   }
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
-  const sizeList = normalizeSizes(req.body.sizes);
+  const sizeType = normalizeSizeType(req.body.size_type);
+  const garmentType = normalizeGarmentType(req.body.garment_type);
+  let sizeList;
+  try {
+    sizeList = normalizeSizes(req.body.sizes, sizeType);
+    validateProductSizes(sizeType, garmentType, sizeList);
+  } catch (e) {
+    return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
   const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
   const id = uuidv4();
   await run(
-    `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,sizes,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,sizes,size_type,garment_type,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id,
       String(name).trim(),
@@ -169,6 +231,8 @@ router.post('/products', authenticateAdmin, async (req, res) => {
       JSON.stringify(tagList),
       stockNum,
       JSON.stringify(sizeList),
+      sizeList.length ? sizeType : null,
+      sizeList.length ? garmentType : null,
       featured ? 1 : 0,
     ]
   );
@@ -189,10 +253,18 @@ router.put('/products/:id', authenticateAdmin, async (req, res) => {
   }
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
-  const sizeList = normalizeSizes(req.body.sizes);
+  const sizeType = normalizeSizeType(req.body.size_type);
+  const garmentType = normalizeGarmentType(req.body.garment_type);
+  let sizeList;
+  try {
+    sizeList = normalizeSizes(req.body.sizes, sizeType);
+    validateProductSizes(sizeType, garmentType, sizeList);
+  } catch (e) {
+    return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
   const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
   await run(
-    `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,stock=?,sizes=?,featured=? WHERE id=?`,
+    `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=? WHERE id=?`,
     [
       String(name).trim(),
       priceNum,
@@ -204,6 +276,8 @@ router.put('/products/:id', authenticateAdmin, async (req, res) => {
       JSON.stringify(tagList),
       stockNum,
       JSON.stringify(sizeList),
+      sizeList.length ? sizeType : null,
+      sizeList.length ? garmentType : null,
       featured ? 1 : 0,
       req.params.id,
     ]
@@ -218,9 +292,9 @@ router.delete('/products/:id', authenticateAdmin, async (req, res) => {
 
 /** Admin only — update size availability without touching other fields. */
 router.patch('/products/:id/sizes', authenticateAdmin, async (req, res) => {
-  const row = await get('SELECT id FROM products WHERE id = ?', [req.params.id]);
+  const row = await get('SELECT id, size_type FROM products WHERE id = ?', [req.params.id]);
   if (!row) return res.status(404).json({ success: false, message: 'Product not found' });
-  const sizeList = normalizeSizes(req.body.sizes);
+  const sizeList = normalizeSizes(req.body.sizes, row.size_type);
   await run('UPDATE products SET sizes = ? WHERE id = ?', [JSON.stringify(sizeList), req.params.id]);
   res.json({ success: true, sizes: sizeList });
 });

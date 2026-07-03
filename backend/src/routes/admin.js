@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { get } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
+const { CHART_KEYS, getAllSizeCharts, getSizeChart, saveSizeChart } = require('../utils/sizeCharts');
 
 // Dashboard stats
 router.get('/stats', authenticateAdmin, async (req, res) => {
@@ -31,6 +32,24 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
       products: totalProducts
     }
   });
+});
+
+router.get('/size-charts', authenticateAdmin, async (req, res) => {
+  const charts = await getAllSizeCharts();
+  res.json({ success: true, charts });
+});
+
+router.put('/size-charts/:key', authenticateAdmin, async (req, res) => {
+  const { key } = req.params;
+  if (!CHART_KEYS.includes(key)) {
+    return res.status(400).json({ success: false, message: 'Invalid chart key' });
+  }
+  try {
+    const chart = await saveSizeChart(key, req.body);
+    res.json({ success: true, chart });
+  } catch (err) {
+    res.status(err.status || 400).json({ success: false, message: err.message });
+  }
 });
 
 module.exports = router;

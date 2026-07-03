@@ -353,6 +353,9 @@ async function initializeDatabase() {
   const { ensureDefaultReimagineCustomizeSettings } = require('../utils/siteSettings');
   await ensureDefaultReimagineCustomizeSettings();
 
+  const { ensureDefaultSizeCharts } = require('../utils/sizeCharts');
+  await ensureDefaultSizeCharts();
+
   // Add sizes column to products (idempotent — skipped if already present).
   try {
     await pool.execute('ALTER TABLE products ADD COLUMN sizes TEXT AFTER stock');
@@ -399,6 +402,20 @@ async function initializeDatabase() {
     } catch (e) {
       if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
         console.warn('[db] orders payment column add skipped:', e.message);
+      }
+    }
+  }
+
+  const productSizeAlters = [
+    "ALTER TABLE products ADD COLUMN size_type VARCHAR(16) NULL AFTER sizes",
+    "ALTER TABLE products ADD COLUMN garment_type VARCHAR(16) NULL AFTER size_type",
+  ];
+  for (const sql of productSizeAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+        console.warn('[db] products size column add skipped:', e.message);
       }
     }
   }

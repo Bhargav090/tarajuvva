@@ -15,7 +15,7 @@ export default function VerticalWaitlistPage({ config, heroVideo = null }) {
       testId={`${config.type}-page`}
       tall
       heroVideo={heroVideo}
-      visualVariant="reimagine"
+      visualVariant={config.type}
       visualAspect="3/4"
       visualPosition="right"
       afterVisual={

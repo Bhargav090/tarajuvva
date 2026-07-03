@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Filter } from 'lucide-react';
 import ProductCard from '../../components/ui/ProductCard';
-import VerticalPageHero from '../../components/ui/VerticalPageHero';
 import ShopFiltersBar from '../../components/shop/ShopFiltersBar';
 import { ProductGridSkeleton } from '../../components/ui/Skeleton';
 import EmptyState from '../../components/ui/EmptyState';
@@ -30,15 +29,6 @@ export default function Shop() {
 
   return (
     <div className="bg-white min-h-screen">
-      <VerticalPageHero
-        bgVar="--tj-shop"
-        tone="dark"
-        eyebrow="01 · Shop"
-        headline={['Ten pieces.', 'A hundred outfits.']}
-        subtext="Built modular. Designed to remix. Priced honestly. No hidden synthetics, no half-truths."
-        testId="shop-header"
-      />
-
       <ShopFiltersBar
         category={category}
         onCategoryChange={setCategory}
@@ -48,7 +38,7 @@ export default function Shop() {
         loading={loading}
       />
 
-      <div className="tj-container py-8 md:py-14 pb-20">
+      <div className="tj-container py-8 md:py-10 pb-20">
         {loading ? (
           <ProductGridSkeleton count={8} />
         ) : sorted.length === 0 ? (

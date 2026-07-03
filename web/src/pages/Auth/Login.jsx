@@ -116,25 +116,25 @@ export default function Login() {
       </Link>
 
       {/* Left visual */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[var(--tj-shop)] flex-col justify-center px-16 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-[var(--tj-shop)] flex-col justify-center px-16 py-12 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 70%, #ffffff 0%, transparent 60%)' }} />
         <motion.div initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }}>
-          <Link to="/" className="flex items-center mb-16">
+          <Link to="/" className="flex items-center mb-5">
             <img
               src={mainLogo}
               alt="Tarajuvva"
-              className="h-[7.2rem] xl:h-[8.7rem] w-auto max-w-[490px] xl:max-w-[576px] object-contain object-left"
+              className="h-[6.5rem] xl:h-[7.5rem] w-auto max-w-[440px] xl:max-w-[520px] object-contain object-left"
             />
           </Link>
-          <h1 className="font-display font-black text-[#241621] leading-tight mb-6" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}>
+          <h1 className="font-display font-black text-[#241621] leading-tight mb-4" style={{ fontSize: 'clamp(2.2rem, 4vw, 3.5rem)' }}>
             Your wardrobe,
             <br />
             <span className="text-[#7A063C]">reimagined.</span>
           </h1>
-          <p className="text-[#241621]/70 font-body text-lg">
+          <p className="text-[#241621]/70 font-body text-lg max-w-md">
             Sign in to track your orders, manage reimagine requests, and shop your next favourite piece.
           </p>
-          <div className="mt-12 space-y-4">
+          <div className="mt-8 space-y-3">
             {['Track all your orders in one place','Manage reimagine requests easily','Save your address for faster checkout'].map(f => (
               <div key={f} className="flex items-center gap-3">
                 <span className="w-5 h-5 rounded-full bg-[#e2a3c9]/20 border border-[#e2a3c9]/40 flex items-center justify-center text-[#e2a3c9] text-xs font-bold">✓</span>

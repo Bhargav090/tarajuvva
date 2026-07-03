@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ShoppingCart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCart } from '../../context/CartContext';
+import SizeChartLink from '../shop/SizeChartLink';
 import { productHeroImage } from '../../utils/productImage';
 import { productDiscountPercent } from '../../utils/productSale';
 import AsyncImage from './AsyncImage';
@@ -107,13 +108,19 @@ export default function ProductCard({ product, disableEntrance = false }) {
           <div className="mt-auto pt-4 border-t border-black/10 space-y-3">
             {hasSizes && (
               <div className="space-y-2">
-                <p
-                  className={`text-[10px] font-mono-tj uppercase tracking-[0.14em] ${
-                    sizeError ? 'text-[#e34334]' : 'text-black/50'
-                  }`}
-                >
-                  {sizeError ? 'Select a size' : selectedSize ? `Size · ${selectedSize}` : 'Select size'}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p
+                    className={`text-[10px] font-mono-tj uppercase tracking-[0.14em] ${
+                      sizeError ? 'text-[#e34334]' : 'text-black/50'
+                    }`}
+                  >
+                    {sizeError ? 'Select a size' : selectedSize ? `Size · ${selectedSize}` : 'Select size'}
+                  </p>
+                  <SizeChartLink
+                    product={product}
+                    className="text-[10px] font-mono-tj uppercase tracking-[0.12em] text-black/45 hover:text-black flex items-center gap-1 shrink-0"
+                  />
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {sizes.map((s) => {
                     const isSelected = selectedSize === s.label;

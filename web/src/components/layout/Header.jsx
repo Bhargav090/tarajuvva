@@ -35,7 +35,7 @@ export default function Header({ hasTicker = false }) {
   };
 
   const navLinkClass = ({ isActive }) =>
-    `text-sm font-medium tracking-wide transition-colors ${
+    `text-[15px] font-semibold tracking-wide transition-colors ${
       isActive ? 'text-black' : 'text-black/60 hover:text-black'
     }`;
 
@@ -47,7 +47,7 @@ export default function Header({ hasTicker = false }) {
       >
         <div className="tj-container">
           <div className="flex items-center justify-between min-h-14 py-2 sm:min-h-[4.25rem] sm:py-1.5">
-            <Link to="/" className="flex items-center shrink-0 min-w-0 max-w-[45%] sm:max-w-none leading-none">
+            <Link to="/" className="flex items-center shrink-0 min-w-0 max-w-[36%] sm:max-w-[168px] lg:max-w-[176px] leading-none">
               <img
                 src={mainLogo}
                 alt="Tarajuvva"
@@ -55,7 +55,7 @@ export default function Header({ hasTicker = false }) {
               />
             </Link>
 
-            <nav className="hidden md:flex items-center gap-7">
+            <nav className="hidden md:flex items-center gap-6 lg:gap-7">
               {NAV_LINKS.map((l) => (
                 <NavLink
                   key={l.to}

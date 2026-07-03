@@ -1,84 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, ArrowLeft, Tag, Sparkles, Ruler, X } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ShoppingBag, ArrowLeft, Tag, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../context/CartContext';
 import { PRODUCT_IMAGE_PLACEHOLDER } from '../../utils/productImage';
 import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
+import SizeChartLink from '../../components/shop/SizeChartLink';
 import AsyncImage from '../../components/ui/AsyncImage';
-
-const SIZE_CHART = [
-  { size: '28', chest: '71', waist: '56', hip:  '79', length: '38' },
-  { size: '30', chest: '76', waist: '61', hip:  '84', length: '39' },
-  { size: '32', chest: '81', waist: '66', hip:  '89', length: '40' },
-  { size: '34', chest: '86', waist: '71', hip:  '94', length: '41' },
-  { size: '36', chest: '91', waist: '76', hip:  '99', length: '42' },
-  { size: '38', chest: '96', waist: '81', hip: '104', length: '43' },
-  { size: '40', chest: '101', waist: '86', hip: '109', length: '44' },
-  { size: '42', chest: '106', waist: '91', hip: '114', length: '45' },
-  { size: '44', chest: '111', waist: '96', hip: '119', length: '46' },
-  { size: '46', chest: '116', waist: '101', hip: '124', length: '47' },
-];
-
-function SizeChartModal({ onClose }) {
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[70] bg-black/50 flex items-end sm:items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-          className="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#241621]/8">
-            <div className="flex items-center gap-2">
-              <Ruler size={16} className="text-[#a8c74a]" />
-              <h3 className="font-black font-display text-[#241621]">Size Chart</h3>
-              <span className="text-xs text-[#241621]/45 font-body">measurements in cm</span>
-            </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#241621]/6 text-[#241621]/50 hover:text-[#241621] transition-colors">
-              <X size={16} />
-            </button>
-          </div>
-          <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-            <table className="w-full text-sm font-display">
-              <thead className="bg-[#241621] text-white sticky top-0">
-                <tr>
-                  {['Size', 'Chest', 'Waist', 'Hip', 'Length'].map(h => (
-                    <th key={h} className="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {SIZE_CHART.map((row, i) => (
-                  <tr key={row.size} className={i % 2 === 0 ? 'bg-white' : 'bg-[#241621]/3'}>
-                    <td className="px-4 py-2.5 font-black text-[#241621]">{row.size}</td>
-                    <td className="px-4 py-2.5 text-[#241621]/75">{row.chest}</td>
-                    <td className="px-4 py-2.5 text-[#241621]/75">{row.waist}</td>
-                    <td className="px-4 py-2.5 text-[#241621]/75">{row.hip}</td>
-                    <td className="px-4 py-2.5 text-[#241621]/75">{row.length}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-5 py-3.5 border-t border-[#241621]/8 bg-[#241621]/2">
-            <p className="text-xs text-[#241621]/50 font-body leading-relaxed">
-              Measurements are in centimetres. For the best fit, measure your body and compare to the chart. If between sizes, size up.
-            </p>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -88,7 +19,6 @@ export default function ProductPage() {
   const [adding, setAdding] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
-  const [showSizeChart, setShowSizeChart] = useState(false);
 
   useEffect(() => {
     setActiveImg(0);
@@ -134,7 +64,6 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen bg-white pt-2 sm:pt-4">
-      {showSizeChart && <SizeChartModal onClose={() => setShowSizeChart(false)} />}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumb */}
         <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#241621]/55 hover:text-[#a8c74a] font-display mb-8 transition-colors">
@@ -228,13 +157,7 @@ export default function ProductPage() {
                   <p className={`text-sm font-bold font-display ${sizeError ? 'text-[#e34334]' : 'text-[#241621]'}`}>
                     Select size{selectedSize ? ` — ${selectedSize}` : ''}{sizeError ? ' (required)' : ''}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowSizeChart(true)}
-                    className="text-xs text-[#241621]/50 underline font-display hover:text-[#241621] flex items-center gap-1"
-                  >
-                    <Ruler size={11} /> Size guide
-                  </button>
+                  <SizeChartLink product={product} />
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map(s => {

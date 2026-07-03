@@ -116,7 +116,7 @@ export default function ShopFiltersBar({
     : `${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'}`;
 
   return (
-    <div className="sticky top-[var(--nav-h)] z-30 bg-white/95 backdrop-blur-xl border-b border-black/10 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+    <div className="sticky top-[calc(var(--ticker-h)+var(--nav-h))] z-30 bg-white/95 backdrop-blur-xl border-b border-black/10 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
       {/* Categories — full-bleed scroll on mobile */}
       <div className="border-b border-black/[0.06] md:border-0">
         <div className="tj-container py-3 md:py-2.5">

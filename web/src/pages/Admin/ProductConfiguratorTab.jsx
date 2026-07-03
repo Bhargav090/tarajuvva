@@ -9,84 +9,135 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import { SHOP_CATEGORIES } from '../../utils/constants';
 import { productHeroImage } from '../../utils/productImage';
+import { LETTER_SIZES, NUMERIC_SIZES, inferGarmentType } from '../../utils/sizeConstants';
 
 const CATEGORIES = SHOP_CATEGORIES.filter(c => c.value).map(c => c.value);
 
-const PRESET_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44', '46'];
-
-/** Size manager used inside the create form. */
-function SizeManager({ sizes, onChange }) {
+/** Size manager — letter OR numeric presets (mutually exclusive). */
+function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarmentTypeChange, onSizesChange }) {
   const [custom, setCustom] = useState('');
+  const presets = sizeType === 'numeric' ? NUMERIC_SIZES : LETTER_SIZES;
+
+  const switchType = (nextType) => {
+    if (nextType === sizeType) return;
+    onSizeTypeChange(nextType);
+    onSizesChange([]);
+    setCustom('');
+  };
 
   const toggle = (label) => {
     const exists = sizes.find(s => s.label === label);
     if (exists) {
-      onChange(sizes.filter(s => s.label !== label));
+      onSizesChange(sizes.filter(s => s.label !== label));
     } else {
-      onChange([...sizes, { label, available: true }]);
+      onSizesChange([...sizes, { label, available: true }]);
     }
   };
 
   const addCustom = () => {
-    const label = custom.trim().toUpperCase();
+    const label = sizeType === 'numeric' ? custom.trim() : custom.trim().toUpperCase();
     if (!label) return;
     if (sizes.find(s => s.label === label)) {
       toast.error(`Size ${label} already added`);
       return;
     }
-    onChange([...sizes, { label, available: true }]);
+    if (sizeType === 'numeric' && !/^\d{1,2}$/.test(label)) {
+      toast.error('Numeric sizes use numbers like 28, 30, 32');
+      return;
+    }
+    onSizesChange([...sizes, { label, available: true }]);
     setCustom('');
   };
 
   return (
-    <div>
-      <span className="block text-sm font-semibold text-[#341631] mb-2 font-display">
-        Sizes available
-        <span className="text-xs font-normal text-[#341631]/50 ml-2">click to add/remove · toggle availability after saving</span>
-      </span>
-      <div className="flex flex-wrap gap-2 mb-3">
-        {PRESET_SIZES.map(label => {
-          const active = !!sizes.find(s => s.label === label);
-          return (
+    <div className="space-y-4">
+      <div>
+        <span className="block text-sm font-semibold text-[#341631] mb-2 font-display">Size system</span>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'letter', label: 'Letter (XS, S, M, L, XL, XXL)' },
+            { id: 'numeric', label: 'Numeric (28, 30, 32…)' },
+          ].map((opt) => (
             <button
-              key={label} type="button"
-              onClick={() => toggle(label)}
-              className={`px-3.5 py-1.5 text-xs font-bold font-display border transition-all ${
-                active
+              key={opt.id}
+              type="button"
+              onClick={() => switchType(opt.id)}
+              className={`px-3.5 py-2 text-xs font-bold font-display border transition-all ${
+                sizeType === opt.id
                   ? 'bg-[#0b4722] text-white border-[#0b4722]'
                   : 'bg-white text-[#341631]/60 border-[#341631]/20 hover:border-[#341631]/50'
               }`}
             >
-              {label}
+              {opt.label}
             </button>
-          );
-        })}
-      </div>
-      <div className="flex gap-2">
-        <input
-          value={custom}
-          onChange={e => setCustom(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
-          placeholder="Custom (e.g. 34, FREE)"
-          className="px-3 py-2 text-xs border border-[#341631]/20 bg-white text-[#341631] placeholder:text-[#341631]/35 focus:outline-none focus:border-[#0b4722] w-44"
-        />
-        <button type="button" onClick={addCustom}
-          className="px-3 py-2 text-xs font-bold bg-white border border-[#341631]/20 hover:border-[#341631]/50 text-[#341631] flex items-center gap-1">
-          <Plus size={12} /> Add
-        </button>
-      </div>
-      {sizes.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {sizes.map(s => (
-            <span key={s.label} className="inline-flex items-center gap-1.5 bg-[#0b4722]/8 border border-[#0b4722]/20 px-2.5 py-1 text-xs font-bold text-[#0b4722] font-display">
-              {s.label}
-              <button type="button" onClick={() => onChange(sizes.filter(x => x.label !== s.label))} className="hover:text-[#e34334]">
-                <X size={10} />
-              </button>
-            </span>
           ))}
         </div>
+        <p className="text-xs text-[#341631]/45 font-body mt-2">
+          Choose one system only — letter sizes or numeric, not both. Edit measurement tables under Admin → Size charts.
+        </p>
+      </div>
+
+      {sizes.length > 0 && (
+        <Select
+          label="Garment type (for size chart)"
+          name="garment_type"
+          value={garmentType || 'top'}
+          onChange={(e) => onGarmentTypeChange(e.target.value)}
+        >
+          <option value="top">Top / Dress / Set (upper body chart)</option>
+          <option value="bottom">Bottom (lower body chart)</option>
+        </Select>
       )}
+
+      <div>
+        <span className="block text-sm font-semibold text-[#341631] mb-2 font-display">
+          Sizes available
+          <span className="text-xs font-normal text-[#341631]/50 ml-2">click to add/remove</span>
+        </span>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {presets.map(label => {
+            const active = !!sizes.find(s => s.label === label);
+            return (
+              <button
+                key={label} type="button"
+                onClick={() => toggle(label)}
+                className={`px-3.5 py-1.5 text-xs font-bold font-display border transition-all ${
+                  active
+                    ? 'bg-[#0b4722] text-white border-[#0b4722]'
+                    : 'bg-white text-[#341631]/60 border-[#341631]/20 hover:border-[#341631]/50'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={custom}
+            onChange={e => setCustom(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
+            placeholder={sizeType === 'numeric' ? 'Custom number (e.g. 48)' : 'Custom (e.g. XXXL)'}
+            className="px-3 py-2 text-xs border border-[#341631]/20 bg-white text-[#341631] placeholder:text-[#341631]/35 focus:outline-none focus:border-[#0b4722] w-48"
+          />
+          <button type="button" onClick={addCustom}
+            className="px-3 py-2 text-xs font-bold bg-white border border-[#341631]/20 hover:border-[#341631]/50 text-[#341631] flex items-center gap-1">
+            <Plus size={12} /> Add
+          </button>
+        </div>
+        {sizes.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {sizes.map(s => (
+              <span key={s.label} className="inline-flex items-center gap-1.5 bg-[#0b4722]/8 border border-[#0b4722]/20 px-2.5 py-1 text-xs font-bold text-[#0b4722] font-display">
+                {s.label}
+                <button type="button" onClick={() => onSizesChange(sizes.filter(x => x.label !== s.label))} className="hover:text-[#e34334]">
+                  <X size={10} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -185,6 +236,8 @@ export default function ProductConfiguratorTab() {
   const formRef = useRef(null);
   const [form, setForm] = useState(emptyForm);
   const [sizes, setSizes] = useState([]);
+  const [sizeType, setSizeType] = useState('letter');
+  const [garmentType, setGarmentType] = useState('top');
   const [imageDataUrls, setImageDataUrls] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -262,6 +315,8 @@ export default function ProductConfiguratorTab() {
     setForm(emptyForm());
     setImageDataUrls([]);
     setSizes([]);
+    setSizeType('letter');
+    setGarmentType('top');
   };
 
   const startEdit = (p) => {
@@ -280,6 +335,11 @@ export default function ProductConfiguratorTab() {
     });
     setImageDataUrls(p.images || []);
     setSizes(p.sizes || []);
+    setSizeType(
+      p.size_type ||
+        (p.sizes?.[0] && /^\d{1,2}$/.test(String(p.sizes[0].label)) ? 'numeric' : 'letter')
+    );
+    setGarmentType(p.garment_type || inferGarmentType(p.category));
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
@@ -295,6 +355,7 @@ export default function ProductConfiguratorTab() {
     if (Number.isNaN(price) || price < 0) return toast.error('Enter a valid price');
     if (original != null && (Number.isNaN(original) || original < 0)) return toast.error('Original price must be a valid number');
     if (imageDataUrls.length === 0) return toast.error('Add at least one image (uploaded as base64)');
+    if (sizes.length > 0 && !garmentType) return toast.error('Select garment type for the size chart');
 
     setSubmitting(true);
     try {
@@ -309,6 +370,8 @@ export default function ProductConfiguratorTab() {
         tags,
         stock: stock || 100,
         sizes,
+        size_type: sizes.length ? sizeType : null,
+        garment_type: sizes.length ? garmentType : null,
         featured: !!form.featured,
       };
 
@@ -343,11 +406,7 @@ export default function ProductConfiguratorTab() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#341631] font-display mb-2">Product configurator</h1>
-      <p className="text-sm text-[#341631]/55 font-body mb-8 max-w-2xl">
-        Fill in the fields below and publish to the <code className="text-xs bg-white px-1 rounded">products</code> table.
-        Images are read in the browser and sent as <strong>base64 data URLs</strong> (<code className="text-xs">data:image/…;base64,…</code>) in the JSON payload, then stored in the database. Legacy catalog items that still use https URLs continue to work in the shop.
-      </p>
+      <h1 className="text-2xl font-black text-[#341631] font-display mb-8">Product configurator</h1>
 
       <form ref={formRef} onSubmit={onSubmit} className="bg-white rounded-2xl p-6 sm:p-8 border border-[#341631]/8 mb-10 space-y-5 max-w-3xl">
         {editingId && (
@@ -459,7 +518,14 @@ export default function ProductConfiguratorTab() {
           placeholder={'Pair with palazzo pants…\nTuck into high-waisted jeans…'}
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
-        <SizeManager sizes={sizes} onChange={setSizes} />
+        <SizeManager
+          sizes={sizes}
+          sizeType={sizeType}
+          garmentType={garmentType}
+          onSizeTypeChange={setSizeType}
+          onGarmentTypeChange={setGarmentType}
+          onSizesChange={setSizes}
+        />
         <label className="flex items-center gap-3 cursor-pointer select-none">
           <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#0b4722] focus:ring-[#0b4722]" />
           <span className="text-sm font-semibold text-[#341631] font-display">Featured product</span>

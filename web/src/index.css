@@ -236,22 +236,22 @@
   /* Header brand mark — height-driven with max-width so mobile header stays usable */
   .tj-header-logo {
     display: block;
-    height: 2.5rem;
+    height: 2.125rem;
     width: auto;
-    max-width: 148px;
+    max-width: 124px;
     object-fit: contain;
     object-position: left center;
   }
   @media (min-width: 640px) {
     .tj-header-logo {
-      height: 3rem;
-      max-width: 180px;
+      height: 2.375rem;
+      max-width: 148px;
     }
   }
   @media (min-width: 1024px) {
     .tj-header-logo {
-      height: 3.25rem;
-      max-width: 210px;
+      height: 2.5rem;
+      max-width: 164px;
     }
   }
 
@@ -531,9 +531,20 @@
   .tj-vertical-hero-after-visual .grid {
     margin-top: 0;
   }
-  .tj-vertical-hero--has-visual .tj-hero-visual-tag {
+  .tj-vertical-hero--has-visual .tj-hero-visual-tag:not(.tj-hero-visual-tag--repair):not(.tj-hero-visual-tag--donate) {
     background: rgba(255, 255, 255, 0.92);
     color: #7A063C;
+  }
+  .tj-vertical-hero--has-visual .tj-hero-visual-tag--repair {
+    background: rgba(255, 255, 255, 0.92);
+    color: #1a3df0;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+  .tj-vertical-hero--has-visual .tj-hero-visual-tag--donate {
+    background: var(--tj-donate);
+    color: #0a0a0a;
+    border-color: rgba(0, 0, 0, 0.12);
   }
   .tj-hero-visual--compact .tj-hero-visual-glow,
   .tj-hero-visual--side .tj-hero-visual-glow {
@@ -1027,7 +1038,7 @@
 
   .tj-hero-visual--home .tj-hero-visual-frame {
     border: none;
-    border-radius: 0;
+    border-radius: 1.25rem;
     box-shadow:
       0 32px 64px -20px rgba(0, 0, 0, 0.32),
       0 12px 28px -8px rgba(200, 255, 46, 0.25);
@@ -1147,6 +1158,19 @@
     border-radius: 9999px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .tj-hero-visual .tj-hero-visual-tag.tj-hero-visual-tag--repair {
+    background: rgba(255, 255, 255, 0.92);
+    color: #1a3df0;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+
+  .tj-hero-visual-tag--donate {
+    background: var(--tj-donate);
+    color: #0a0a0a;
+    border-color: rgba(0, 0, 0, 0.12);
   }
 
   @media (prefers-reduced-motion: reduce) {

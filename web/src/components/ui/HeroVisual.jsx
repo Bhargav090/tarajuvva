@@ -6,11 +6,29 @@ const VARIANTS = {
     tag: 'Banthibhojanam collection SS2026',
     ribbon: 'Circular fashion OS',
     showRibbon: true,
+    showSecondaryAccent: false,
+    tagClass: '',
   },
   reimagine: {
     tag: 'Remake · Transform',
     ribbon: null,
     showRibbon: false,
+    showSecondaryAccent: false,
+    tagClass: '',
+  },
+  repair: {
+    tag: 'Repair · Wear longer',
+    ribbon: null,
+    showRibbon: false,
+    showSecondaryAccent: false,
+    tagClass: 'tj-hero-visual-tag--repair',
+  },
+  donate: {
+    tag: 'Donate · Keep it in loop',
+    ribbon: null,
+    showRibbon: false,
+    showSecondaryAccent: false,
+    tagClass: 'tj-hero-visual-tag--donate',
   },
 };
 
@@ -63,8 +81,10 @@ export default function HeroVisual({
       <div className="tj-hero-visual-glow" aria-hidden />
       {variant !== 'home' && (
         <>
-          <div className="tj-hero-visual-accent tj-hero-visual-accent--secondary" aria-hidden />
           <div className="tj-hero-visual-accent" aria-hidden />
+          {config.showSecondaryAccent && (
+            <div className="tj-hero-visual-accent tj-hero-visual-accent--secondary" aria-hidden />
+          )}
         </>
       )}
       <div className="tj-hero-visual-frame">
@@ -91,7 +111,9 @@ export default function HeroVisual({
         )}
         <div className="tj-hero-visual-shimmer" aria-hidden />
       </div>
-      <span className="tj-hero-visual-tag">{config.tag}</span>
+      <span className={`tj-hero-visual-tag${config.tagClass ? ` ${config.tagClass}` : ''}`}>
+        {config.tag}
+      </span>
       {config.showRibbon && (
         <span className="tj-hero-visual-ribbon" aria-hidden>
           {config.ribbon}

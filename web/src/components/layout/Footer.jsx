@@ -14,12 +14,12 @@ export default function Footer() {
       <div className="tj-container py-10 sm:py-12 lg:py-16">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] md:gap-x-10 lg:grid-cols-12 lg:gap-x-12">
           {/* Brand block */}
-          <div className="lg:col-span-5">
+          <div className="tj-footer-brand lg:col-span-5">
             <BrandLogo
               foreground="#0a0a0a"
-              className="h-[clamp(5rem,11vw+2rem,7.5rem)] w-auto max-w-[min(100%,320px)] sm:max-w-[360px] lg:max-w-[420px] object-contain object-left"
+              className="tj-footer-brand__logo block w-auto object-contain object-left object-top"
             />
-            <p className="mt-4 text-base leading-relaxed text-black/60 max-w-md font-display">
+            <p className="mt-1 md:-mt-4 lg:-mt-5 text-base leading-relaxed text-black/60 max-w-md font-display">
               A circular fashion operating system, made in India. Wear it. Remake it. Repair it. Donate it.
             </p>
           </div>

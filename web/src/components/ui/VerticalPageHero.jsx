@@ -25,6 +25,7 @@ export default function VerticalPageHero({
   visualAspect,
   visualPosition = 'right',
   afterVisual = null,
+  alignTop = false,
 }) {
   const isDarkTone = tone === 'dark';
   const sideWidths = tall ? { ...SIDE_ASPECT_WIDTH, ...TALL_SIDE_ASPECT_WIDTH } : SIDE_ASPECT_WIDTH;
@@ -134,7 +135,13 @@ export default function VerticalPageHero({
     <section
       className={`tj-vertical-hero border-b border-black relative overflow-hidden ${
         isDarkTone ? 'tj-vertical-hero--dark' : ''
-      } ${tall ? 'tj-vertical-hero--tall min-h-[80vh] flex items-center' : ''} ${showVisualSlot ? `tj-vertical-hero--has-visual tj-vertical-hero--visual-${visualPosition}` : ''}`}
+      } ${
+        tall
+          ? alignTop
+            ? 'tj-vertical-hero--tall tj-vertical-hero--align-top'
+            : 'tj-vertical-hero--tall min-h-[80vh] flex items-center'
+          : ''
+      } ${showVisualSlot ? `tj-vertical-hero--has-visual tj-vertical-hero--visual-${visualPosition}` : ''}`}
       style={{ background: `var(${bgVar})` }}
       data-testid={testId}
     >
@@ -144,7 +151,13 @@ export default function VerticalPageHero({
         aria-hidden
       />
       <div
-        className={`relative w-full ${tall ? 'py-14 md:py-20' : 'py-14 md:py-20 lg:py-24'} w-full`}
+        className={`relative w-full ${
+          tall
+            ? alignTop
+              ? 'pt-5 pb-5 md:py-0'
+              : 'py-14 md:py-20'
+            : 'py-14 md:py-20 lg:py-24'
+        } w-full`}
       >
         <div
           className={`tj-container relative ${
@@ -195,6 +208,12 @@ export default function VerticalPageHero({
                 {desktopVisual}
               </div>
             ) : null}
+
+            {showVisualSlot && tall && alignTop ? (
+              <div className="tj-vertical-hero-visual-slot tj-vertical-hero-visual-slot--inline md:hidden w-full">
+                {mobileVisual}
+              </div>
+            ) : null}
           </div>
 
           {showVisualSlot && !tall ? (
@@ -205,11 +224,11 @@ export default function VerticalPageHero({
             </div>
           ) : null}
 
-          {showVisualSlot ? (
+          {showVisualSlot && !(tall && alignTop) ? (
             <div
               className={`${desktopVisualBreakpoint}:hidden tj-vertical-hero-visual-slot${
                 tall ? ' tj-hero-visual-slot--mobile' : ''
-              } flex justify-center items-center mt-6 w-full`}
+              } flex justify-center items-center ${alignTop ? 'mt-0' : 'mt-6'} w-full`}
             >
               {mobileVisual}
             </div>

@@ -124,9 +124,12 @@ export default function Reimagine() {
         headline={['Send the old.', 'Get the new.']}
         subtext="Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour."
         testId="reimagine-hero"
+        tall
+        alignTop
         heroVideo={reimagineVideo}
         visualVariant="reimagine"
         visualAspect="3/4"
+        visualPosition="right"
       />
 
       <section className="border-b border-black bg-white">

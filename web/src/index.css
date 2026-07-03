@@ -236,22 +236,42 @@
   /* Header brand mark — height-driven with max-width so mobile header stays usable */
   .tj-header-logo {
     display: block;
-    height: 3rem;
+    height: 2.5rem;
     width: auto;
-    max-width: 168px;
+    max-width: 148px;
     object-fit: contain;
     object-position: left center;
   }
   @media (min-width: 640px) {
     .tj-header-logo {
-      height: 3.5rem;
-      max-width: 200px;
+      height: 3rem;
+      max-width: 180px;
     }
   }
   @media (min-width: 1024px) {
     .tj-header-logo {
-      height: 3.75rem;
-      max-width: 235px;
+      height: 3.25rem;
+      max-width: 210px;
+    }
+  }
+
+  /* Footer brand — align visible logo mark with tagline (PNG has side padding) */
+  .tj-footer-brand {
+    --footer-logo-h: clamp(5rem, 11vw + 2rem, 7.5rem);
+  }
+  .tj-footer-brand__logo {
+    height: var(--footer-logo-h);
+    max-width: min(100%, 320px);
+    margin-left: calc(var(--footer-logo-h) * -217 / 854);
+  }
+  @media (min-width: 640px) {
+    .tj-footer-brand__logo {
+      max-width: 360px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .tj-footer-brand__logo {
+      max-width: 420px;
     }
   }
 
@@ -322,6 +342,61 @@
   .tj-vertical-hero-stage--has-visual {
     align-items: flex-start;
   }
+  .tj-vertical-hero--align-top .tj-vertical-hero-stage {
+    gap: 0;
+    margin: 0;
+  }
+  @media (max-width: 767px) {
+    .tj-vertical-hero--align-top .tj-vertical-hero-stage--has-visual {
+      gap: 2.5rem;
+      padding-top: 0.25rem;
+      padding-bottom: 0.5rem;
+    }
+    .tj-vertical-hero--align-top .tj-vertical-hero-title {
+      margin-top: 0.75rem;
+    }
+    .tj-vertical-hero--align-top .tj-vertical-hero-copy > p.mt-5 {
+      margin-top: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .tj-vertical-hero--align-top .tj-vertical-hero-visual-slot--inline {
+      margin: 0;
+      padding: 0 1rem 0.25rem;
+      width: 100%;
+      max-width: none;
+      box-sizing: border-box;
+    }
+    .tj-vertical-hero--align-top .tj-vertical-hero-visual-slot--inline .tj-hero-visual--fluid {
+      width: 100%;
+      max-width: min(100%, 300px);
+      margin-inline: auto;
+      aspect-ratio: 3 / 4;
+      height: auto;
+    }
+    .tj-vertical-hero--align-top .tj-hero-visual--fluid .tj-hero-visual-accent {
+      transform: rotate(-2deg) translate(4px, 4px);
+    }
+    .tj-vertical-hero--align-top .tj-hero-visual--fluid .tj-hero-visual-accent--secondary {
+      transform: rotate(2deg) translate(-4px, 4px);
+    }
+    .tj-vertical-hero--align-top
+      .tj-vertical-hero-visual-slot--inline
+      .tj-hero-visual
+      .tj-hero-visual-tag {
+      left: 0.65rem;
+      bottom: 0.65rem;
+      transform: none;
+      max-width: calc(100% - 1rem);
+    }
+  }
+  .tj-vertical-hero--align-top .tj-vertical-hero-visual-cell {
+    align-items: flex-start;
+  }
+  .tj-vertical-hero--align-top.tj-vertical-hero--has-visual
+    .tj-vertical-hero-visual-cell
+    .tj-hero-visual--side.tj-hero-visual--ratio-3-4 {
+    max-height: none !important;
+  }
   .tj-vertical-hero-copy {
     position: relative;
     z-index: 2;
@@ -333,6 +408,9 @@
       grid-template-columns: minmax(0, 1fr) minmax(220px, 38%);
       gap: 1.75rem 2rem;
       align-items: start;
+    }
+    .tj-vertical-hero--align-top.tj-vertical-hero--tall .tj-vertical-hero-stage--has-visual {
+      align-items: center;
     }
     .tj-vertical-hero--tall .tj-vertical-hero-stage--visual-left.tj-vertical-hero-stage--has-visual {
       grid-template-columns: minmax(220px, 38%) minmax(0, 1fr);
@@ -425,6 +503,10 @@
   .tj-vertical-hero--tall .tj-vertical-hero-visual-slot {
     max-width: none;
     margin-top: 1.5rem;
+  }
+  .tj-vertical-hero--align-top .tj-vertical-hero-visual-slot {
+    margin-top: 0;
+    margin-bottom: 0;
   }
   @media (max-width: 767px) {
     .tj-vertical-hero-visual-slot {
@@ -941,6 +1023,14 @@
       0 32px 64px -20px rgba(0, 0, 0, 0.32),
       0 12px 28px -8px rgba(200, 255, 46, 0.25),
       0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  .tj-hero-visual--home .tj-hero-visual-frame {
+    border: none;
+    border-radius: 0;
+    box-shadow:
+      0 32px 64px -20px rgba(0, 0, 0, 0.32),
+      0 12px 28px -8px rgba(200, 255, 46, 0.25);
   }
 
   .tj-hero-visual-frame::after {

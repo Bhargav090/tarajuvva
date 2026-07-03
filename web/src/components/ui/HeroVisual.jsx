@@ -39,8 +39,8 @@ export default function HeroVisual({
       className={`tj-hero-visual group${
         isFluid ? ' tj-hero-visual--fluid' : ''
       }${isCompact ? ' tj-hero-visual--compact' : ''      }${isSide ? ' tj-hero-visual--side' : ''}${
-        variant === 'reimagine' ? ' tj-hero-visual--reimagine' : ''
-      }${fillTall ? ' tj-hero-visual--fill-tall' : ''}${ratioClass}`}
+        variant === 'home' ? ' tj-hero-visual--home' : ''
+      }${variant === 'reimagine' ? ' tj-hero-visual--reimagine' : ''}${fillTall ? ' tj-hero-visual--fill-tall' : ''}${ratioClass}`}
       style={
         isFluid
           ? undefined

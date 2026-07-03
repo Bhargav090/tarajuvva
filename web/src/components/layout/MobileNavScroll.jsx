@@ -15,7 +15,7 @@ export default function MobileNavScroll() {
     <div className="md:hidden border-t border-black/8">
       <HorizontalScrollRail
         ariaLabel="Main navigation"
-        innerClassName="gap-1 px-3 py-2.5"
+        innerClassName="gap-1 px-3 py-2"
       >
         {NAV_LINKS.map((l) => (
           <NavLink

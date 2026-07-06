@@ -8,7 +8,7 @@ import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import { SHOP_CATEGORIES } from '../../utils/constants';
-import { productHeroImage } from '../../utils/productImage';
+import { productHeroImage, resolveProductImageSrc } from '../../utils/productImage';
 import { LETTER_SIZES, NUMERIC_SIZES, inferGarmentType } from '../../utils/sizeConstants';
 
 const CATEGORIES = SHOP_CATEGORIES.filter(c => c.value).map(c => c.value);
@@ -190,9 +190,21 @@ function ProductSizeControls({ product, authHeader, onUpdate }) {
   );
 }
 
-/** ~6MB file before base64 expansion keeps payload reasonable for JSON + LONGTEXT. */
+/** ~6MB per file — sent as multipart, not base64 JSON. */
 const MAX_FILE_BYTES = 6 * 1024 * 1024;
 const MAX_IMAGES = 12;
+
+function newImageKey() {
+  return `img-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function previewFromFile(file) {
+  return URL.createObjectURL(file);
+}
+
+function releasePreview(preview) {
+  if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview);
+}
 
 const emptyForm = () => ({
   name: '',
@@ -221,13 +233,45 @@ function tagsFromRaw(raw) {
     .filter(Boolean);
 }
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result || ''));
-    r.onerror = () => reject(new Error('Could not read file'));
-    r.readAsDataURL(file);
+function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
+  const ways_to_wear = linesToList(form.waysRaw);
+  const tags = tagsFromRaw(form.tagsRaw);
+  const price = Number(form.price);
+  const stock = Math.max(0, parseInt(String(form.stock), 10) || 0);
+  const original = form.original_price === '' ? null : Number(form.original_price);
+
+  const imageMeta = [];
+  const fd = new FormData();
+  let fileIndex = 0;
+
+  imageSlots.forEach((slot) => {
+    if (slot.file) {
+      imageMeta.push({ type: 'file', index: fileIndex });
+      fd.append('images', slot.file);
+      fileIndex += 1;
+    } else if (slot.retained) {
+      imageMeta.push({ type: 'retain', value: slot.retained });
+    }
   });
+
+  const payload = {
+    name: form.name.trim(),
+    price,
+    original_price: original,
+    category: form.category.trim(),
+    description: form.description.trim() || null,
+    ways_to_wear,
+    tags,
+    stock: stock || 100,
+    sizes,
+    size_type: sizes.length ? sizeType : null,
+    garment_type: sizes.length ? garmentType : null,
+    featured: !!form.featured,
+    imageMeta,
+  };
+
+  fd.append('data', JSON.stringify(payload));
+  return fd;
 }
 
 export default function ProductConfiguratorTab() {
@@ -238,7 +282,7 @@ export default function ProductConfiguratorTab() {
   const [sizes, setSizes] = useState([]);
   const [sizeType, setSizeType] = useState('letter');
   const [garmentType, setGarmentType] = useState('top');
-  const [imageDataUrls, setImageDataUrls] = useState([]);
+  const [imageSlots, setImageSlots] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -272,7 +316,7 @@ export default function ProductConfiguratorTab() {
     e.target.value = '';
     if (files.length === 0) return;
 
-    const remaining = MAX_IMAGES - imageDataUrls.length;
+    const remaining = MAX_IMAGES - imageSlots.length;
     if (remaining <= 0) {
       toast.error(`Maximum ${MAX_IMAGES} images`);
       return;
@@ -292,28 +336,37 @@ export default function ProductConfiguratorTab() {
 
     setUploadingImages(true);
     try {
-      const urls = [];
-      for (const f of toRead) {
-        const dataUrl = await readFileAsDataUrl(f);
-        if (!/^data:image\/(png|jpeg|jpg|gif|webp);base64,/i.test(dataUrl)) {
-          toast.error(`${f.name}: unsupported image type`);
-          return;
-        }
-        urls.push(dataUrl);
-      }
-      setImageDataUrls((prev) => [...prev, ...urls]);
-      toast.success(`${urls.length} image(s) added as base64`);
+      const slots = toRead.map((file) => ({
+        key: newImageKey(),
+        preview: previewFromFile(file),
+        file,
+      }));
+      setImageSlots((prev) => [...prev, ...slots]);
+      toast.success(`${slots.length} image(s) added`);
     } catch {
-      toast.error('Could not read one or more files');
+      toast.error('Could not add one or more files');
     } finally {
       setUploadingImages(false);
     }
   };
 
+  const removeImageSlot = (key) => {
+    setImageSlots((prev) => {
+      const slot = prev.find((s) => s.key === key);
+      if (slot) releasePreview(slot.preview);
+      return prev.filter((s) => s.key !== key);
+    });
+  };
+
+  const clearImageSlots = () => {
+    imageSlots.forEach((slot) => releasePreview(slot.preview));
+    setImageSlots([]);
+  };
+
   const resetAll = () => {
     setEditingId(null);
     setForm(emptyForm());
-    setImageDataUrls([]);
+    clearImageSlots();
     setSizes([]);
     setSizeType('letter');
     setGarmentType('top');
@@ -333,7 +386,14 @@ export default function ProductConfiguratorTab() {
       featured: !!p.featured,
       sizes: [],
     });
-    setImageDataUrls(p.images || []);
+    setImageSlots((prev) => {
+      prev.forEach((slot) => releasePreview(slot.preview));
+      return (p.images || []).map((retained) => ({
+        key: newImageKey(),
+        preview: resolveProductImageSrc(retained),
+        retained,
+      }));
+    });
     setSizes(p.sizes || []);
     setSizeType(
       p.size_type ||
@@ -354,32 +414,19 @@ export default function ProductConfiguratorTab() {
     if (!form.name.trim()) return toast.error('Product name is required');
     if (Number.isNaN(price) || price < 0) return toast.error('Enter a valid price');
     if (original != null && (Number.isNaN(original) || original < 0)) return toast.error('Original price must be a valid number');
-    if (imageDataUrls.length === 0) return toast.error('Add at least one image (uploaded as base64)');
+    if (imageSlots.length === 0) return toast.error('Add at least one product image');
     if (sizes.length > 0 && !garmentType) return toast.error('Select garment type for the size chart');
 
     setSubmitting(true);
     try {
-      const payload = {
-        name: form.name.trim(),
-        price,
-        original_price: original,
-        category: form.category.trim(),
-        description: form.description.trim() || null,
-        ways_to_wear,
-        images: imageDataUrls,
-        tags,
-        stock: stock || 100,
-        sizes,
-        size_type: sizes.length ? sizeType : null,
-        garment_type: sizes.length ? garmentType : null,
-        featured: !!form.featured,
-      };
+      const fd = buildProductFormData(form, sizes, sizeType, garmentType, imageSlots);
+      const config = { headers: { ...authHeader } };
 
       if (editingId) {
-        await api.put(`/shop/products/${editingId}`, payload, { headers: authHeader });
+        await api.put(`/shop/products/${editingId}`, fd, config);
         toast.success('Product updated');
       } else {
-        await api.post('/shop/products', payload, { headers: authHeader });
+        await api.post('/shop/products', fd, config);
         toast.success('Product created');
       }
       resetAll();
@@ -471,28 +518,28 @@ export default function ProductConfiguratorTab() {
               size="sm"
               icon={ImagePlus}
               loading={uploadingImages}
-              disabled={imageDataUrls.length >= MAX_IMAGES}
+              disabled={imageSlots.length >= MAX_IMAGES}
               onClick={() => fileInputRef.current?.click()}
             >
               Add images
             </Button>
-            {imageDataUrls.length > 0 && (
+            {imageSlots.length > 0 && (
               <span className="text-xs text-[#341631]/50 font-body">
-                {imageDataUrls.length} / {MAX_IMAGES} — first is the shop thumbnail
+                {imageSlots.length} / {MAX_IMAGES} — first is the shop thumbnail
               </span>
             )}
           </div>
           <p className="text-xs text-[#341631]/45 font-body mt-2">
-            JPEG, PNG, WebP, or GIF · up to 6MB per file · stored as base64 in MySQL (large payloads may take a few seconds).
+            JPEG, PNG, WebP, or GIF · up to 6MB per file · uploads as files (not base64) so multiple photos save reliably.
           </p>
-          {imageDataUrls.length > 0 && (
+          {imageSlots.length > 0 && (
             <ul className="mt-4 flex flex-wrap gap-3">
-              {imageDataUrls.map((url, i) => (
-                <li key={`${i}-${url.slice(0, 48)}`} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#341631]/12 bg-gray-50">
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+              {imageSlots.map((slot, i) => (
+                <li key={slot.key} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#341631]/12 bg-gray-50">
+                  <img src={slot.preview} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"
-                    onClick={() => setImageDataUrls((prev) => prev.filter((_, j) => j !== i))}
+                    onClick={() => removeImageSlot(slot.key)}
                     className="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-[#341631]/85 text-[#eef4d1] flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
                     aria-label={`Remove image ${i + 1}`}
                   >

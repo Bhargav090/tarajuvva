@@ -8,6 +8,9 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(cfg => {
+  if (cfg.data instanceof FormData) {
+    delete cfg.headers['Content-Type'];
+  }
   // Caller may set Authorization (e.g. admin hooks). Do not overwrite.
   const h = cfg.headers;
   const hasExplicitAuth =

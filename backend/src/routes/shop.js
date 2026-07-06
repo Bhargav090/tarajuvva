@@ -1,12 +1,35 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { parseImages, pickStorableImage, enrichOrderItems } = require('../lib/orderItems');
+const { resolveImagesFromRequest } = require('../lib/productImages');
 const { notifyOrder } = require('../utils/notifyEmail');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
 const { getAllSizeCharts, getSizeChart, chartKeyForProduct } = require('../utils/sizeCharts');
+
+const productImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 6 * 1024 * 1024, files: 12 },
+  fileFilter: (req, file, cb) => {
+    const ok = /^image\/(jpeg|jpg|png|gif|webp)$/i.test(file.mimetype);
+    cb(ok ? null : new Error('Only JPEG, PNG, GIF, or WebP images are allowed.'), ok);
+  },
+});
+
+function handleProductUpload(req, res, next) {
+  productImageUpload.array('images', 12)(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'Image upload failed.',
+      });
+    }
+    next();
+  });
+}
 
 /** Max serialized length per image string (base64 data URLs can be large). */
 const MAX_IMAGE_STRING = 20 * 1024 * 1024;
@@ -192,25 +215,28 @@ router.get('/products/:id', async (req, res) => {
   res.json({ success: true, product, size_chart });
 });
 
-router.post('/products', authenticateAdmin, async (req, res) => {
-  const { name, price, original_price, category, description, ways_to_wear, images, tags, stock, featured } = req.body;
+router.post('/products', authenticateAdmin, handleProductUpload, async (req, res) => {
+  let parsed;
+  let imgList;
+  try {
+    ({ data: parsed, images: imgList } = resolveImagesFromRequest(req));
+    imgList = normalizeProductImages(imgList);
+  } catch (e) {
+    return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
+
+  const { name, price, original_price, category, description, ways_to_wear, tags, stock, featured } = parsed;
   if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: 'Name is required' });
   const priceNum = Number(price);
   if (Number.isNaN(priceNum) || priceNum < 0) return res.status(400).json({ success: false, message: 'Valid price is required' });
   if (!category || !String(category).trim()) return res.status(400).json({ success: false, message: 'Category is required' });
-  let imgList;
-  try {
-    imgList = normalizeProductImages(images);
-  } catch (e) {
-    return res.status(e.status || 400).json({ success: false, message: e.message });
-  }
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
-  const sizeType = normalizeSizeType(req.body.size_type);
-  const garmentType = normalizeGarmentType(req.body.garment_type);
+  const sizeType = normalizeSizeType(parsed.size_type);
+  const garmentType = normalizeGarmentType(parsed.garment_type);
   let sizeList;
   try {
-    sizeList = normalizeSizes(req.body.sizes, sizeType);
+    sizeList = normalizeSizes(parsed.sizes, sizeType);
     validateProductSizes(sizeType, garmentType, sizeList);
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
@@ -239,25 +265,28 @@ router.post('/products', authenticateAdmin, async (req, res) => {
   res.status(201).json({ success: true, id });
 });
 
-router.put('/products/:id', authenticateAdmin, async (req, res) => {
-  const { name, price, original_price, category, description, ways_to_wear, images, tags, stock, featured } = req.body;
+router.put('/products/:id', authenticateAdmin, handleProductUpload, async (req, res) => {
+  let parsed;
+  let imgList;
+  try {
+    ({ data: parsed, images: imgList } = resolveImagesFromRequest(req));
+    imgList = normalizeProductImages(imgList);
+  } catch (e) {
+    return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
+
+  const { name, price, original_price, category, description, ways_to_wear, tags, stock, featured } = parsed;
   if (!name || !String(name).trim()) return res.status(400).json({ success: false, message: 'Name is required' });
   const priceNum = Number(price);
   if (Number.isNaN(priceNum) || priceNum < 0) return res.status(400).json({ success: false, message: 'Valid price is required' });
   if (!category || !String(category).trim()) return res.status(400).json({ success: false, message: 'Category is required' });
-  let imgList;
-  try {
-    imgList = normalizeProductImages(images);
-  } catch (e) {
-    return res.status(e.status || 400).json({ success: false, message: e.message });
-  }
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
-  const sizeType = normalizeSizeType(req.body.size_type);
-  const garmentType = normalizeGarmentType(req.body.garment_type);
+  const sizeType = normalizeSizeType(parsed.size_type);
+  const garmentType = normalizeGarmentType(parsed.garment_type);
   let sizeList;
   try {
-    sizeList = normalizeSizes(req.body.sizes, sizeType);
+    sizeList = normalizeSizes(parsed.sizes, sizeType);
     validateProductSizes(sizeType, garmentType, sizeList);
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });

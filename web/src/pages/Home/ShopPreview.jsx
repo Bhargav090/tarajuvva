@@ -189,7 +189,7 @@ function MobileProductSlider({ products }) {
 }
 
 export default function ShopPreview() {
-  const { products, loading } = useProducts({ limit: 4 });
+  const { products, loading } = useProducts({ featured: true, limit: 4 });
 
   return (
     <section className="tj-section border-b border-black bg-white !pt-8 md:!pt-10 lg:!pt-12" data-testid="shop-highlight">

@@ -5,7 +5,7 @@ import { ShoppingBag, ArrowLeft, Tag, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../context/CartContext';
-import { PRODUCT_IMAGE_PLACEHOLDER } from '../../utils/productImage';
+import { PRODUCT_IMAGE_PLACEHOLDER, resolveProductImageSrc } from '../../utils/productImage';
 import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
 import SizeChartLink from '../../components/shop/SizeChartLink';
@@ -58,7 +58,7 @@ export default function ProductPage() {
 
   const gallery =
     Array.isArray(product.images) && product.images.length > 0
-      ? product.images
+      ? product.images.map(resolveProductImageSrc)
       : [PRODUCT_IMAGE_PLACEHOLDER];
   const viewLabels = ['Front View', 'Back View', 'Side View', 'Detail View'];
 

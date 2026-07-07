@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { parseImages, pickStorableImage, enrichOrderItems } = require('../lib/orderItems');
-const { resolveImagesFromRequest } = require('../lib/productImages');
+const { resolveImagesFromRequest, saveDataUrlProductImage } = require('../lib/productImages');
 const { notifyOrder } = require('../utils/notifyEmail');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
 const { getAllSizeCharts, getSizeChart, chartKeyForProduct } = require('../utils/sizeCharts');
@@ -84,9 +84,9 @@ async function resolveOrderItems(rawItems) {
 }
 
 /**
- * Normalizes `images` to a non-empty array of strings.
- * Preferred: `data:image/<type>;base64,...` (stored in DB as JSON).
- * Legacy seed / old rows: `https://...` or `/uploads/...` still accepted.
+ * Normalizes `images` to a non-empty array of storable references.
+ * New uploads: `/uploads/products/...` on disk. Legacy rows may still have https URLs.
+ * Base64 data URLs are converted to disk files so the DB stays small.
  */
 function normalizeProductImages(images) {
   const arr = Array.isArray(images) ? images : [];
@@ -100,12 +100,18 @@ function normalizeProductImages(images) {
       throw err;
     }
     if (DATA_URL_RE.test(s)) {
-      out.push(s);
+      const saved = saveDataUrlProductImage(s);
+      if (!saved) {
+        const err = new Error('Could not process one or more uploaded images');
+        err.status = 400;
+        throw err;
+      }
+      out.push(saved);
     } else if (LEGACY_SRC_RE.test(s)) {
       out.push(s);
     } else {
       const err = new Error(
-        'Each image must be a base64 data URL (data:image/png|jpeg|gif|webp;base64,...) or a legacy http(s) / /uploads/ URL'
+        'Each image must be a valid upload, base64 data URL, or legacy http(s) / /uploads/ URL'
       );
       err.status = 400;
       throw err;
@@ -117,6 +123,17 @@ function normalizeProductImages(images) {
     throw err;
   }
   return out;
+}
+
+function productDbErrorMessage(err) {
+  if (!err) return 'Could not save product';
+  if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ETIMEDOUT') {
+    return 'Database connection lost. Please try again in a few seconds.';
+  }
+  if (err.code === 'ER_DATA_TOO_LONG') {
+    return 'Product data is too large. Use fewer or smaller images (max 6MB each).';
+  }
+  return err.sqlMessage || err.message || 'Could not save product';
 }
 
 const parseProduct = (p) => ({
@@ -243,25 +260,30 @@ router.post('/products', authenticateAdmin, handleProductUpload, async (req, res
   }
   const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
   const id = uuidv4();
-  await run(
-    `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,sizes,size_type,garment_type,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [
-      id,
-      String(name).trim(),
-      priceNum,
-      original_price == null || original_price === '' ? null : Number(original_price),
-      String(category).trim(),
-      description ? String(description).trim() : null,
-      JSON.stringify(ways),
-      JSON.stringify(imgList),
-      JSON.stringify(tagList),
-      stockNum,
-      JSON.stringify(sizeList),
-      sizeList.length ? sizeType : null,
-      sizeList.length ? garmentType : null,
-      featured ? 1 : 0,
-    ]
-  );
+  try {
+    await run(
+      `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,sizes,size_type,garment_type,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        id,
+        String(name).trim(),
+        priceNum,
+        original_price == null || original_price === '' ? null : Number(original_price),
+        String(category).trim(),
+        description ? String(description).trim() : null,
+        JSON.stringify(ways),
+        JSON.stringify(imgList),
+        JSON.stringify(tagList),
+        stockNum,
+        JSON.stringify(sizeList),
+        sizeList.length ? sizeType : null,
+        sizeList.length ? garmentType : null,
+        featured ? 1 : 0,
+      ]
+    );
+  } catch (err) {
+    console.error('Product create failed:', err);
+    return res.status(500).json({ success: false, message: productDbErrorMessage(err) });
+  }
   res.status(201).json({ success: true, id });
 });
 
@@ -292,25 +314,30 @@ router.put('/products/:id', authenticateAdmin, handleProductUpload, async (req, 
     return res.status(e.status || 400).json({ success: false, message: e.message });
   }
   const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
-  await run(
-    `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=? WHERE id=?`,
-    [
-      String(name).trim(),
-      priceNum,
-      original_price == null || original_price === '' ? null : Number(original_price),
-      String(category).trim(),
-      description ? String(description).trim() : null,
-      JSON.stringify(ways),
-      JSON.stringify(imgList),
-      JSON.stringify(tagList),
-      stockNum,
-      JSON.stringify(sizeList),
-      sizeList.length ? sizeType : null,
-      sizeList.length ? garmentType : null,
-      featured ? 1 : 0,
-      req.params.id,
-    ]
-  );
+  try {
+    await run(
+      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=? WHERE id=?`,
+      [
+        String(name).trim(),
+        priceNum,
+        original_price == null || original_price === '' ? null : Number(original_price),
+        String(category).trim(),
+        description ? String(description).trim() : null,
+        JSON.stringify(ways),
+        JSON.stringify(imgList),
+        JSON.stringify(tagList),
+        stockNum,
+        JSON.stringify(sizeList),
+        sizeList.length ? sizeType : null,
+        sizeList.length ? garmentType : null,
+        featured ? 1 : 0,
+        req.params.id,
+      ]
+    );
+  } catch (err) {
+    console.error('Product update failed:', err);
+    return res.status(500).json({ success: false, message: productDbErrorMessage(err) });
+  }
   res.json({ success: true });
 });
 

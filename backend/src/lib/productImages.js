@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { isDataUrl, isHttpUrl } = require('./imageDataUrl');
+const { isDataUrl, isHttpUrl, parseDataUrl } = require('./imageDataUrl');
 
 const EXT_BY_MIME = {
   'image/jpeg': '.jpg',
@@ -28,8 +28,21 @@ function saveProductImageFile(file) {
 function normalizeRetainedImage(ref) {
   const s = String(ref || '').trim();
   if (!s) return null;
-  if (isDataUrl(s) || isHttpUrl(s) || s.startsWith('/uploads/')) return s;
+  if (isHttpUrl(s) || s.startsWith('/uploads/')) return s;
+  if (isDataUrl(s)) return saveDataUrlProductImage(s);
   return null;
+}
+
+/** Persist a base64 data URL to disk; returns `/uploads/products/...` path. */
+function saveDataUrlProductImage(dataUrl) {
+  const parsed = parseDataUrl(dataUrl);
+  if (!parsed) return null;
+  const ext = EXT_BY_MIME[String(parsed.mime || '').toLowerCase()] || '.jpg';
+  const dir = getProductsUploadDir();
+  fs.mkdirSync(dir, { recursive: true });
+  const filename = `${uuidv4()}${ext}`;
+  fs.writeFileSync(path.join(dir, filename), parsed.buffer);
+  return `/uploads/products/${filename}`;
 }
 
 /**
@@ -77,6 +90,7 @@ function resolveImagesFromRequest(req) {
 
 module.exports = {
   saveProductImageFile,
+  saveDataUrlProductImage,
   normalizeRetainedImage,
   resolveImagesFromRequest,
 };

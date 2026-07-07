@@ -233,6 +233,15 @@ function tagsFromRaw(raw) {
     .filter(Boolean);
 }
 
+function dataUrlToFile(dataUrl, filename = 'image.jpg') {
+  const [header, b64] = String(dataUrl).split(',');
+  const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) arr[i] = bin.charCodeAt(i);
+  return new File([arr], filename, { type: mime });
+}
+
 function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
   const ways_to_wear = linesToList(form.waysRaw);
   const tags = tagsFromRaw(form.tagsRaw);
@@ -250,7 +259,14 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
       fd.append('images', slot.file);
       fileIndex += 1;
     } else if (slot.retained) {
-      imageMeta.push({ type: 'retain', value: slot.retained });
+      // Legacy base64 rows: re-upload as binary so the JSON `data` field stays small.
+      if (String(slot.retained).startsWith('data:')) {
+        imageMeta.push({ type: 'file', index: fileIndex });
+        fd.append('images', dataUrlToFile(slot.retained));
+        fileIndex += 1;
+      } else {
+        imageMeta.push({ type: 'retain', value: slot.retained });
+      }
     }
   });
 
@@ -432,7 +448,12 @@ export default function ProductConfiguratorTab() {
       resetAll();
       loadProducts();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not save product');
+      const status = err.response?.status;
+      if (status === 413) {
+        toast.error('Upload too large for the server. Use fewer images or smaller files (max 6MB each).');
+      } else {
+        toast.error(err.response?.data?.message || 'Could not save product');
+      }
     } finally {
       setSubmitting(false);
     }

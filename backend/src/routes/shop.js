@@ -31,6 +31,39 @@ function handleProductUpload(req, res, next) {
   });
 }
 
+function maybeProductUpload(req, res, next) {
+  const ct = String(req.headers['content-type'] || '');
+  if (ct.includes('multipart/form-data')) {
+    return handleProductUpload(req, res, next);
+  }
+  next();
+}
+
+/**
+ * Multipart (`data` + `images` files) or legacy JSON body (`name`, `images`, …).
+ */
+function resolveProductSave(req) {
+  const body = req.body && typeof req.body === 'object' ? req.body : null;
+  if (!body) {
+    const err = new Error('Invalid product request. Refresh the admin page and try again.');
+    err.status = 400;
+    throw err;
+  }
+
+  if (body.data != null && body.data !== '') {
+    const dataField = typeof body.data === 'string' ? body.data : JSON.stringify(body.data);
+    return resolveImagesFromRequest({ ...req, body: { ...body, data: dataField } });
+  }
+
+  if (body.name) {
+    return { data: body, images: body.images || [] };
+  }
+
+  const err = new Error('Invalid product request. Refresh the admin page and try again.');
+  err.status = 400;
+  throw err;
+}
+
 /** Max serialized length per image string (base64 data URLs can be large). */
 const MAX_IMAGE_STRING = 20 * 1024 * 1024;
 const DATA_URL_RE = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/i;
@@ -232,14 +265,18 @@ router.get('/products/:id', async (req, res) => {
   res.json({ success: true, product, size_chart });
 });
 
-router.post('/products', authenticateAdmin, handleProductUpload, async (req, res) => {
+router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res) => {
   let parsed;
   let imgList;
   try {
-    ({ data: parsed, images: imgList } = resolveImagesFromRequest(req));
+    ({ data: parsed, images: imgList } = resolveProductSave(req));
     imgList = normalizeProductImages(imgList);
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    return res.status(400).json({ success: false, message: 'Invalid product data' });
   }
 
   const { name, price, original_price, category, description, ways_to_wear, tags, stock, featured } = parsed;
@@ -287,14 +324,18 @@ router.post('/products', authenticateAdmin, handleProductUpload, async (req, res
   res.status(201).json({ success: true, id });
 });
 
-router.put('/products/:id', authenticateAdmin, handleProductUpload, async (req, res) => {
+router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, res) => {
   let parsed;
   let imgList;
   try {
-    ({ data: parsed, images: imgList } = resolveImagesFromRequest(req));
+    ({ data: parsed, images: imgList } = resolveProductSave(req));
     imgList = normalizeProductImages(imgList);
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    return res.status(400).json({ success: false, message: 'Invalid product data' });
   }
 
   const { name, price, original_price, category, description, ways_to_wear, tags, stock, featured } = parsed;

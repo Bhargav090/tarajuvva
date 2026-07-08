@@ -9,7 +9,12 @@ const api = axios.create({
 
 api.interceptors.request.use(cfg => {
   if (cfg.data instanceof FormData) {
-    delete cfg.headers['Content-Type'];
+    // Axios 1.x uses AxiosHeaders — delete() is required so the browser sets multipart boundary.
+    if (cfg.headers && typeof cfg.headers.delete === 'function') {
+      cfg.headers.delete('Content-Type');
+    } else if (cfg.headers) {
+      delete cfg.headers['Content-Type'];
+    }
   }
   // Caller may set Authorization (e.g. admin hooks). Do not overwrite.
   const h = cfg.headers;

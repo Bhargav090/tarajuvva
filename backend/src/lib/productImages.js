@@ -50,9 +50,10 @@ function saveDataUrlProductImage(dataUrl) {
  * imageMeta: [{ type: 'retain', value }, { type: 'file', index: 0 }, ...]
  */
 function resolveImagesFromRequest(req) {
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
   let data;
   try {
-    data = JSON.parse(req.body.data || '{}');
+    data = JSON.parse(body.data || '{}');
   } catch {
     const err = new Error('Invalid product data JSON');
     err.status = 400;

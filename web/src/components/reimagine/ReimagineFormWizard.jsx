@@ -15,7 +15,14 @@ export const REIMAGINE_FORM_STEPS = [
     label: 'Pickup / delivery address',
     type: 'textarea',
     required: true,
-    placeholder: 'Full address for pickup or delivery',
+    placeholder: 'House / flat, street, area, city, state',
+  },
+  {
+    key: 'pincode',
+    label: 'Pincode',
+    type: 'pincode',
+    required: true,
+    placeholder: '6-digit PIN',
   },
   { key: 'photos', label: 'Upload a photo of the garment', type: 'dropzone', required: false },
   {
@@ -46,7 +53,9 @@ export default function ReimagineFormWizard({
   const canNext = () => {
     if (!step.required) return true;
     if (step.key === 'photos') return true;
-    return String(valueFor(step.key)).trim().length > 0;
+    const val = String(valueFor(step.key)).trim();
+    if (step.key === 'pincode') return /^\d{6}$/.test(val);
+    return val.length > 0;
   };
 
   const goNext = () => {
@@ -85,9 +94,22 @@ export default function ReimagineFormWizard({
               value={valueFor(step.key)}
               onChange={(e) => setDetails((p) => ({ ...p, [step.key]: e.target.value }))}
               required={step.required}
-              rows={step.key === 'address' ? 3 : 3}
+              rows={step.key === 'address' ? 4 : 3}
               placeholder={step.placeholder}
               className={`${FIELD} resize-none`}
+            />
+          ) : step.type === 'pincode' ? (
+            <input
+              name={step.key}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              value={valueFor(step.key)}
+              onChange={(e) => setDetails((p) => ({ ...p, [step.key]: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+              required={step.required}
+              placeholder={step.placeholder}
+              className={FIELD}
             />
           ) : (
             <input

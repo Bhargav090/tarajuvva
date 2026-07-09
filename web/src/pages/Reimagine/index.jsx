@@ -1,4 +1,4 @@
-import { useLayoutEffect, useEffect } from 'react';
+import { useLayoutEffect, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, CheckCircle, PhoneCall } from 'lucide-react';
@@ -50,10 +50,17 @@ export default function Reimagine() {
   } = useReimagineSubmit();
   const { garmentImage, presetImage } = useReimagineImages();
   const { settings: customizeSettings } = useReimagineCustomizeSettings();
+  const flowRef = useRef(null);
 
   useLayoutEffect(() => {
     if (done) window.scrollTo({ top: 0, left: 0 });
   }, [done]);
+
+  useEffect(() => {
+    if (step > 0 || isCustomize) {
+      flowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [step, isCustomize]);
 
   const garmentLabel = GARMENTS.find((g) => g.id === garment)?.label ?? '';
   const transformMeta = getTransformationMeta(transformation);
@@ -118,21 +125,23 @@ export default function Reimagine() {
 
   return (
     <div className="min-h-screen bg-white">
-      <VerticalPageHero
-        bgVar="--tj-reimagine"
-        eyebrow="02 · Reimagine"
-        headline={['Send the old.', 'Get the new.']}
-        subtext="Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour."
-        testId="reimagine-hero"
-        tall
-        alignTop
-        heroVideo={reimagineVideo}
-        visualVariant="reimagine"
-        visualAspect="3/4"
-        visualPosition="right"
-      />
+      {step === 0 && !isCustomize && (
+        <VerticalPageHero
+          bgVar="--tj-reimagine"
+          eyebrow="02 · Reimagine"
+          headline={['Send the old.', 'Get the new.']}
+          subtext="Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour."
+          testId="reimagine-hero"
+          tall
+          alignTop
+          heroVideo={reimagineVideo}
+          visualVariant="reimagine"
+          visualAspect="3/4"
+          visualPosition="right"
+        />
+      )}
 
-      <section className="border-b border-black bg-white">
+      <section ref={flowRef} className="border-b border-black bg-white scroll-mt-[calc(var(--ticker-h,0px)+var(--nav-h,4rem))]">
         <div className="tj-container py-10 md:py-14 lg:py-16">
           <AnimatePresence mode="wait">
             {isCustomize ? (
@@ -226,7 +235,7 @@ export default function Reimagine() {
                             Consultation
                           </p>
                           <p className="font-display text-2xl font-extrabold text-[#0a0a0a] mt-2">
-                            ₹{Number(customizeSettings.price || 199).toLocaleString('en-IN')}
+                            ₹{Number(customizeSettings.price || 299).toLocaleString('en-IN')}
                           </p>
                         </div>
                         <div className="p-4 md:p-5 border-t border-black bg-[#fdf8fa]">

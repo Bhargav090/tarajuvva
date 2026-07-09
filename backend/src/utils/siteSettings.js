@@ -1,7 +1,7 @@
 const { get, run } = require('../db/database');
 
 const REIMAGINE_CUSTOMIZE_DEFAULTS = {
-  reimagine_customize_price: '199',
+  reimagine_customize_price: '299',
   reimagine_customize_feature: '15 min consultation call',
   reimagine_customize_description:
     'Book a one-on-one call with our remake team. Show us your garment, share references, and get a clear plan — fit, fabric, timeline, and quote — before we cut a single thread.',
@@ -24,7 +24,7 @@ async function setSetting(key, value) {
 async function getReimagineCustomizeSettings() {
   const price = Number(await getSetting('reimagine_customize_price', REIMAGINE_CUSTOMIZE_DEFAULTS.reimagine_customize_price));
   return {
-    price: Number.isFinite(price) && price >= 0 ? price : 199,
+    price: Number.isFinite(price) && price >= 0 ? price : 299,
     feature: (await getSetting('reimagine_customize_feature', REIMAGINE_CUSTOMIZE_DEFAULTS.reimagine_customize_feature)) || REIMAGINE_CUSTOMIZE_DEFAULTS.reimagine_customize_feature,
     description:
       (await getSetting('reimagine_customize_description', REIMAGINE_CUSTOMIZE_DEFAULTS.reimagine_customize_description)) ||

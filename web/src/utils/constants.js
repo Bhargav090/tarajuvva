@@ -265,6 +265,6 @@ export const BRAND_VALUES = [
 export const HERO_STATS = [
   { value: '100+', label: 'looks from 10 pieces' },
   { value: '1×',   label: 'garment. many lives.' },
-  { value: '₹199', label: 'book a reimagine session' },
+  { value: '₹299', label: 'book a reimagine session' },
   { value: '0',    label: 'waste built into the design.' },
 ];

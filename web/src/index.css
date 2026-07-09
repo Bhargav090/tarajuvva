@@ -1216,7 +1216,8 @@
     100% { transform: translateX(-50%); }
   }
   .tj-marquee {
-    animation: tj-scroll 30s linear infinite;
+    animation: tj-scroll 40s linear infinite;
+    will-change: transform;
   }
   @media (prefers-reduced-motion: reduce) {
     .tj-marquee { animation: none; }

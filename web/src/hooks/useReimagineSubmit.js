@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { formatAddressWithPincode } from '../utils/address';
 
 const VALID_STEPS = [0, 1, 3];
 
@@ -17,6 +18,7 @@ function emptyDetails() {
     user_phone: '',
     user_email: '',
     address: '',
+    pincode: '',
     notes: '',
     consultation_date: '',
     consultation_slot_id: '',
@@ -143,6 +145,14 @@ export function useReimagineSubmit() {
   const addFiles = (newFiles) => setFiles((p) => [...p, ...newFiles]);
   const removeFile = (idx) => setFiles((p) => p.filter((_, i) => i !== idx));
 
+  const buildSubmitFields = useCallback((fields) => {
+    const { pincode, address, ...rest } = fields;
+    return {
+      ...rest,
+      address: formatAddressWithPincode(address, pincode),
+    };
+  }, []);
+
   const submitRequest = async (payload) => {
     if (!user) {
       redirectToLogin();
@@ -152,7 +162,7 @@ export function useReimagineSubmit() {
     setLoading(true);
     try {
       const fd = new FormData();
-      Object.entries(payload.fields).forEach(([k, v]) => fd.append(k, v ?? ''));
+      Object.entries(buildSubmitFields(payload.fields)).forEach(([k, v]) => fd.append(k, v ?? ''));
       files.forEach((f) => fd.append('images', f));
 
       await api.post('/reimagine/requests', fd, {

@@ -46,23 +46,27 @@ export default function Hero() {
             </div>
 
             <div className="tj-hero-visual-slot hidden lg:flex justify-end">
-              <HeroVisual
-                heroSrc={homeHeroImage}
-                testId="hero-image"
-                variant="home"
-                width={480}
-                height={640}
-              />
+              <Link to="/shop" className="block cursor-pointer rounded-[inherit]" aria-label="Shop the drop">
+                <HeroVisual
+                  heroSrc={homeHeroImage}
+                  testId="hero-image"
+                  variant="home"
+                  width={480}
+                  height={640}
+                />
+              </Link>
             </div>
           </div>
 
           <div className="lg:hidden tj-hero-visual-slot tj-hero-visual-slot--mobile">
-            <HeroVisual
-              heroSrc={homeHeroImage}
-              testId="hero-image-mobile"
-              variant="home"
-              size="fluid"
-            />
+            <Link to="/shop" className="block cursor-pointer rounded-[inherit]" aria-label="Shop the drop">
+              <HeroVisual
+                heroSrc={homeHeroImage}
+                testId="hero-image-mobile"
+                variant="home"
+                size="fluid"
+              />
+            </Link>
           </div>
         </div>
 

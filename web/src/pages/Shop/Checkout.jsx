@@ -105,13 +105,33 @@ export default function Checkout() {
             <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-black/45 font-display">
               Shipping details
             </h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Input label="Full Name"    name="user_name"  value={form.user_name}  onChange={onChange} required />
-              <Input label="Phone"        name="user_phone" value={form.user_phone} onChange={onChange} required type="tel" />
+            <div className="flex flex-col gap-4">
+              <Input label="Full Name" name="user_name" value={form.user_name} onChange={onChange} required />
+              <Input label="Phone" name="user_phone" value={form.user_phone} onChange={onChange} required type="tel" />
+              <Input label="Email" name="user_email" value={form.user_email} onChange={onChange} type="email" />
+              <Textarea
+                label="Delivery address"
+                name="address_line"
+                value={form.address_line}
+                onChange={onChange}
+                required
+                rows={4}
+                placeholder="House / flat, street, area, city, state"
+              />
+              <Input
+                label="Pincode"
+                name="pincode"
+                value={form.pincode}
+                onChange={onChange}
+                required
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                placeholder="6-digit PIN"
+              />
+              <Textarea label="Order notes (optional)" name="notes" value={form.notes} onChange={onChange} rows={2} />
             </div>
-            <Input label="Email" name="user_email" value={form.user_email} onChange={onChange} type="email" />
-            <Textarea label="Delivery Address" name="address" value={form.address} onChange={onChange} required rows={3} />
-            <Textarea label="Order Notes (optional)" name="notes" value={form.notes} onChange={onChange} rows={2} />
             <div className="border border-black/10 p-4 space-y-3">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/45 font-display">
                 Payment method

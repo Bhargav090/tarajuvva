@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../utils/api';
 
 const DEFAULTS = {
-  price: 199,
+  price: 299,
   feature: '15 min consultation call',
   description:
     'Book a one-on-one call with our remake team. Show us your garment, share references, and get a clear plan — fit, fabric, timeline, and quote — before we cut a single thread.',

@@ -8,7 +8,7 @@ const LOOP_HIGHLIGHT =
 
 const BULLETS = [
   '12 ready-made presets across sarees, kurtis, shirts and pants',
-  'Something else in mind? Let\'s design it together from ₹199.',
+  'Something else in mind? Let\'s design it together from ₹299.',
   'Ready in 14 days, with updates along the way',
 ];
 

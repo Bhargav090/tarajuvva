@@ -2,13 +2,15 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { openRazorpayCheckout } from '../utils/razorpay';
+import { formatAddressWithPincode } from '../utils/address';
 
 export function useOrderSubmit({ items, total, user, onSuccess }) {
   const [form, setForm] = useState({
     user_name:  user?.name  || '',
     user_email: user?.email || '',
     user_phone: user?.phone || '',
-    address:    user?.address || '',
+    address_line: user?.address || '',
+    pincode: '',
     notes:      '',
   });
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
@@ -19,9 +21,17 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
 
   const onChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
+  const orderPayload = () => ({
+    user_name: form.user_name,
+    user_email: form.user_email,
+    user_phone: form.user_phone,
+    address: formatAddressWithPincode(form.address_line, form.pincode),
+    notes: form.notes,
+  });
+
   const placeCodOrder = async (orderItems) => {
     const { data } = await api.post('/shop/orders', {
-      ...form,
+      ...orderPayload(),
       items: orderItems,
       payment_method: 'cod',
     });
@@ -35,7 +45,7 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
 
   const placeRazorpayOrder = async (orderItems) => {
     const { data } = await api.post('/shop/orders', {
-      ...form,
+      ...orderPayload(),
       items: orderItems,
       payment_method: 'razorpay',
     });
@@ -78,6 +88,10 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
 
   const onSubmit = async e => {
     e.preventDefault();
+    if (!formatAddressWithPincode(form.address_line, form.pincode).trim()) {
+      toast.error('Delivery address is required');
+      return;
+    }
     setLoading(true);
     try {
       const orderItems = items.map(({ id, qty, size }) => ({ id, qty, ...(size ? { size } : {}) }));

@@ -57,7 +57,7 @@ export function ReimagineCustomizeCard({ price, feature, description }) {
           Consultation
         </p>
         <p className="font-display text-3xl md:text-4xl font-extrabold text-[#0a0a0a] mt-1.5">
-          ₹{Number(price || 199).toLocaleString('en-IN')}
+          ₹{Number(price || 299).toLocaleString('en-IN')}
         </p>
         <div className="mt-4 pt-4 border-t border-black/10">
           <p className="font-display font-bold text-base text-[#0a0a0a]">{feature}</p>

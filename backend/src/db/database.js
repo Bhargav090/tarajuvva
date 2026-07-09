@@ -320,6 +320,24 @@ async function initializeDatabase() {
     }
   }
 
+  const reimagineExtraAlters = [
+    'ALTER TABLE reimagine_requests ADD COLUMN pickup_date DATE NULL AFTER callback_requested',
+    "ALTER TABLE reimagine_requests ADD COLUMN payment_status VARCHAR(32) NULL AFTER pickup_date",
+    'ALTER TABLE reimagine_requests ADD COLUMN razorpay_order_id VARCHAR(64) NULL AFTER payment_status',
+    'ALTER TABLE reimagine_requests ADD COLUMN razorpay_payment_id VARCHAR(64) NULL AFTER razorpay_order_id',
+    'ALTER TABLE reimagine_requests ADD COLUMN paid_at DATETIME NULL AFTER razorpay_payment_id',
+    'ALTER TABLE reimagine_requests ADD COLUMN consultation_fee DOUBLE NULL AFTER paid_at',
+  ];
+  for (const sql of reimagineExtraAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+        console.warn('[db] reimagine_requests column add skipped:', e.message);
+      }
+    }
+  }
+
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS site_settings (
       setting_key VARCHAR(64) PRIMARY KEY,

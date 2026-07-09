@@ -4,8 +4,9 @@ import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { formatAddressWithPincode } from '../utils/address';
+import { openRazorpayCheckout } from '../utils/razorpay';
 
-const VALID_STEPS = [0, 1, 3];
+const VALID_STEPS = [0, 1, 3, 4];
 
 function parseStep(raw) {
   const n = Number(raw);
@@ -20,6 +21,7 @@ function emptyDetails() {
     address: '',
     pincode: '',
     notes: '',
+    pickup_date: '',
     consultation_date: '',
     consultation_slot_id: '',
     consultation_time: '',
@@ -28,7 +30,12 @@ function emptyDetails() {
   };
 }
 
-export function useReimagineSubmit() {
+export function needsReimaginePayment(isCustomize, details, price) {
+  if (details.request_callback) return false;
+  return Number(price) > 0;
+}
+
+export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,7 +51,8 @@ export function useReimagineSubmit() {
   );
 
   const isCustomize = searchParams.get('mode') === 'customize';
-  const step = isCustomize ? 3 : parseStep(searchParams.get('step'));
+  const phase = searchParams.get('phase') || '';
+  const step = isCustomize ? (phase === 'payment' ? 4 : 3) : parseStep(searchParams.get('step'));
   const garment = searchParams.get('garment') || '';
   const transformation = searchParams.get('transformation') || '';
 
@@ -55,36 +63,11 @@ export function useReimagineSubmit() {
   const [doneCallback, setDoneCallback] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
 
-  useEffect(() => {
-    if (prefilled || !user) return;
-    setDetails((p) => ({
-      ...p,
-      user_name: p.user_name || user.name || '',
-      user_email: p.user_email || user.email || '',
-      user_phone: p.user_phone || user.phone || '',
-      address: p.address || user.address || '',
-    }));
-    setPrefilled(true);
-  }, [user, prefilled]);
-
-  useEffect(() => {
-    if (done || isCustomize) return;
-    if (step === 1 && !garment) {
-      setSearchParams({}, { replace: true });
-    } else if (step === 3 && (!garment || !transformation)) {
-      const params = new URLSearchParams();
-      if (garment) {
-        params.set('step', '1');
-        params.set('garment', garment);
-      }
-      setSearchParams(params, { replace: true });
-    }
-  }, [step, garment, transformation, done, isCustomize, setSearchParams]);
-
   const goToStep = useCallback(
     (newStep, extra = {}, { replace = false } = {}) => {
       const params = new URLSearchParams(searchParams);
       params.delete('mode');
+      params.delete('phase');
       params.set('step', String(newStep));
 
       if ('garment' in extra) {
@@ -101,6 +84,44 @@ export function useReimagineSubmit() {
     [searchParams, setSearchParams],
   );
 
+  useEffect(() => {
+    if (prefilled || !user) return;
+    const addr = user.address || '';
+    const pinMatch = addr.match(/\bPIN:\s*(\d{6})\b/i);
+    const lineOnly = pinMatch ? addr.replace(/\n?PIN:\s*\d{6}\s*/i, '').trim() : addr;
+    setDetails((p) => ({
+      ...p,
+      user_name: p.user_name || user.name || '',
+      user_email: p.user_email || user.email || '',
+      user_phone: p.user_phone || user.phone || '',
+      address: p.address || lineOnly,
+      pincode: p.pincode || (pinMatch ? pinMatch[1] : ''),
+    }));
+    setPrefilled(true);
+  }, [user, prefilled]);
+
+  useEffect(() => {
+    if (done || isCustomize) return;
+    if (step === 1 && !garment) {
+      setSearchParams({}, { replace: true });
+    } else if ((step === 3 || step === 4) && (!garment || !transformation)) {
+      const params = new URLSearchParams();
+      if (garment) {
+        params.set('step', '1');
+        params.set('garment', garment);
+      }
+      setSearchParams(params, { replace: true });
+    }
+  }, [step, garment, transformation, done, isCustomize, setSearchParams]);
+
+  const goToPaymentPhase = useCallback(() => {
+    if (isCustomize) {
+      setSearchParams({ mode: 'customize', phase: 'payment' }, { replace: false });
+      return;
+    }
+    goToStep(4);
+  }, [isCustomize, setSearchParams, goToStep]);
+
   const startCustomize = useCallback(() => {
     if (!user) {
       redirectToLogin('/reimagine?mode=customize');
@@ -115,11 +136,19 @@ export function useReimagineSubmit() {
 
   const goBack = useCallback(() => {
     if (isCustomize) {
+      if (phase === 'payment') {
+        setSearchParams({ mode: 'customize' }, { replace: true });
+        return;
+      }
       exitCustomize();
       return;
     }
+    if (step === 4) {
+      goToStep(3);
+      return;
+    }
     navigate(-1);
-  }, [navigate, isCustomize, exitCustomize]);
+  }, [navigate, isCustomize, exitCustomize, phase, setSearchParams, step, goToStep]);
 
   const setGarment = useCallback(
     (id) => goToStep(1, { garment: id }),
@@ -153,36 +182,76 @@ export function useReimagineSubmit() {
     };
   }, []);
 
-  const submitRequest = async (payload) => {
-    if (!user) {
+  const buildPayloadFields = useCallback(() => {
+    if (isCustomize) {
+      const callback = details.request_callback;
+      const { request_callback: _rc, ...detailFields } = details;
+      return {
+        garment_type: 'customize',
+        transformation: callback
+          ? 'Customize Consultation — Callback requested'
+          : 'Customize Consultation',
+        is_consultation: callback ? '0' : '1',
+        is_custom: '1',
+        request_callback: callback ? '1' : '0',
+        consultation_slot_id: callback ? '' : details.consultation_slot_id,
+        ...detailFields,
+      };
+    }
+    return {
+      garment_type: garment,
+      transformation,
+      is_custom: transformation === 'Custom' ? '1' : '0',
+      ...details,
+    };
+  }, [isCustomize, details, garment, transformation]);
+
+  const postRequest = async (extraFields = {}) => {
+    const fd = new FormData();
+    const fields = buildSubmitFields({ ...buildPayloadFields(), ...extraFields });
+    Object.entries(fields).forEach(([k, v]) => fd.append(k, v ?? ''));
+    files.forEach((f) => fd.append('images', f));
+    const { data } = await api.post('/reimagine/requests', fd);
+    return data;
+  };
+
+  const completeRazorpayPayment = async (createData) => {
+    const payment = await openRazorpayCheckout({
+      keyId: createData.razorpay.key_id,
+      amount: createData.razorpay.amount,
+      currency: createData.razorpay.currency,
+      orderId: createData.razorpay.order_id,
+      prefill: {
+        name: details.user_name,
+        email: details.user_email,
+        contact: details.user_phone,
+      },
+      onDismiss: () => toast.error('Payment cancelled'),
+    });
+
+    const { data: verified } = await api.post(
+      `/reimagine/requests/${createData.requestId}/razorpay/verify`,
+      {
+        razorpay_order_id: payment.razorpay_order_id,
+        razorpay_payment_id: payment.razorpay_payment_id,
+        razorpay_signature: payment.razorpay_signature,
+      }
+    );
+
+    setDone(true);
+    setDoneCallback(false);
+    toast.success(verified.message || 'Payment confirmed');
+  };
+
+  const handleSubmitError = (err) => {
+    const status = err.response?.status;
+    if (status === 401 || status === 403) {
       redirectToLogin();
-      toast.error('Please sign in to submit your request.');
+      toast.error(err.response?.data?.message || 'Please sign in to submit your request.');
       return;
     }
-    setLoading(true);
-    try {
-      const fd = new FormData();
-      Object.entries(buildSubmitFields(payload.fields)).forEach(([k, v]) => fd.append(k, v ?? ''));
-      files.forEach((f) => fd.append('images', f));
-
-      await api.post('/reimagine/requests', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setDone(true);
-      setDoneCallback(Boolean(payload.fields?.request_callback === '1'));
-    } catch (err) {
-      const status = err.response?.status;
-      if (status === 401 || status === 403) {
-        redirectToLogin();
-        toast.error(err.response?.data?.message || 'Please sign in to submit your request.');
-        return;
-      }
-      toast.error(
-        err.response?.data?.message || 'Could not submit your request. Please try again.',
-      );
-    } finally {
-      setLoading(false);
-    }
+    const msg = err.response?.data?.message || err.message || 'Could not submit your request. Please try again.';
+    if (msg !== 'Payment cancelled') toast.error(msg);
   };
 
   const resetDone = useCallback(() => {
@@ -194,42 +263,107 @@ export function useReimagineSubmit() {
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
 
-  const onSubmit = async (e) => {
-    e?.preventDefault();
+  const validateContactDetails = () => {
+    if (!details.user_name?.trim()) {
+      toast.error('Full name is required');
+      return false;
+    }
+    if (!details.user_phone?.trim()) {
+      toast.error('Phone is required');
+      return false;
+    }
+    if (!details.address?.trim()) {
+      toast.error('Address is required');
+      return false;
+    }
+    if (!/^\d{6}$/.test(String(details.pincode || '').trim())) {
+      toast.error('Enter a valid 6-digit pincode');
+      return false;
+    }
+    return true;
+  };
 
-    if (isCustomize) {
-      const callback = details.request_callback;
-      const { request_callback: _rc, ...detailFields } = details;
-      await submitRequest({
-        fields: {
-          garment_type: 'customize',
-          transformation: callback
-            ? 'Customize Consultation — Callback requested'
-            : 'Customize Consultation',
-          is_consultation: callback ? '0' : '1',
-          is_custom: '1',
-          request_callback: callback ? '1' : '0',
-          consultation_slot_id: callback ? '' : details.consultation_slot_id,
-          ...detailFields,
-        },
-      });
+  const submitRequest = async (extraFields = {}) => {
+    if (!user) {
+      redirectToLogin();
+      toast.error('Please sign in to submit your request.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await postRequest(extraFields);
+      if (data.requires_payment && data.razorpay) {
+        await completeRazorpayPayment(data);
+        return;
+      }
+      setDone(true);
+      setDoneCallback(Boolean(extraFields.request_callback === '1' || details.request_callback));
+    } catch (err) {
+      handleSubmitError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onWizardComplete = (e) => {
+    e?.preventDefault();
+    if (!validateContactDetails()) return;
+
+    if (isCustomize && !details.request_callback && !details.consultation_slot_id) {
+      toast.error('Please select a consultation slot or request a callback');
       return;
     }
 
-    await submitRequest({
-      fields: {
-        garment_type: garment,
-        transformation,
-        is_custom: transformation === 'Custom' ? '1' : '0',
-        ...details,
-      },
-    });
+    if (needsReimaginePayment(isCustomize, details, sessionPrice)) {
+      goToPaymentPhase();
+      return;
+    }
+    onSubmit(e);
+  };
+
+  const onSubmit = async (e) => {
+    e?.preventDefault();
+    if (!validateContactDetails()) return;
+    await submitRequest({ payment_method: 'none' });
+  };
+
+  const onPayment = async () => {
+    if (!validateContactDetails()) return;
+    setLoading(true);
+    try {
+      const payFields = { payment_method: 'razorpay' };
+      if (!isCustomize) {
+        payFields.payment_amount = String(sessionPrice);
+      }
+      const data = await postRequest(payFields);
+      if (data.requires_payment && data.razorpay) {
+        await completeRazorpayPayment(data);
+      } else {
+        setDone(true);
+      }
+    } catch (err) {
+      handleSubmitError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onPresetContinue = (e) => {
+    e?.preventDefault();
+    if (!validateContactDetails()) return;
+    if (needsReimaginePayment(false, details, sessionPrice)) {
+      goToPaymentPhase();
+      return;
+    }
+    onSubmit(e);
   };
 
   return {
     step,
+    phase,
     isCustomize,
     goToStep,
+    goToPaymentPhase,
     startCustomize,
     exitCustomize,
     goBack,
@@ -243,9 +377,13 @@ export function useReimagineSubmit() {
     details,
     setDetails,
     onSubmit,
+    onWizardComplete,
+    onPayment,
+    onPresetContinue,
     loading,
     done,
     doneCallback,
     resetDone,
+    needsPayment: needsReimaginePayment(isCustomize, details, sessionPrice),
   };
 }

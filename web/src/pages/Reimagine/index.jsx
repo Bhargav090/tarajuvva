@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, CheckCircle, PhoneCall } from 'lucide-react';
 import VerticalPageHero from '../../components/ui/VerticalPageHero';
 import SuccessNav from '../../components/ui/SuccessNav';
-import ReimagineFormWizard from '../../components/reimagine/ReimagineFormWizard';
+import ReimagineFormWizard, { REIMAGINE_CONTACT_STEPS } from '../../components/reimagine/ReimagineFormWizard';
 import CustomizeFormWizard from '../../components/reimagine/CustomizeFormWizard';
+import ReimagineExtras from '../../components/reimagine/ReimagineExtras';
+import ReimaginePaymentStep from '../../components/reimagine/ReimaginePaymentStep';
 import {
   ReimagineRemakeCard,
   ReimagineCustomizeCard,
@@ -27,6 +29,7 @@ export default function Reimagine() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
+  const { settings: customizeSettings } = useReimagineCustomizeSettings();
   const {
     step,
     isCustomize,
@@ -43,13 +46,17 @@ export default function Reimagine() {
     addFiles,
     removeFile,
     onSubmit,
+    onWizardComplete,
+    onPayment,
+    onPresetContinue,
     loading,
     done,
     doneCallback,
     resetDone,
-  } = useReimagineSubmit();
+    needsPayment,
+    phase,
+  } = useReimagineSubmit({ sessionPrice: customizeSettings.price });
   const { garmentImage, presetImage } = useReimagineImages();
-  const { settings: customizeSettings } = useReimagineCustomizeSettings();
   const flowRef = useRef(null);
 
   useLayoutEffect(() => {
@@ -64,7 +71,7 @@ export default function Reimagine() {
 
   const garmentLabel = GARMENTS.find((g) => g.id === garment)?.label ?? '';
   const transformMeta = getTransformationMeta(transformation);
-  const needsAuth = isCustomize || step === 3;
+  const needsAuth = isCustomize || step === 3 || step === 4;
 
   useEffect(() => {
     if (authLoading || done) return;
@@ -146,7 +153,7 @@ export default function Reimagine() {
           <AnimatePresence mode="wait">
             {isCustomize ? (
               <motion.div
-                key="customize"
+                key={phase === 'payment' ? 'customize-pay' : 'customize'}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
@@ -154,29 +161,45 @@ export default function Reimagine() {
               >
                 <button
                   type="button"
-                  onClick={exitCustomize}
+                  onClick={goBack}
                   className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
                 >
-                  <ArrowLeft size={14} /> Back to presets
+                  <ArrowLeft size={14} /> {phase === 'payment' ? 'Back to details' : 'Back to presets'}
                 </button>
-                <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl">Your vision. Our craft.</h2>
-                <div className="mt-5 grid sm:grid-cols-2 gap-8 md:gap-12 lg:gap-14 items-start">
-                  <ReimagineCustomizeCard
-                    price={customizeSettings.price}
-                    feature={customizeSettings.feature}
-                    description={customizeSettings.description}
-                  />
-                <CustomizeFormWizard
-                  details={details}
-                  setDetails={setDetails}
-                  files={files}
-                  addFiles={addFiles}
-                  removeFile={removeFile}
-                  onSubmit={onSubmit}
-                  loading={loading}
-                  submitLabel="Submit customize request"
-                />
-                </div>
+                {phase === 'payment' ? (
+                  <div className="mt-8">
+                    <ReimaginePaymentStep
+                      price={customizeSettings.price}
+                      loading={loading}
+                      onBack={goBack}
+                      onPay={onPayment}
+                      title="Pay consultation fee"
+                      description="Complete payment to confirm your custom Reimagine consultation slot."
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl">Your vision. Our craft.</h2>
+                    <div className="mt-5 grid sm:grid-cols-2 gap-8 md:gap-12 lg:gap-14 items-start">
+                      <ReimagineCustomizeCard
+                        price={customizeSettings.price}
+                        feature={customizeSettings.feature}
+                        description={customizeSettings.description}
+                      />
+                      <CustomizeFormWizard
+                        details={details}
+                        setDetails={setDetails}
+                        files={files}
+                        addFiles={addFiles}
+                        removeFile={removeFile}
+                        onSubmit={onSubmit}
+                        onWizardComplete={onWizardComplete}
+                        loading={loading}
+                        submitLabel="Submit customize request"
+                      />
+                    </div>
+                  </>
+                )}
               </motion.div>
             ) : (
               <>
@@ -325,7 +348,7 @@ export default function Reimagine() {
                       <ArrowLeft size={14} /> Change preset
                     </button>
                     <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl">
-                      Tell us where to send it.
+                      Tell us about your piece
                     </h2>
                     <div className="mt-5 grid sm:grid-cols-2 gap-8 md:gap-12 lg:gap-14 items-start">
                       <ReimagineRemakeCard
@@ -344,8 +367,45 @@ export default function Reimagine() {
                         files={files}
                         addFiles={addFiles}
                         removeFile={removeFile}
-                        onSubmit={onSubmit}
+                        steps={REIMAGINE_CONTACT_STEPS}
+                        onWizardComplete={onPresetContinue}
                         loading={loading}
+                        completeLabel={needsPayment ? 'Continue to payment' : 'Submit request'}
+                      />
+                    </div>
+                    <ReimagineExtras
+                      details={details}
+                      setDetails={setDetails}
+                      files={files}
+                      addFiles={addFiles}
+                      removeFile={removeFile}
+                    />
+                  </motion.div>
+                )}
+
+                {step === 4 && (
+                  <motion.div
+                    key="s4"
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -16 }}
+                    className="max-w-5xl w-full"
+                  >
+                    <button
+                      type="button"
+                      onClick={goBack}
+                      className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
+                    >
+                      <ArrowLeft size={14} /> Back to details
+                    </button>
+                    <div className="mt-8">
+                      <ReimaginePaymentStep
+                        price={customizeSettings.price}
+                        loading={loading}
+                        onBack={goBack}
+                        onPay={onPayment}
+                        title="Complete your remake request"
+                        description="Pay the session fee to submit your Reimagine request."
                       />
                     </div>
                   </motion.div>

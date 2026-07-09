@@ -81,6 +81,41 @@ adminRouter.post('/', async (req, res) => {
   });
 });
 
+/** Delete unbooked slots in bulk by id list or date range. */
+adminRouter.post('/bulk-delete', async (req, res) => {
+  const { slot_ids: slotIds, from_date: fromDate, to_date: toDate } = req.body || {};
+
+  if (Array.isArray(slotIds) && slotIds.length) {
+    let deleted = 0;
+    let skipped = 0;
+    for (const id of slotIds) {
+      const row = await get('SELECT * FROM consultation_slots WHERE id = ?', [id]);
+      if (!row) continue;
+      if (row.is_booked) {
+        skipped += 1;
+        continue;
+      }
+      await run('DELETE FROM consultation_slots WHERE id = ?', [id]);
+      deleted += 1;
+    }
+    return res.json({ success: true, deleted, skipped });
+  }
+
+  if (fromDate && toDate) {
+    const result = await run(
+      `DELETE FROM consultation_slots
+       WHERE is_booked = 0 AND slot_date >= ? AND slot_date <= ?`,
+      [toISODateString(fromDate), toISODateString(toDate)]
+    );
+    return res.json({ success: true, deleted: result.affectedRows || 0 });
+  }
+
+  return res.status(400).json({
+    success: false,
+    message: 'Provide slot_ids array or from_date and to_date.',
+  });
+});
+
 /** Delete an unbooked slot. */
 adminRouter.delete('/:id', async (req, res) => {
   const row = await get('SELECT * FROM consultation_slots WHERE id = ?', [req.params.id]);

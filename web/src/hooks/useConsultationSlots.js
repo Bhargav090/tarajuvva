@@ -99,5 +99,22 @@ export function useAdminConsultationSlots() {
     }
   };
 
-  return { slots, loading, submitting, preview, create, remove, reload: load };
+  const bulkDelete = async ({ slot_ids, from_date, to_date }) => {
+    setSubmitting(true);
+    try {
+      const { data } = await api.post(
+        '/admin/consultation-slots/bulk-delete',
+        { slot_ids, from_date, to_date },
+        { headers: authHeader }
+      );
+      await load();
+      return { ok: true, deleted: data.deleted, skipped: data.skipped };
+    } catch (err) {
+      return { ok: false, message: err.response?.data?.message || 'Could not delete slots.' };
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return { slots, loading, submitting, preview, create, remove, bulkDelete, reload: load };
 }

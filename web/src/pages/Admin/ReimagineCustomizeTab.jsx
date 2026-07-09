@@ -20,7 +20,7 @@ function groupByDate(slots) {
 
 export default function ReimagineCustomizeTab() {
   const { settings, loading, submitting, save } = useAdminReimagineCustomizeSettings();
-  const { slots: savedSlots, loading: slotsLoading, submitting: slotsSubmitting, preview, create, remove } =
+  const { slots: savedSlots, loading: slotsLoading, submitting: slotsSubmitting, preview, create, remove, bulkDelete } =
     useAdminConsultationSlots();
 
   const [form, setForm] = useState(null);
@@ -33,6 +33,7 @@ export default function ReimagineCustomizeTab() {
   });
   const [previewSlots, setPreviewSlots] = useState([]);
   const [generating, setGenerating] = useState(false);
+  const [bulkRange, setBulkRange] = useState({ from_date: '', to_date: '' });
 
   if (loading && !form) {
     return (
@@ -43,7 +44,7 @@ export default function ReimagineCustomizeTab() {
   }
 
   const values = form || {
-    price: String(settings.price ?? 199),
+    price: String(settings.price ?? 299),
     feature: settings.feature || '',
     description: settings.description || '',
   };
@@ -111,6 +112,36 @@ export default function ReimagineCustomizeTab() {
     }
   };
 
+  const onBulkDeleteRange = async () => {
+    if (!bulkRange.from_date || !bulkRange.to_date) {
+      toast.error('Select from and to dates');
+      return;
+    }
+    const result = await bulkDelete({
+      from_date: bulkRange.from_date,
+      to_date: bulkRange.to_date,
+    });
+    if (result.ok) {
+      toast.success(`Deleted ${result.deleted} unbooked slot(s)`);
+    } else {
+      toast.error(result.message);
+    }
+  };
+
+  const onBulkDeleteUnbooked = async () => {
+    const ids = savedSlots.filter((s) => !s.is_booked).map((s) => s.id);
+    if (!ids.length) {
+      toast.error('No unbooked slots to delete');
+      return;
+    }
+    const result = await bulkDelete({ slot_ids: ids });
+    if (result.ok) {
+      toast.success(`Deleted ${result.deleted} slot(s)${result.skipped ? `, ${result.skipped} booked skipped` : ''}`);
+    } else {
+      toast.error(result.message);
+    }
+  };
+
   const previewGrouped = groupByDate(previewSlots);
   const savedGrouped = groupByDate(savedSlots);
 
@@ -133,7 +164,7 @@ export default function ReimagineCustomizeTab() {
           value={values.price}
           onChange={onChange}
           required
-          placeholder="199"
+          placeholder="299"
         />
         <Input
           label="Feature title"
@@ -253,6 +284,30 @@ export default function ReimagineCustomizeTab() {
 
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#241621]/8">
         <h2 className="text-lg font-bold text-[#241621] font-display mb-4">Saved slots</h2>
+        <div className="flex flex-wrap gap-3 mb-5 pb-5 border-b border-[#241621]/8">
+          <Input
+            label="Bulk delete from"
+            name="bulk_from"
+            type="date"
+            value={bulkRange.from_date}
+            onChange={(e) => setBulkRange((p) => ({ ...p, from_date: e.target.value }))}
+          />
+          <Input
+            label="To"
+            name="bulk_to"
+            type="date"
+            value={bulkRange.to_date}
+            onChange={(e) => setBulkRange((p) => ({ ...p, to_date: e.target.value }))}
+          />
+          <div className="flex items-end gap-2">
+            <Button type="button" variant="outline" loading={slotsSubmitting} onClick={onBulkDeleteRange}>
+              Delete range
+            </Button>
+            <Button type="button" variant="outline" loading={slotsSubmitting} onClick={onBulkDeleteUnbooked}>
+              Delete all unbooked
+            </Button>
+          </div>
+        </div>
         {slotsLoading ? (
           <div className="flex justify-center py-8">
             <Spinner size={24} />

@@ -34,6 +34,11 @@ export const REIMAGINE_FORM_STEPS = [
   },
 ];
 
+/** Contact-only steps for preset remake (photos/notes/pickup live on the page). */
+export const REIMAGINE_CONTACT_STEPS = REIMAGINE_FORM_STEPS.filter(
+  (s) => !['photos', 'notes'].includes(s.key)
+);
+
 export default function ReimagineFormWizard({
   details,
   setDetails,
@@ -41,12 +46,15 @@ export default function ReimagineFormWizard({
   addFiles,
   removeFile,
   onSubmit,
+  onWizardComplete,
   loading,
   submitLabel = 'Submit remake request',
+  steps = REIMAGINE_FORM_STEPS,
+  completeLabel = 'Continue',
 }) {
   const [cardStep, setCardStep] = useState(0);
-  const step = REIMAGINE_FORM_STEPS[cardStep];
-  const isLast = cardStep === REIMAGINE_FORM_STEPS.length - 1;
+  const step = steps[cardStep];
+  const isLast = cardStep === steps.length - 1;
 
   const valueFor = (key) => details[key] ?? '';
 
@@ -68,7 +76,15 @@ export default function ReimagineFormWizard({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isLast) {
+      if (canNext()) goNext();
+      return;
+    }
     if (!canNext()) return;
+    if (onWizardComplete) {
+      onWizardComplete(e);
+      return;
+    }
     onSubmit(e);
   };
 
@@ -150,7 +166,7 @@ export default function ReimagineFormWizard({
             disabled={loading || !canNext()}
             className="ml-auto flex-1 tj-btn-reimagine justify-center disabled:opacity-60"
           >
-            {loading ? 'Submitting…' : submitLabel}
+            {loading ? 'Submitting…' : onWizardComplete ? completeLabel : submitLabel}
           </button>
         )}
       </div>

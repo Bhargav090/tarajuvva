@@ -49,8 +49,10 @@ export default function CustomizeFormWizard({
   addFiles,
   removeFile,
   onSubmit,
+  onWizardComplete,
   loading,
   submitLabel = 'Submit customize request',
+  completeLabel = 'Continue to payment',
 }) {
   const [cardStep, setCardStep] = useState(0);
   const step = STEPS[cardStep];
@@ -110,7 +112,15 @@ export default function CustomizeFormWizard({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isLast) {
+      if (canNext()) goNext();
+      return;
+    }
     if (!canNext()) return;
+    if (onWizardComplete) {
+      onWizardComplete(e);
+      return;
+    }
     onSubmit(e);
   };
 
@@ -341,7 +351,7 @@ export default function CustomizeFormWizard({
             disabled={loading || !canNext()}
             className="ml-auto flex-1 tj-btn-reimagine justify-center disabled:opacity-60"
           >
-            {loading ? 'Submitting…' : submitLabel}
+            {loading ? 'Submitting…' : onWizardComplete ? completeLabel : submitLabel}
           </button>
         )}
       </div>

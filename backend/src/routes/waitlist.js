@@ -3,6 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { get, run, all } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
+const { notifyWaitlistEntry } = require('../utils/notifyEmail');
 
 // Join waitlist (repair or donate)
 router.post('/', async (req, res) => {
@@ -24,6 +25,8 @@ router.post('/', async (req, res) => {
 
   const id = uuidv4();
   await run('INSERT INTO waitlist (id, type, name, email, phone) VALUES (?, ?, ?, ?, ?)', [id, type, name, email, phone || null]);
+
+  notifyWaitlistEntry({ id, type, name, email, phone }).catch(() => {});
 
   res.status(201).json({
     success: true,

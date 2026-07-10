@@ -1,8 +1,19 @@
 const nodemailer = require('nodemailer');
 
-const NOTIFY_TO = process.env.NOTIFY_EMAIL || 'contact@tarajuvva.com';
+const NOTIFY_TO = process.env.NOTIFY_EMAIL || process.env.SMTP_REPLY_TO || 'support@tarajuvva.com';
 
 let transporter = null;
+
+function mailFrom() {
+  const addr = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const name = process.env.SMTP_FROM_NAME || 'Tarajuvva';
+  if (!addr) return null;
+  return name ? `"${name}" <${addr}>` : addr;
+}
+
+function mailReplyTo() {
+  return process.env.SMTP_REPLY_TO || process.env.SMTP_USER || null;
+}
 
 function getTransporter() {
   if (transporter) return transporter;
@@ -29,9 +40,21 @@ async function sendMail({ to, subject, text, html }) {
     return { ok: false, skipped: true };
   }
 
-  const from = process.env.SMTP_FROM || process.env.SMTP_USER;
+  const from = mailFrom();
+  const replyTo = mailReplyTo();
+  if (!from) {
+    console.warn('[notifyEmail] SMTP_FROM not configured — skipped:', subject);
+    return { ok: false, skipped: true };
+  }
   try {
-    await tx.sendMail({ from, to, subject, text, html: html || text.replace(/\n/g, '<br>') });
+    await tx.sendMail({
+      from,
+      to,
+      replyTo: replyTo || undefined,
+      subject,
+      text,
+      html: html || text.replace(/\n/g, '<br>'),
+    });
     return { ok: true };
   } catch (err) {
     console.error('[notifyEmail]', err.message);

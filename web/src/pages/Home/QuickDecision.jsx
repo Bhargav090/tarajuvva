@@ -21,7 +21,7 @@ export default function QuickDecision() {
         {/* Header */}
         <div className="text-center mb-12">
           <span className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-widest font-display mb-4"
-            style={{ background: '#a8c74a18', color: '#a8c74a', border: '1px solid #a8c74a25' }}>
+            style={{ background: '#c8ff2e18', color: '#a8e000', border: '1px solid #c8ff2e25' }}>
             Quick Start
           </span>
           <h2 className="font-display font-black text-4xl sm:text-5xl text-[#241621] leading-tight">

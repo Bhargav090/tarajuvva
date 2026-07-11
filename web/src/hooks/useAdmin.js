@@ -62,44 +62,76 @@ export function useAdminStats() {
 
 // ── Admin Orders ───────────────────────────────────────────────────────────────
 export function useAdminOrders() {
-  const [orders, setOrders]  = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
 
   useEffect(() => {
-    api.get('/shop/orders', { headers: authHeader })
-      .then(r => setOrders(r.data.orders || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    let cancelled = false;
+    setLoading(true);
+    api
+      .get('/shop/orders', { headers: authHeader, params: { page, limit: 10 } })
+      .then((r) => {
+        if (cancelled) return;
+        setOrders(r.data.orders || []);
+        setPagination(r.data.pagination || { page, limit: 10, total: 0, totalPages: 1 });
+      })
+      .catch(() => {
+        if (!cancelled) setOrders([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page]);
 
   const updateStatus = async (id, status) => {
     await api.patch(`/shop/orders/${id}/status`, { status }, { headers: authHeader });
-    setOrders(p => p.map(o => o.id === id ? { ...o, status } : o));
+    setOrders((p) => p.map((o) => (o.id === id ? { ...o, status } : o)));
   };
 
-  return { orders, loading, updateStatus };
+  return { orders, loading, updateStatus, pagination, page, setPage };
 }
 
 // ── Admin Reimagine ────────────────────────────────────────────────────────────
 export function useAdminReimagine() {
   const [requests, setRequests] = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
 
   useEffect(() => {
-    api.get('/reimagine/requests', { headers: authHeader })
-      .then(r => setRequests(r.data.requests || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+    let cancelled = false;
+    setLoading(true);
+    api
+      .get('/reimagine/requests', { headers: authHeader, params: { page, limit: 10 } })
+      .then((r) => {
+        if (cancelled) return;
+        setRequests(r.data.requests || []);
+        setPagination(r.data.pagination || { page, limit: 10, total: 0, totalPages: 1 });
+      })
+      .catch(() => {
+        if (!cancelled) setRequests([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [page]);
 
   const updateStatus = async (id, status) => {
     await api.patch(`/reimagine/requests/${id}/status`, { status }, { headers: authHeader });
-    setRequests(p => p.map(r => r.id === id ? { ...r, status } : r));
+    setRequests((p) => p.map((r) => (r.id === id ? { ...r, status } : r)));
   };
 
-  return { requests, loading, updateStatus };
+  return { requests, loading, updateStatus, pagination, page, setPage };
 }
 
 // ── Admin Waitlist ─────────────────────────────────────────────────────────────

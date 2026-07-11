@@ -5,36 +5,54 @@ import { ShoppingCart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCart } from '../../context/CartContext';
 import SizeChartLink from '../shop/SizeChartLink';
-import { productHeroImage } from '../../utils/productImage';
+import { productHeroImage, resolveProductImageSrc } from '../../utils/productImage';
 import { productDiscountPercent } from '../../utils/productSale';
 import AsyncImage from './AsyncImage';
 
 function availableSizes(product) {
   if (!Array.isArray(product?.sizes)) return [];
-  return product.sizes.filter((s) => s?.label && s.available !== false);
+  return product.sizes.filter((s) => {
+    if (!s?.label) return false;
+    if (typeof s.stock === 'number') return s.stock > 0;
+    return s.available !== false;
+  });
 }
 
-export default function ProductCard({ product, disableEntrance = false }) {
+function galleryList(product) {
+  const img = productHeroImage(product.images);
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    return product.images.map((src) => resolveProductImageSrc(src)).filter(Boolean);
+  }
+  return img ? [img] : [];
+}
+
+export default function ProductCard({ product, disableEntrance = false, variant = 'default' }) {
   const { addItem } = useCart();
+  const [imgIndex, setImgIndex] = useState(0);
   const [hovering, setHovering] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
   const sizes = availableSizes(product);
   const hasSizes = sizes.length > 0;
   const discount = productDiscountPercent(product);
-  const img = productHeroImage(product.images);
-  const gallery =
-    Array.isArray(product.images) && product.images.length > 0
-      ? product.images
-      : [img];
-  const primary = gallery[0];
-  const hoverImage = gallery[1] || null;
+  const gallery = galleryList(product);
+  const primary = gallery[0] || '';
+  const currentSrc = gallery[imgIndex] || primary;
+  const hoverSrc = gallery.length > 1 ? gallery[1] : null;
   const tagline = product.description?.split('.')[0]
     ? `${product.description.split('.')[0]}.`
     : '';
   const material = product.tags?.[0]
     ? String(product.tags[0]).replace(/-/g, ' ')
     : product.category;
+  const imageTag = (product.image_tag || 'Modular').trim() || 'Modular';
+
+  const cycleImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (gallery.length <= 1) return;
+    setImgIndex((i) => (i + 1) % gallery.length);
+  };
 
   const handleAdd = () => {
     if (hasSizes && !selectedSize) {
@@ -45,6 +63,58 @@ export default function ProductCard({ product, disableEntrance = false }) {
     addItem(product, selectedSize);
     toast.success(`${product.name}${selectedSize ? ` (${selectedSize})` : ''} added to cart`);
   };
+
+  if (variant === 'home') {
+    const homeCard = (
+      <div className="flex flex-col h-full bg-white">
+        <button
+          type="button"
+          onClick={cycleImage}
+          className="relative block w-full overflow-hidden aspect-[3/4] bg-[var(--tj-bg-soft)] text-left cursor-pointer"
+          aria-label={
+            gallery.length > 1
+              ? `Preview next image of ${product.name}`
+              : product.name
+          }
+        >
+          <AsyncImage
+            src={currentSrc || primary}
+            alt={product.name}
+            fill
+            imgClassName="transition-opacity duration-300"
+          />
+          {gallery.length > 1 && (
+            <span className="absolute bottom-2 right-2 z-[1] bg-black/60 text-white text-[9px] font-mono-tj px-1.5 py-0.5 tabular-nums">
+              {imgIndex + 1}/{gallery.length}
+            </span>
+          )}
+        </button>
+        <Link to={`/shop/${product.id}`} className="pt-3 px-1 pb-1 block">
+          <p className="font-display font-bold text-[11px] sm:text-xs uppercase tracking-[0.06em] text-[#0a0a0a] leading-snug line-clamp-2">
+            {product.name}
+          </p>
+          <p className="mt-1 font-mono-tj text-[11px] sm:text-xs uppercase tracking-wide text-[#0a0a0a]">
+            RS. {Number(product.price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </Link>
+      </div>
+    );
+
+    if (disableEntrance) {
+      return <div className="h-full">{homeCard}</div>;
+    }
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        viewport={{ once: true }}
+        className="h-full"
+      >
+        {homeCard}
+      </motion.div>
+    );
+  }
 
   const card = (
       <div className="tj-card p-3 sm:p-4 hover:-translate-y-1 transition-transform h-full flex flex-col">
@@ -59,12 +129,12 @@ export default function ProductCard({ product, disableEntrance = false }) {
             alt={product.name}
             fill
             imgClassName={`transition-opacity duration-500 ease-out ${
-              hovering && hoverImage ? '!opacity-0' : ''
+              hovering && hoverSrc ? '!opacity-0' : ''
             }`}
           />
-          {hoverImage && (
+          {hoverSrc && (
             <AsyncImage
-              src={hoverImage}
+              src={hoverSrc}
               alt=""
               fill
               aria-hidden
@@ -73,7 +143,7 @@ export default function ProductCard({ product, disableEntrance = false }) {
             />
           )}
           <span className="absolute top-2 left-2 z-[1] bg-[var(--tj-shop)] text-black text-[10px] font-mono-tj uppercase tracking-wider px-2 py-1">
-            Modular
+            {imageTag}
           </span>
           {discount > 0 && (
             <span className="absolute top-2 right-2 z-[1] bg-black text-white text-[10px] font-mono-tj uppercase tracking-wider px-2 py-1">
@@ -124,6 +194,8 @@ export default function ProductCard({ product, disableEntrance = false }) {
                 <div className="flex flex-wrap gap-2">
                   {sizes.map((s) => {
                     const isSelected = selectedSize === s.label;
+                    const stockQty = typeof s.stock === 'number' ? s.stock : null;
+                    const showLow = stockQty != null && stockQty > 0 && stockQty < 10;
                     return (
                       <button
                         key={s.label}
@@ -132,6 +204,7 @@ export default function ProductCard({ product, disableEntrance = false }) {
                           setSelectedSize(s.label);
                           setSizeError(false);
                         }}
+                        title={showLow ? `${s.label} — only ${stockQty} left` : s.label}
                         className={`min-w-[2.5rem] h-9 px-2.5 text-xs font-bold font-display border transition-all ${
                           isSelected
                             ? 'border-black bg-black text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.15)]'
@@ -140,13 +213,41 @@ export default function ProductCard({ product, disableEntrance = false }) {
                               : 'border-black/15 text-black hover:border-black bg-white'
                         }`}
                       >
-                        {s.label}
+                        <span className="leading-none">{s.label}</span>
+                        {showLow && (
+                          <span
+                            className={`block text-[9px] font-mono-tj mt-0.5 leading-none ${
+                              isSelected ? 'text-white/80' : 'text-[#e34334]'
+                            }`}
+                          >
+                            {stockQty}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
+                {(() => {
+                  const row = sizes.find((s) => s.label === selectedSize);
+                  const qty = typeof row?.stock === 'number' ? row.stock : null;
+                  if (qty == null || qty <= 0 || qty >= 10) return null;
+                  return (
+                    <p className="text-[10px] font-mono-tj text-[#e34334] uppercase tracking-wider">
+                      Only {qty} left in {selectedSize}
+                    </p>
+                  );
+                })()}
               </div>
             )}
+
+            {!hasSizes &&
+              typeof product.stock === 'number' &&
+              product.stock > 0 &&
+              product.stock < 10 && (
+                <p className="text-[10px] font-mono-tj text-[#e34334] uppercase tracking-wider">
+                  Only {product.stock} left
+                </p>
+              )}
 
             <button
               type="button"

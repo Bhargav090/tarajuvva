@@ -5,7 +5,7 @@ import { useAdminReimagineImages } from '../../hooks/useReimagineImages';
 import { GARMENTS, TRANSFORMATIONS, getTransformationMeta } from '../../utils/constants';
 import { uploadUrl } from '../../utils/uploadUrl';
 import { Spinner } from '../../components/ui/Skeleton';
-
+import ZoomableImage from '../../components/ui/ZoomableImage';
 function SlotCard({ slot, uploading, onUpload, onRemove }) {
   const fileRef = useRef(null);
   const isUploading = uploading;
@@ -33,14 +33,19 @@ function SlotCard({ slot, uploading, onUpload, onRemove }) {
     <div className="border border-[#241621]/10 rounded-xl overflow-hidden bg-white">
       <div className="aspect-square bg-[#241621]/4 relative">
         {src ? (
-          <img src={src} alt={slot.label} className="w-full h-full object-cover" />
+          <ZoomableImage
+            src={src}
+            alt={slot.label}
+            wrapperClassName="absolute inset-0 w-full h-full"
+            imgClassName="w-full h-full object-cover"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[#241621]/25 text-xs font-body px-3 text-center">
             No image — upload square photo
           </div>
         )}
         {isUploading && (
-          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+          <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
             <Spinner size={24} />
           </div>
         )}
@@ -53,7 +58,7 @@ function SlotCard({ slot, uploading, onUpload, onRemove }) {
             type="button"
             disabled={isUploading}
             onClick={() => fileRef.current?.click()}
-            className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide bg-[#0b4722] text-white hover:bg-[#0b4722]/90 disabled:opacity-50"
+            className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 text-[10px] font-bold uppercase tracking-wide bg-[#a8e000] text-white hover:bg-[#a8e000]/90 disabled:opacity-50"
           >
             {src ? <Upload size={11} /> : <ImagePlus size={11} />}
             {src ? 'Replace' : 'Upload'}

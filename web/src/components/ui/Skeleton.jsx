@@ -45,7 +45,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }) {
   );
 }
 
-export function Spinner({ size = 24, color = '#a8c74a' }) {
+export function Spinner({ size = 24, color = '#c8ff2e' }) {
   return (
     <div
       className="border-2 border-t-transparent rounded-full animate-spin"

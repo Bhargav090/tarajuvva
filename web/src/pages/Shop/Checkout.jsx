@@ -67,8 +67,8 @@ export default function Checkout() {
           transition={{ duration: 0.35, ease: 'easeOut' }}
           className="w-full max-w-md mx-auto text-center"
         >
-          <div className="w-20 h-20 bg-[#a8c74a]/12 rounded-3xl flex items-center justify-center mx-auto mb-6">
-            <CheckCircle size={40} className="text-[#a8c74a]" />
+          <div className="w-20 h-20 bg-[#c8ff2e]/12 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={40} className="text-[#c8ff2e]" />
           </div>
           <h2 className="text-3xl font-black text-[#241621] font-display mb-3">Order Placed!</h2>
           <p className="text-[#241621]/60 font-body text-sm leading-relaxed">
@@ -145,7 +145,7 @@ export default function Checkout() {
                   value="razorpay"
                   checked={paymentMethod === 'razorpay'}
                   onChange={() => setPaymentMethod('razorpay')}
-                  className="mt-1 accent-[#a8c74a]"
+                  className="mt-1 accent-[#c8ff2e]"
                 />
                 <span>
                   <span className="text-sm font-semibold text-[#0a0a0a] font-display block">Pay online (Razorpay)</span>
@@ -161,7 +161,7 @@ export default function Checkout() {
                   value="cod"
                   checked={paymentMethod === 'cod'}
                   onChange={() => setPaymentMethod('cod')}
-                  className="mt-1 accent-[#a8c74a]"
+                  className="mt-1 accent-[#c8ff2e]"
                 />
                 <span>
                   <span className="text-sm font-semibold text-[#0a0a0a] font-display block">Cash on delivery</span>

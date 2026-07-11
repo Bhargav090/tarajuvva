@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { get, all, run } = require('../db/database');
 const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { parseImages, pickStorableImage, enrichOrderItems } = require('../lib/orderItems');
+const { parsePagination, paginationMeta } = require('../lib/pagination');
 const { resolveImagesFromRequest, saveDataUrlProductImage } = require('../lib/productImages');
 const { notifyOrder } = require('../utils/notifyEmail');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
@@ -98,22 +99,102 @@ async function resolveOrderItems(rawItems) {
       throw err;
     }
 
-    const product = await get('SELECT id, name, price, images FROM products WHERE id = ?', [id]);
+    const product = await get('SELECT id, name, price, images, stock, sizes FROM products WHERE id = ?', [id]);
     if (!product) {
       const err = new Error(`Product not found: ${id}`);
       err.status = 404;
       throw err;
     }
 
+    const sizeLabel = line.size ? String(line.size).trim() : '';
+    const sizes = parseJsonArray(product.sizes);
+    if (sizes.length > 0) {
+      if (!sizeLabel) {
+        const err = new Error(`Please select a size for ${product.name}`);
+        err.status = 400;
+        throw err;
+      }
+      const sizeRow = sizes.find((s) => String(s.label).toUpperCase() === sizeLabel.toUpperCase());
+      if (!sizeRow) {
+        const err = new Error(`Size ${sizeLabel} is not available for ${product.name}`);
+        err.status = 400;
+        throw err;
+      }
+      const sizeStock =
+        typeof sizeRow.stock === 'number'
+          ? sizeRow.stock
+          : sizeRow.available === false
+            ? 0
+            : Math.max(0, parseInt(String(product.stock ?? 0), 10) || 0);
+      if (sizeStock < qty) {
+        const err = new Error(
+          sizeStock <= 0
+            ? `${product.name} (${sizeLabel}) is out of stock`
+            : `Only ${sizeStock} left for ${product.name} (${sizeLabel})`
+        );
+        err.status = 400;
+        throw err;
+      }
+    } else {
+      const stockNum = Math.max(0, parseInt(String(product.stock ?? 0), 10) || 0);
+      if (stockNum < qty) {
+        const err = new Error(
+          stockNum <= 0 ? `${product.name} is out of stock` : `Only ${stockNum} left for ${product.name}`
+        );
+        err.status = 400;
+        throw err;
+      }
+    }
+
     const image = pickStorableImage(parseImages(product.images));
     const orderLine = { id: product.id, name: product.name, price: product.price, qty };
     if (image) orderLine.image = image;
-    if (line.size) orderLine.size = String(line.size).trim();
+    if (sizeLabel) orderLine.size = sizeLabel;
     items.push(orderLine);
     total += product.price * qty;
   }
 
   return { items, total };
+}
+
+async function decrementStockForOrder(orderItems) {
+  if (!Array.isArray(orderItems)) return;
+  for (const line of orderItems) {
+    const product = await get('SELECT id, stock, sizes FROM products WHERE id = ?', [line.id]);
+    if (!product) continue;
+    const qty = Math.max(1, parseInt(line.qty, 10) || 1);
+    const sizes = parseJsonArray(product.sizes);
+    if (sizes.length > 0 && line.size) {
+      const next = sizes.map((s) => {
+        if (String(s.label).toUpperCase() !== String(line.size).toUpperCase()) {
+          const stock =
+            typeof s.stock === 'number'
+              ? Math.max(0, Math.floor(s.stock))
+              : s.available === false
+                ? 0
+                : 1;
+          return { label: s.label, stock, available: stock > 0 };
+        }
+        const prev =
+          typeof s.stock === 'number'
+            ? s.stock
+            : s.available === false
+              ? 0
+              : Math.max(0, parseInt(String(product.stock ?? 0), 10) || 0);
+        const stock = Math.max(0, prev - qty);
+        return { label: s.label, stock, available: stock > 0 };
+      });
+      const total = next.reduce((sum, s) => sum + (Number(s.stock) || 0), 0);
+      await run('UPDATE products SET sizes = ?, stock = ? WHERE id = ?', [
+        JSON.stringify(next),
+        total,
+        product.id,
+      ]);
+    } else {
+      const prev = Math.max(0, parseInt(String(product.stock ?? 0), 10) || 0);
+      await run('UPDATE products SET stock = ? WHERE id = ?', [Math.max(0, prev - qty), product.id]);
+    }
+  }
 }
 
 /**
@@ -177,6 +258,7 @@ const parseProduct = (p) => ({
   sizes: parseJsonArray(p.sizes),
   size_type: p.size_type || null,
   garment_type: p.garment_type || null,
+  image_tag: (p.image_tag && String(p.image_tag).trim()) || 'Modular',
 });
 
 const LETTER_SIZE_RE = /^(XXS|XS|S|M|L|XL|XXL|XXXL|FREE|[A-Z]{1,4})$/i;
@@ -192,7 +274,7 @@ function normalizeGarmentType(raw) {
   return null;
 }
 
-/** Validate and normalise sizes array: [{label, available}]. */
+/** Validate and normalise sizes array: [{label, stock, available}]. */
 function normalizeSizes(raw, sizeType = null) {
   if (!raw || !Array.isArray(raw)) return [];
   const sizes = raw
@@ -200,7 +282,17 @@ function normalizeSizes(raw, sizeType = null) {
     .map((s) => {
       const labelRaw = String(s.label).trim();
       const label = sizeType === 'numeric' ? labelRaw : labelRaw.toUpperCase();
-      return { label, available: s.available !== false };
+      let stock;
+      if (typeof s.stock === 'number' && Number.isFinite(s.stock)) {
+        stock = Math.max(0, Math.floor(s.stock));
+      } else if (s.stock != null && String(s.stock).trim() !== '') {
+        stock = Math.max(0, parseInt(String(s.stock), 10) || 0);
+      } else if (s.available === false) {
+        stock = 0;
+      } else {
+        stock = 1;
+      }
+      return { label, stock, available: stock > 0 };
     });
 
   if (sizeType === 'letter') {
@@ -210,6 +302,18 @@ function normalizeSizes(raw, sizeType = null) {
     return sizes.filter((s) => NUMERIC_SIZE_RE.test(s.label));
   }
   return sizes;
+}
+
+function totalStockFromSizes(sizeList, fallbackStock) {
+  if (Array.isArray(sizeList) && sizeList.length > 0) {
+    return sizeList.reduce((sum, s) => sum + (Number(s.stock) || 0), 0);
+  }
+  return Math.max(0, parseInt(String(fallbackStock ?? 100), 10) || 0) || 100;
+}
+
+function normalizeImageTag(raw) {
+  const t = String(raw ?? 'Modular').trim();
+  return t || 'Modular';
 }
 
 function validateProductSizes(sizeType, garmentType, sizes) {
@@ -286,6 +390,7 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   if (!category || !String(category).trim()) return res.status(400).json({ success: false, message: 'Category is required' });
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
+  const imageTag = normalizeImageTag(parsed.image_tag);
   const sizeType = normalizeSizeType(parsed.size_type);
   const garmentType = normalizeGarmentType(parsed.garment_type);
   let sizeList;
@@ -295,11 +400,11 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
   }
-  const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
+  const stockNum = totalStockFromSizes(sizeList, stock);
   const id = uuidv4();
   try {
     await run(
-      `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,stock,sizes,size_type,garment_type,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,image_tag,stock,sizes,size_type,garment_type,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         id,
         String(name).trim(),
@@ -310,6 +415,7 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
         JSON.stringify(ways),
         JSON.stringify(imgList),
         JSON.stringify(tagList),
+        imageTag,
         stockNum,
         JSON.stringify(sizeList),
         sizeList.length ? sizeType : null,
@@ -345,6 +451,7 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
   if (!category || !String(category).trim()) return res.status(400).json({ success: false, message: 'Category is required' });
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
+  const imageTag = normalizeImageTag(parsed.image_tag);
   const sizeType = normalizeSizeType(parsed.size_type);
   const garmentType = normalizeGarmentType(parsed.garment_type);
   let sizeList;
@@ -354,10 +461,10 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
   }
-  const stockNum = Math.max(0, parseInt(String(stock ?? 100), 10) || 0) || 100;
+  const stockNum = totalStockFromSizes(sizeList, stock);
   try {
     await run(
-      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=? WHERE id=?`,
+      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=? WHERE id=?`,
       [
         String(name).trim(),
         priceNum,
@@ -367,6 +474,7 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
         JSON.stringify(ways),
         JSON.stringify(imgList),
         JSON.stringify(tagList),
+        imageTag,
         stockNum,
         JSON.stringify(sizeList),
         sizeList.length ? sizeType : null,
@@ -387,13 +495,18 @@ router.delete('/products/:id', authenticateAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/** Admin only — update size availability without touching other fields. */
+/** Admin only — update size availability / stock without touching other fields. */
 router.patch('/products/:id/sizes', authenticateAdmin, async (req, res) => {
   const row = await get('SELECT id, size_type FROM products WHERE id = ?', [req.params.id]);
   if (!row) return res.status(404).json({ success: false, message: 'Product not found' });
   const sizeList = normalizeSizes(req.body.sizes, row.size_type);
-  await run('UPDATE products SET sizes = ? WHERE id = ?', [JSON.stringify(sizeList), req.params.id]);
-  res.json({ success: true, sizes: sizeList });
+  const stockNum = totalStockFromSizes(sizeList, 0);
+  await run('UPDATE products SET sizes = ?, stock = ? WHERE id = ?', [
+    JSON.stringify(sizeList),
+    stockNum,
+    req.params.id,
+  ]);
+  res.json({ success: true, sizes: sizeList, stock: stockNum });
 });
 
 // ── ORDERS ────────────────────────────────────────────────────────────────────
@@ -485,6 +598,12 @@ router.post('/orders', authenticateUser, async (req, res) => {
     ]
   );
 
+  try {
+    await decrementStockForOrder(orderItems);
+  } catch (err) {
+    console.error('[shop] stock decrement failed:', err);
+  }
+
   const row = await get('SELECT * FROM orders WHERE id=?', [id]);
   const itemsWithImages = await enrichOrderItems(orderItems, get);
   notifyOrder(row).catch(() => {});
@@ -531,6 +650,13 @@ router.post('/orders/:id/razorpay/verify', authenticateUser, async (req, res) =>
     [razorpay_order_id, razorpay_payment_id, req.params.id]
   );
 
+  try {
+    const paidItems = JSON.parse(order.items || '[]');
+    await decrementStockForOrder(paidItems);
+  } catch (err) {
+    console.error('[shop] stock decrement after payment failed:', err);
+  }
+
   const updated = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
   const itemsWithImages = await enrichOrderItems(JSON.parse(updated.items), get);
   notifyOrder(updated).catch(() => {});
@@ -545,21 +671,34 @@ router.post('/orders/:id/razorpay/verify', authenticateUser, async (req, res) =>
 router.get('/orders', authenticateAdmin, async (req, res) => {
   try {
     const { status } = req.query;
-    let q = 'SELECT * FROM orders WHERE 1=1';
+    const { page, limit, offset } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
+    const where = [];
     const params = [];
     if (status) {
-      q += ' AND status=?';
+      where.push('status = ?');
       params.push(status);
     }
-    q += ' ORDER BY created_at DESC';
-    const rows = await all(q, params);
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const countRow = await get(`SELECT COUNT(*) AS total FROM orders ${whereSql}`, params);
+    const total = Number(countRow?.total) || 0;
+
+    const rows = await all(
+      `SELECT * FROM orders ${whereSql} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+      params
+    );
+
     const orders = await Promise.all(
       rows.map(async (o) => ({
         ...o,
         items: await enrichOrderItems(JSON.parse(o.items ?? '[]'), get),
       }))
     );
-    res.json({ success: true, orders });
+    res.json({
+      success: true,
+      orders,
+      pagination: paginationMeta({ page, limit, total }),
+    });
   } catch (err) {
     console.error('[shop] GET /orders failed:', err);
     res.status(500).json({ success: false, message: err.message || 'Failed to load orders' });

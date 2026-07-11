@@ -35,7 +35,7 @@ export function needsReimaginePayment(isCustomize, details, price) {
   return Number(price) > 0;
 }
 
-export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
+export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,6 +55,7 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
   const step = isCustomize ? (phase === 'payment' ? 4 : 3) : parseStep(searchParams.get('step'));
   const garment = searchParams.get('garment') || '';
   const transformation = searchParams.get('transformation') || '';
+  const conversionId = searchParams.get('conversion') || '';
 
   const [files, setFiles] = useState([]);
   const [details, setDetails] = useState(emptyDetails);
@@ -62,6 +63,8 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
   const [done, setDone] = useState(false);
   const [doneCallback, setDoneCallback] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
+
+  const payPrice = isCustomize ? sessionPrice : remakePrice;
 
   const goToStep = useCallback(
     (newStep, extra = {}, { replace = false } = {}) => {
@@ -77,6 +80,10 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
       if ('transformation' in extra) {
         if (extra.transformation) params.set('transformation', extra.transformation);
         else params.delete('transformation');
+      }
+      if ('conversion' in extra) {
+        if (extra.conversion) params.set('conversion', extra.conversion);
+        else params.delete('conversion');
       }
 
       setSearchParams(params, { replace });
@@ -102,9 +109,14 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
 
   useEffect(() => {
     if (done || isCustomize) return;
+    // Remake no longer uses an intermediate payment step — open Razorpay from details
+    if (step === 4) {
+      goToStep(3, {}, { replace: true });
+      return;
+    }
     if (step === 1 && !garment) {
       setSearchParams({}, { replace: true });
-    } else if ((step === 3 || step === 4) && (!garment || !transformation)) {
+    } else if (step === 3 && (!garment || !transformation || !conversionId)) {
       const params = new URLSearchParams();
       if (garment) {
         params.set('step', '1');
@@ -112,14 +124,20 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
       }
       setSearchParams(params, { replace: true });
     }
-  }, [step, garment, transformation, done, isCustomize, setSearchParams]);
+  }, [step, garment, transformation, conversionId, done, isCustomize, setSearchParams, goToStep]);
+
+  // Customize: drop legacy ?phase=payment — payment opens from the form directly
+  useEffect(() => {
+    if (!isCustomize || phase !== 'payment' || done) return;
+    setSearchParams({ mode: 'customize' }, { replace: true });
+  }, [isCustomize, phase, done, setSearchParams]);
 
   const goToPaymentPhase = useCallback(() => {
     if (isCustomize) {
       setSearchParams({ mode: 'customize', phase: 'payment' }, { replace: false });
       return;
     }
-    goToStep(4);
+    goToStep(4, {}, { replace: false });
   }, [isCustomize, setSearchParams, goToStep]);
 
   const startCustomize = useCallback(() => {
@@ -136,37 +154,41 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
 
   const goBack = useCallback(() => {
     if (isCustomize) {
-      if (phase === 'payment') {
-        setSearchParams({ mode: 'customize' }, { replace: true });
-        return;
-      }
       exitCustomize();
       return;
     }
-    if (step === 4) {
-      goToStep(3);
+    // Explicit steps — never navigate(-1); history after payment ↔ details is unreliable
+    if (step === 4 || step === 3) {
+      goToStep(1, { transformation: '', conversion: '' }, { replace: true });
       return;
     }
-    navigate(-1);
-  }, [navigate, isCustomize, exitCustomize, phase, setSearchParams, step, goToStep]);
+    if (step === 1) {
+      goToStep(0, { garment: '', transformation: '', conversion: '' }, { replace: true });
+      return;
+    }
+    setSearchParams({}, { replace: true });
+  }, [isCustomize, exitCustomize, setSearchParams, step, goToStep]);
 
   const setGarment = useCallback(
-    (id) => goToStep(1, { garment: id }),
+    (id) => goToStep(1, { garment: id, transformation: '', conversion: '' }),
     [goToStep],
   );
 
   const setTransformation = useCallback(
-    (t) => {
+    (t, conversion = null) => {
+      const convId = conversion?.id || '';
       const params = new URLSearchParams(searchParams);
       params.delete('mode');
       params.set('step', '3');
       if (garment) params.set('garment', garment);
       params.set('transformation', t);
+      if (convId) params.set('conversion', convId);
+      else params.delete('conversion');
       if (!user) {
         redirectToLogin(`/reimagine?${params.toString()}`);
         return;
       }
-      goToStep(3, { transformation: t });
+      goToStep(3, { transformation: t, conversion: convId });
     },
     [goToStep, user, redirectToLogin, garment, searchParams],
   );
@@ -201,10 +223,11 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
     return {
       garment_type: garment,
       transformation,
+      conversion_id: conversionId,
       is_custom: transformation === 'Custom' ? '1' : '0',
       ...details,
     };
-  }, [isCustomize, details, garment, transformation]);
+  }, [isCustomize, details, garment, transformation, conversionId]);
 
   const postRequest = async (extraFields = {}) => {
     const fd = new FormData();
@@ -280,6 +303,20 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
       toast.error('Enter a valid 6-digit pincode');
       return false;
     }
+    if (!String(details.notes || '').trim()) {
+      toast.error('Please add notes / description before continuing');
+      return false;
+    }
+    if (!isCustomize) {
+      if (!files.length) {
+        toast.error('Please upload at least one garment photo');
+        return false;
+      }
+      if (!String(details.pickup_date || '').trim()) {
+        toast.error('Please select a preferred pickup date');
+        return false;
+      }
+    }
     return true;
   };
 
@@ -314,11 +351,12 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
       return;
     }
 
-    if (needsReimaginePayment(isCustomize, details, sessionPrice)) {
-      goToPaymentPhase();
+    // Open Razorpay immediately — no intermediate payment screen
+    if (needsReimaginePayment(isCustomize, details, payPrice)) {
+      void onPayment();
       return;
     }
-    onSubmit(e);
+    void onSubmit(e);
   };
 
   const onSubmit = async (e) => {
@@ -332,9 +370,6 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
     setLoading(true);
     try {
       const payFields = { payment_method: 'razorpay' };
-      if (!isCustomize) {
-        payFields.payment_amount = String(sessionPrice);
-      }
       const data = await postRequest(payFields);
       if (data.requires_payment && data.razorpay) {
         await completeRazorpayPayment(data);
@@ -351,11 +386,12 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
   const onPresetContinue = (e) => {
     e?.preventDefault();
     if (!validateContactDetails()) return;
-    if (needsReimaginePayment(false, details, sessionPrice)) {
-      goToPaymentPhase();
+    // Open Razorpay immediately — no intermediate payment screen
+    if (needsReimaginePayment(false, details, payPrice)) {
+      void onPayment();
       return;
     }
-    onSubmit(e);
+    void onSubmit(e);
   };
 
   return {
@@ -371,6 +407,7 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
     setGarment,
     transformation,
     setTransformation,
+    conversionId,
     files,
     addFiles,
     removeFile,
@@ -384,6 +421,7 @@ export function useReimagineSubmit({ sessionPrice = 0 } = {}) {
     done,
     doneCallback,
     resetDone,
-    needsPayment: needsReimaginePayment(isCustomize, details, sessionPrice),
+    needsPayment: needsReimaginePayment(isCustomize, details, payPrice),
+    payPrice,
   };
 }

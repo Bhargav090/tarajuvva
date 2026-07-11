@@ -4,24 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, CheckCircle, PhoneCall } from 'lucide-react';
 import VerticalPageHero from '../../components/ui/VerticalPageHero';
 import SuccessNav from '../../components/ui/SuccessNav';
-import ReimagineFormWizard, { REIMAGINE_CONTACT_STEPS } from '../../components/reimagine/ReimagineFormWizard';
+import ReimagineFormWizard, { REIMAGINE_FORM_STEPS } from '../../components/reimagine/ReimagineFormWizard';
 import CustomizeFormWizard from '../../components/reimagine/CustomizeFormWizard';
-import ReimagineExtras from '../../components/reimagine/ReimagineExtras';
-import ReimaginePaymentStep from '../../components/reimagine/ReimaginePaymentStep';
 import {
   ReimagineRemakeCard,
   ReimagineCustomizeCard,
 } from '../../components/reimagine/ReimagineSidePanel';
 import {
-  GARMENTS,
-  TRANSFORMATIONS,
   REIMAGINE_STEP_HEADINGS,
-  getTransformationMeta,
 } from '../../utils/constants';
 import { useReimagineSubmit } from '../../hooks/useReimagineSubmit';
 import { useAuth } from '../../context/AuthContext';
-import { useReimagineImages } from '../../hooks/useReimagineImages';
 import { useReimagineCustomizeSettings } from '../../hooks/useReimagineCustomize';
+import { useReimagineConversions } from '../../hooks/useReimagineConversions';
+import { uploadUrl } from '../../utils/uploadUrl';
 import reimagineVideo from '../../assets/reimagine.mov';
 import { Spinner } from '../../components/ui/Skeleton';
 
@@ -30,16 +26,24 @@ export default function Reimagine() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { settings: customizeSettings } = useReimagineCustomizeSettings();
+  const { fromOptions, optionsForFrom, conversions, loading: conversionsLoading } = useReimagineConversions();
+  const flowRef = useRef(null);
+
+  // Peek conversion id from URL for remake price before hook (search string)
+  const conversionIdPeek = new URLSearchParams(location.search).get('conversion') || '';
+  const peekedConversion = conversions.find((c) => c.id === conversionIdPeek);
+  const remakePrice = peekedConversion ? Number(peekedConversion.price) || 0 : 0;
+
   const {
     step,
     isCustomize,
     goBack,
-    exitCustomize,
     startCustomize,
     garment,
     setGarment,
     transformation,
     setTransformation,
+    conversionId,
     details,
     setDetails,
     files,
@@ -47,17 +51,31 @@ export default function Reimagine() {
     removeFile,
     onSubmit,
     onWizardComplete,
-    onPayment,
     onPresetContinue,
     loading,
     done,
     doneCallback,
     resetDone,
     needsPayment,
-    phase,
-  } = useReimagineSubmit({ sessionPrice: customizeSettings.price });
-  const { garmentImage, presetImage } = useReimagineImages();
-  const flowRef = useRef(null);
+    payPrice,
+  } = useReimagineSubmit({
+    sessionPrice: customizeSettings.price,
+    remakePrice,
+  });
+
+  const selectedConversion =
+    conversions.find((c) => c.id === conversionId) ||
+    conversions.find((c) => c.from_label === garment && c.to_label === transformation) ||
+    null;
+  const garmentLabel = selectedConversion?.from_label || garment || '';
+  const transformLabel = selectedConversion?.to_label || transformation || '';
+  const fromImage = selectedConversion?.from_image
+    ? uploadUrl(selectedConversion.from_image)
+    : '';
+  const toImage = selectedConversion?.to_image
+    ? uploadUrl(selectedConversion.to_image)
+    : '';
+  const transformOptions = optionsForFrom(garment);
 
   useLayoutEffect(() => {
     if (done) window.scrollTo({ top: 0, left: 0 });
@@ -69,8 +87,6 @@ export default function Reimagine() {
     }
   }, [step, isCustomize]);
 
-  const garmentLabel = GARMENTS.find((g) => g.id === garment)?.label ?? '';
-  const transformMeta = getTransformationMeta(transformation);
   const needsAuth = isCustomize || step === 3 || step === 4;
 
   useEffect(() => {
@@ -153,7 +169,7 @@ export default function Reimagine() {
           <AnimatePresence mode="wait">
             {isCustomize ? (
               <motion.div
-                key={phase === 'payment' ? 'customize-pay' : 'customize'}
+                key="customize"
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -12 }}
@@ -164,42 +180,32 @@ export default function Reimagine() {
                   onClick={goBack}
                   className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
                 >
-                  <ArrowLeft size={14} /> {phase === 'payment' ? 'Back to details' : 'Back to presets'}
+                  <ArrowLeft size={14} /> Back to presets
                 </button>
-                {phase === 'payment' ? (
-                  <div className="mt-8">
-                    <ReimaginePaymentStep
-                      price={customizeSettings.price}
-                      loading={loading}
-                      onBack={goBack}
-                      onPay={onPayment}
-                      title="Pay consultation fee"
-                      description="Complete payment to confirm your custom Reimagine consultation slot."
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl">Your vision. Our craft.</h2>
-                    <div className="mt-5 grid sm:grid-cols-2 gap-8 md:gap-12 lg:gap-14 items-start">
-                      <ReimagineCustomizeCard
-                        price={customizeSettings.price}
-                        feature={customizeSettings.feature}
-                        description={customizeSettings.description}
-                      />
-                      <CustomizeFormWizard
-                        details={details}
-                        setDetails={setDetails}
-                        files={files}
-                        addFiles={addFiles}
-                        removeFile={removeFile}
-                        onSubmit={onSubmit}
-                        onWizardComplete={onWizardComplete}
-                        loading={loading}
-                        submitLabel="Submit customize request"
-                      />
-                    </div>
-                  </>
-                )}
+                <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl">Your vision. Our craft.</h2>
+                <div className="mt-5 grid sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 items-start">
+                  <ReimagineCustomizeCard
+                    price={customizeSettings.price}
+                    feature={customizeSettings.feature}
+                    description={customizeSettings.description}
+                  />
+                  <CustomizeFormWizard
+                    details={details}
+                    setDetails={setDetails}
+                    files={files}
+                    addFiles={addFiles}
+                    removeFile={removeFile}
+                    onSubmit={onSubmit}
+                    onWizardComplete={onWizardComplete}
+                    loading={loading}
+                    submitLabel="Submit customize request"
+                    completeLabel={
+                      needsPayment
+                        ? `Pay ₹${Number(customizeSettings.price || 0).toLocaleString('en-IN')}`
+                        : 'Submit request'
+                    }
+                  />
+                </div>
               </motion.div>
             ) : (
               <>
@@ -217,26 +223,29 @@ export default function Reimagine() {
                     exit={{ opacity: 0, x: -16 }}
                   >
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-                      {GARMENTS.map((g) => (
+                      {fromOptions.map((g) => (
                         <button
                           key={g.id}
                           type="button"
                           data-testid={`segment-${g.id}`}
-                          onClick={() => setGarment(g.id)}
+                          onClick={() => setGarment(g.label)}
                           className="text-left tj-card group hover:-translate-y-1 transition-transform overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,0.08)] hover:shadow-[6px_6px_0_0_rgba(122,6,60,0.5)]"
                         >
                           <div className="aspect-[4/5] overflow-hidden bg-[var(--tj-bg-soft)]">
-                            <img
-                              src={garmentImage(g.id, g.image)}
-                              alt={g.label}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
+                            {g.image ? (
+                              <img
+                                src={uploadUrl(g.image)}
+                                alt={g.label}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-black/30 font-display text-2xl">{g.label}</div>
+                            )}
                           </div>
                           <div className="p-4 md:p-5 border-t border-black">
                             <p className="font-display text-xl md:text-2xl font-extrabold text-[#0a0a0a] leading-tight">
                               {g.label}
                             </p>
-                            <p className="text-sm text-black/60 mt-1 leading-snug">{g.desc}</p>
                             <span className="mt-3 md:mt-4 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/70 group-hover:text-black">
                               Pick this <ArrowRight size={12} />
                             </span>
@@ -285,24 +294,25 @@ export default function Reimagine() {
                     exit={{ opacity: 0, x: -16 }}
                   >
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 max-w-4xl">
-                      {(TRANSFORMATIONS[garment] || []).map((t) => {
-                        const meta = getTransformationMeta(t);
-                        const selected = transformation === t;
+                      {transformOptions.map((c) => {
+                        const selected = conversionId === c.id || transformation === c.to_label;
                         return (
                           <button
-                            key={t}
+                            key={c.id}
                             type="button"
-                            onClick={() => setTransformation(t)}
+                            onClick={() => setTransformation(c.to_label, c)}
                             className={`text-left tj-card group overflow-hidden transition-transform hover:-translate-y-1 ${
                               selected ? 'ring-2 ring-black ring-offset-2' : ''
                             }`}
                           >
                             <div className="aspect-square overflow-hidden bg-[var(--tj-bg-soft)] relative">
-                              <img
-                                src={presetImage(garment, t, meta.image)}
-                                alt={meta.display}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              />
+                              {c.to_image ? (
+                                <img
+                                  src={uploadUrl(c.to_image)}
+                                  alt={c.to_label}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                />
+                              ) : null}
                               {selected && (
                                 <span className="absolute top-3 right-3 w-7 h-7 bg-black text-white flex items-center justify-center rounded-full">
                                   <CheckCircle size={16} />
@@ -311,9 +321,11 @@ export default function Reimagine() {
                             </div>
                             <div className="p-4 md:p-5 border-t border-black">
                               <p className="font-display text-lg md:text-xl font-extrabold text-[#0a0a0a] leading-tight">
-                                {meta.display}
+                                {c.to_label}
                               </p>
-                              <p className="text-sm text-black/60 mt-1 leading-snug">{meta.blurb}</p>
+                              <p className="text-sm text-black/60 mt-1 leading-snug">
+                                ₹{Number(c.price).toLocaleString('en-IN')}
+                              </p>
                               <span className="mt-3 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-black/70 group-hover:text-black">
                                 Pick this <ArrowRight size={12} />
                               </span>
@@ -338,7 +350,7 @@ export default function Reimagine() {
                     initial={{ opacity: 0, x: 16 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -16 }}
-                    className="max-w-5xl w-full"
+                    className="max-w-6xl w-full"
                   >
                     <button
                       type="button"
@@ -347,66 +359,36 @@ export default function Reimagine() {
                     >
                       <ArrowLeft size={14} /> Change preset
                     </button>
-                    <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl">
+                    <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl sm:max-w-[calc(50%-0.5rem)]">
                       Tell us about your piece
                     </h2>
-                    <div className="mt-5 grid sm:grid-cols-2 gap-8 md:gap-12 lg:gap-14 items-start">
+                    <div className="mt-5 grid sm:grid-cols-2 gap-8 md:gap-10 lg:gap-12 items-start">
                       <ReimagineRemakeCard
                         garmentLabel={garmentLabel}
-                        transformLabel={transformMeta.display}
-                        blurb={transformMeta.blurb}
-                        fromImage={garmentImage(
-                          garment,
-                          GARMENTS.find((g) => g.id === garment)?.image
-                        )}
-                        toImage={presetImage(garment, transformation, transformMeta.image)}
+                        transformLabel={transformLabel}
+                        blurb={`₹${Number(selectedConversion?.price || payPrice || 0).toLocaleString('en-IN')} remake`}
+                        fromImage={fromImage}
+                        toImage={toImage}
                       />
-                      <ReimagineFormWizard
-                        details={details}
-                        setDetails={setDetails}
-                        files={files}
-                        addFiles={addFiles}
-                        removeFile={removeFile}
-                        steps={REIMAGINE_CONTACT_STEPS}
-                        onWizardComplete={onPresetContinue}
-                        loading={loading}
-                        completeLabel={needsPayment ? 'Continue to payment' : 'Submit request'}
-                      />
-                    </div>
-                    <ReimagineExtras
-                      details={details}
-                      setDetails={setDetails}
-                      files={files}
-                      addFiles={addFiles}
-                      removeFile={removeFile}
-                    />
-                  </motion.div>
-                )}
-
-                {step === 4 && (
-                  <motion.div
-                    key="s4"
-                    initial={{ opacity: 0, x: 16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -16 }}
-                    className="max-w-5xl w-full"
-                  >
-                    <button
-                      type="button"
-                      onClick={goBack}
-                      className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
-                    >
-                      <ArrowLeft size={14} /> Back to details
-                    </button>
-                    <div className="mt-8">
-                      <ReimaginePaymentStep
-                        price={customizeSettings.price}
-                        loading={loading}
-                        onBack={goBack}
-                        onPay={onPayment}
-                        title="Complete your remake request"
-                        description="Pay the session fee to submit your Reimagine request."
-                      />
+                      <div className="min-w-0">
+                        <ReimagineFormWizard
+                          key={`details-${conversionId || transformation}`}
+                          details={details}
+                          setDetails={setDetails}
+                          files={files}
+                          addFiles={addFiles}
+                          removeFile={removeFile}
+                          steps={REIMAGINE_FORM_STEPS}
+                          onWizardComplete={onPresetContinue}
+                          loading={loading}
+                          completeLabel={
+                            needsPayment
+                              ? `Pay ₹${Number(selectedConversion?.price || payPrice || 0).toLocaleString('en-IN')}`
+                              : 'Submit request'
+                          }
+                          preferGarmentStep={Boolean(String(details.notes || '').trim())}
+                        />
+                      </div>
                     </div>
                   </motion.div>
                 )}

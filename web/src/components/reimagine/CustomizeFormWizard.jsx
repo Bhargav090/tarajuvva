@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Calendar, Clock, PhoneCall } from 'lucide-react'
 import DropZone from '../ui/DropZone';
 import { useConsultationSlotDates, useConsultationSlotsForDate } from '../../hooks/useConsultationSlots';
 import { toISODateString, formatDateLabel, formatTimeLabel } from '../../utils/dates';
+import { REIMAGINE_FORM_CARD } from './formCardStyles';
 
 const FIELD =
   'w-full px-4 py-3 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm';
@@ -32,12 +33,11 @@ const STEPS = [
     type: 'schedule',
     required: true,
   },
-  { key: 'photos', label: 'Upload a photo of the garment', type: 'dropzone', required: false },
   {
     key: 'notes',
-    label: 'Notes (optional)',
-    type: 'textarea',
-    required: false,
+    label: 'Notes / description',
+    type: 'notes_with_photos',
+    required: true,
     placeholder: 'References, fit preferences, sentimental details…',
   },
 ];
@@ -95,7 +95,6 @@ export default function CustomizeFormWizard({
 
   const canNext = () => {
     if (!step.required) return true;
-    if (step.key === 'photos') return true;
     if (step.key === 'consultation_schedule') return scheduleComplete();
     const val = String(valueFor(step.key)).trim();
     if (step.key === 'pincode') return /^\d{6}$/.test(val);
@@ -161,7 +160,22 @@ export default function CustomizeFormWizard({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="tj-card p-5 md:p-6 w-full shadow-[4px_4px_0_0_rgba(0,0,0,0.06)]">
+    <form onSubmit={handleSubmit} className={REIMAGINE_FORM_CARD}>
+      <div className="flex items-center gap-1.5 mb-3 shrink-0" aria-hidden>
+        {STEPS.map((_, i) => (
+          <span
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-colors ${
+              i <= cardStep ? 'bg-black' : 'bg-black/10'
+            }`}
+          />
+        ))}
+      </div>
+      <p className="text-[0.65rem] font-mono-tj uppercase tracking-[0.16em] text-black/40 mb-3 shrink-0">
+        Step {cardStep + 1} of {STEPS.length}
+      </p>
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
       <AnimatePresence mode="wait">
         <motion.div
           key={step.key}
@@ -174,7 +188,30 @@ export default function CustomizeFormWizard({
             {step.label}{step.required && ' *'}
           </label>
 
-          {step.type === 'dropzone' ? (
+          {step.type === 'notes_with_photos' ? (
+            <div className="space-y-5">
+              <div>
+                <p className="text-[0.65rem] font-mono-tj uppercase tracking-[0.16em] text-black/45 mb-2">
+                  Upload garment photos (optional)
+                </p>
+                <DropZone files={files} onAdd={addFiles} onRemove={removeFile} variant="compact" />
+              </div>
+              <div>
+                <p className="text-[0.65rem] font-mono-tj uppercase tracking-[0.16em] text-black/45 mb-2">
+                  Describe what you want *
+                </p>
+                <textarea
+                  name="notes"
+                  value={valueFor('notes')}
+                  onChange={(e) => setDetails((p) => ({ ...p, notes: e.target.value }))}
+                  rows={4}
+                  required
+                  placeholder={step.placeholder}
+                  className={`${FIELD} resize-none`}
+                />
+              </div>
+            </div>
+          ) : step.type === 'dropzone' ? (
             <DropZone files={files} onAdd={addFiles} onRemove={removeFile} variant="compact" />
           ) : step.type === 'schedule' ? (
             <div className="space-y-4">
@@ -325,8 +362,9 @@ export default function CustomizeFormWizard({
           )}
         </motion.div>
       </AnimatePresence>
+      </div>
 
-      <div className="mt-5 flex items-center gap-3">
+      <div className="mt-4 pt-3 border-t border-black/10 flex items-center gap-3 shrink-0">
         {cardStep > 0 && (
           <button
             type="button"
@@ -351,16 +389,16 @@ export default function CustomizeFormWizard({
             disabled={loading || !canNext()}
             className="ml-auto flex-1 tj-btn-reimagine justify-center disabled:opacity-60"
           >
-            {loading ? 'Submitting…' : onWizardComplete ? completeLabel : submitLabel}
+            {loading ? 'Opening payment…' : onWizardComplete ? completeLabel : submitLabel}
           </button>
         )}
       </div>
 
       {isLast && (
-        <p className="text-xs text-black/45 mt-3 text-center">
+        <p className="text-xs text-black/45 mt-2 text-center shrink-0">
           {requestCallback
-            ? 'We&apos;ll reach out within 24 hours to schedule your call.'
-            : 'We&apos;ll confirm your consultation slot within 24 hours.'}
+            ? "We'll reach out within 24 hours to schedule your call."
+            : "We'll confirm your consultation slot within 24 hours."}
         </p>
       )}
     </form>

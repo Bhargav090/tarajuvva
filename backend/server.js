@@ -44,8 +44,17 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Serve uploaded files
+// Serve uploaded files (local disk first)
 app.use('/uploads', express.static(uploadsDir));
+
+// When using a shared remote DB, product images often live only on production.
+// Missing local files redirect there so shop/admin previews work in local dev.
+const uploadsFallbackOrigin = String(process.env.UPLOADS_FALLBACK_ORIGIN || '').replace(/\/$/, '');
+if (uploadsFallbackOrigin) {
+  app.use('/uploads', (req, res) => {
+    res.redirect(302, `${uploadsFallbackOrigin}${req.originalUrl}`);
+  });
+}
 
 // Routes
 app.use('/api/media', require('./src/routes/media'));

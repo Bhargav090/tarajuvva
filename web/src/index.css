@@ -107,7 +107,7 @@
     font-family: Outfit, Poppins, system-ui, sans-serif;
   }
   .text-gradient-green {
-    background: linear-gradient(135deg, #a8c74a, #8aab38);
+    background: linear-gradient(135deg, #c8ff2e, #a8e000);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

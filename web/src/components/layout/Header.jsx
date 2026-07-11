@@ -85,7 +85,7 @@ export default function Header({ hasTicker = false }) {
                         src={user.avatar}
                         name={user.name}
                         className="w-7 h-7 rounded-full"
-                        fallbackClassName="bg-[#a8c74a] text-[#241621] text-xs font-bold"
+                        fallbackClassName="bg-[#c8ff2e] text-[#241621] text-xs font-bold"
                       />
                       <ChevronDown size={14} className="text-[#241621]/50" />
                     </button>
@@ -106,14 +106,14 @@ export default function Header({ hasTicker = false }) {
                           <Link
                             to="/profile"
                             onClick={() => setUserMenu(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8c74a] hover:bg-gray-50 transition-colors font-body"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8e000] hover:bg-gray-50 transition-colors font-body"
                           >
                             <User size={15} /> My Profile
                           </Link>
                           <Link
                             to="/profile/orders"
                             onClick={() => setUserMenu(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8c74a] hover:bg-gray-50 transition-colors font-body"
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8e000] hover:bg-gray-50 transition-colors font-body"
                           >
                             <Package size={15} /> My Orders
                           </Link>
@@ -140,7 +140,7 @@ export default function Header({ hasTicker = false }) {
                         src={user.avatar}
                         name={user.name}
                         className="w-8 h-8 rounded-full"
-                        fallbackClassName="bg-[#a8c74a] text-[#241621] text-xs font-bold"
+                        fallbackClassName="bg-[#c8ff2e] text-[#241621] text-xs font-bold"
                       />
                     </button>
                     <AnimatePresence>
@@ -166,14 +166,14 @@ export default function Header({ hasTicker = false }) {
                             <Link
                               to="/profile"
                               onClick={() => setMobileUserMenu(false)}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8c74a] hover:bg-gray-50 transition-colors font-body"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8e000] hover:bg-gray-50 transition-colors font-body"
                             >
                               <User size={15} /> My Profile
                             </Link>
                             <Link
                               to="/profile/orders"
                               onClick={() => setMobileUserMenu(false)}
-                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8c74a] hover:bg-gray-50 transition-colors font-body"
+                              className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#241621] hover:text-[#a8e000] hover:bg-gray-50 transition-colors font-body"
                             >
                               <Package size={15} /> My Orders
                             </Link>
@@ -193,7 +193,7 @@ export default function Header({ hasTicker = false }) {
               ) : (
                 <Link
                   to="/login"
-                  className="inline-flex items-center justify-center p-2 rounded-xl text-[#241621]/70 hover:text-[#241621] hover:bg-[#241621]/6 transition-colors md:px-4 md:py-2 md:text-sm md:font-semibold md:text-[#241621] md:border-2 md:border-[#241621] md:rounded-xl md:hover:bg-[#a8c74a] md:hover:border-[#a8c74a] md:hover:text-[#241621] font-display"
+                  className="inline-flex items-center justify-center p-2 rounded-xl text-[#241621]/70 hover:text-[#241621] hover:bg-[#241621]/6 transition-colors md:px-4 md:py-2 md:text-sm md:font-semibold md:text-[#241621] md:border-2 md:border-[#241621] md:rounded-xl md:hover:bg-[#c8ff2e] md:hover:border-[#c8ff2e] md:hover:text-[#241621] font-display"
                   aria-label="Sign in"
                 >
                   <User size={20} className="md:hidden" />

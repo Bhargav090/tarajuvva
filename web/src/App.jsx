@@ -83,7 +83,7 @@ export default function App() {
                 border: '1px solid rgba(238,244,209,0.12)',
                 borderRadius: 12,
               },
-              success: { iconTheme: { primary: '#a8c74a', secondary: '#eef4d1' } },
+              success: { iconTheme: { primary: '#c8ff2e', secondary: '#eef4d1' } },
               error:   { iconTheme: { primary: '#e34334', secondary: '#eef4d1' } },
             }}
           />
@@ -107,7 +107,7 @@ export default function App() {
                 <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
                   <p className="text-8xl font-black text-[#241621]/10 font-display">404</p>
                   <p className="text-xl font-bold text-[#241621] font-display">Page not found</p>
-                  <a href="/" className="text-[#a8c74a] font-semibold hover:underline font-display">Go Home →</a>
+                  <a href="/" className="text-[#a8e000] font-semibold hover:underline font-display">Go Home →</a>
                 </div>
               } />
             </Routes>

@@ -1,18 +1,60 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ImageLightbox from './ImageLightbox';
 
 const MAX_BYTES = 4 * 1024 * 1024;
 
-export default function DropZone({ files, onAdd, onRemove, maxFiles = 5, variant = 'default' }) {
-  const onDrop = useCallback(accepted => {
-    const remaining = maxFiles - files.length;
-    onAdd(accepted.slice(0, remaining).map(f => Object.assign(f, { preview: URL.createObjectURL(f) })));
-  }, [files, maxFiles, onAdd]);
+function FileThumbs({ files, onRemove, onPreview }) {
+  if (!files.length) return null;
+  return (
+    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+      {files.map((f, i) => (
+        <div
+          key={i}
+          className="relative group overflow-hidden aspect-square bg-[var(--tj-bg-soft)] border border-black"
+        >
+          <button
+            type="button"
+            onClick={() => onPreview(f.preview)}
+            className="absolute inset-0 w-full h-full cursor-zoom-in"
+            aria-label="View photo full size"
+          >
+            <img src={f.preview} alt="" className="w-full h-full object-cover" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(i);
+            }}
+            className="absolute top-1 right-1 z-10 w-5 h-5 bg-black flex items-center justify-center opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+            aria-label="Remove photo"
+          >
+            <X size={11} className="text-white" strokeWidth={3} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-  const onDropRejected = useCallback(rejections => {
-    const tooLarge = rejections.some(r => r.errors.some(e => e.code === 'file-too-large'));
+export default function DropZone({ files, onAdd, onRemove, maxFiles = 5, variant = 'default' }) {
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+
+  const onDrop = useCallback(
+    (accepted) => {
+      const remaining = maxFiles - files.length;
+      onAdd(
+        accepted.slice(0, remaining).map((f) => Object.assign(f, { preview: URL.createObjectURL(f) }))
+      );
+    },
+    [files, maxFiles, onAdd]
+  );
+
+  const onDropRejected = useCallback((rejections) => {
+    const tooLarge = rejections.some((r) => r.errors.some((e) => e.code === 'file-too-large'));
     if (tooLarge) toast.error('Each file must be 4MB or less.');
   }, []);
 
@@ -23,6 +65,14 @@ export default function DropZone({ files, onAdd, onRemove, maxFiles = 5, variant
     maxFiles,
     maxSize: MAX_BYTES,
   });
+
+  const thumbs = (
+    <FileThumbs files={files} onRemove={onRemove} onPreview={setLightboxSrc} />
+  );
+
+  const lightbox = (
+    <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+  );
 
   if (variant === 'compact') {
     return (
@@ -43,22 +93,8 @@ export default function DropZone({ files, onAdd, onRemove, maxFiles = 5, variant
             </p>
           </div>
         </div>
-        {files.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {files.map((f, i) => (
-              <div key={i} className="relative group overflow-hidden aspect-square bg-[var(--tj-bg-soft)] border border-black">
-                <img src={f.preview} alt="" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => onRemove(i)}
-                  className="absolute top-1 right-1 w-5 h-5 bg-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X size={11} className="text-white" strokeWidth={3} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        {thumbs}
+        {lightbox}
       </div>
     );
   }
@@ -88,23 +124,8 @@ export default function DropZone({ files, onAdd, onRemove, maxFiles = 5, variant
           </div>
         </div>
       </div>
-
-      {files.length > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {files.map((f, i) => (
-            <div key={i} className="relative group overflow-hidden aspect-square bg-[var(--tj-bg-soft)] border border-black">
-              <img src={f.preview} alt="" className="w-full h-full object-cover" />
-              <button
-                type="button"
-                onClick={() => onRemove(i)}
-                className="absolute top-1 right-1 w-5 h-5 bg-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X size={11} className="text-white" strokeWidth={3} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      {thumbs}
+      {lightbox}
     </div>
   );
 }

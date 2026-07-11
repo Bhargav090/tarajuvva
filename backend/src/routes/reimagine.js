@@ -9,6 +9,11 @@ const { getReimagineCustomizeSettings } = require('../utils/siteSettings');
 const { formatSlotLabel, toISODateString, toTimeString, normalizeReimagineRequest } = require('../utils/consultationSlots');
 const { bufferToDataUrl } = require('../lib/imageDataUrl');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
+const {
+  listConversions,
+  getConversionById,
+  parseConversion,
+} = require('../lib/reimagineConversions');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -19,12 +24,6 @@ const upload = multer({
   },
 });
 
-const TRANSFORMATION_MAP = {
-  saree: ['Dress', 'Co-ord Set', 'Blouse + Skirt'],
-  kurti: ['Skirt', 'Halter Top', 'Crop Top'],
-  shirt: ['Japanese Shirt', 'Corset Back', 'Tote Bag'],
-  pant:  ['Jorts (Shorts)', 'Flared Pants', 'Skirt'],
-};
 
 async function bookConsultationSlot(requestId, slotId) {
   const booked = await run(
@@ -49,10 +48,105 @@ async function buildNotifyPayload(row, extras = {}) {
   };
 }
 
-router.get('/transformations/:garment', (req, res) => {
-  const t = TRANSFORMATION_MAP[req.params.garment.toLowerCase()];
-  if (!t) return res.status(404).json({ success: false });
-  res.json({ success: true, transformations: t });
+router.get('/conversions', async (req, res) => {
+  try {
+    const conversions = await listConversions({ activeOnly: true });
+    res.json({ success: true, conversions });
+  } catch (err) {
+    console.error('[reimagine] GET /conversions failed:', err);
+    res.status(500).json({ success: false, message: 'Could not load conversions' });
+  }
+});
+
+router.get('/admin/conversions', authenticateAdmin, async (req, res) => {
+  try {
+    const conversions = await listConversions({ activeOnly: false });
+    res.json({ success: true, conversions });
+  } catch (err) {
+    console.error('[reimagine] GET /admin/conversions failed:', err);
+    res.status(500).json({ success: false, message: 'Could not load conversions' });
+  }
+});
+
+router.post('/admin/conversions', authenticateAdmin, async (req, res) => {
+  const from_label = String(req.body.from_label || '').trim();
+  const to_label = String(req.body.to_label || '').trim();
+  if (!from_label || !to_label) {
+    return res.status(400).json({ success: false, message: 'From and to labels are required' });
+  }
+  const price = Math.max(0, parseInt(String(req.body.price ?? 0), 10) || 0);
+  const sort_order = Math.max(0, parseInt(String(req.body.sort_order ?? 0), 10) || 0);
+  const active = req.body.active === false || req.body.active === 0 || req.body.active === '0' ? 0 : 1;
+  const id = uuidv4();
+  await run(
+    `INSERT INTO reimagine_conversions
+      (id, from_label, to_label, from_image, to_image, price, sort_order, active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      from_label,
+      to_label,
+      req.body.from_image ? String(req.body.from_image).trim() : null,
+      req.body.to_image ? String(req.body.to_image).trim() : null,
+      price,
+      sort_order,
+      active,
+    ]
+  );
+  const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [id]);
+  res.status(201).json({ success: true, conversion: parseConversion(row) });
+});
+
+router.put('/admin/conversions/:id', authenticateAdmin, async (req, res) => {
+  const existing = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [req.params.id]);
+  if (!existing) return res.status(404).json({ success: false, message: 'Not found' });
+
+  const from_label = String(req.body.from_label ?? existing.from_label).trim();
+  const to_label = String(req.body.to_label ?? existing.to_label).trim();
+  if (!from_label || !to_label) {
+    return res.status(400).json({ success: false, message: 'From and to labels are required' });
+  }
+  const price = Math.max(0, parseInt(String(req.body.price ?? existing.price), 10) || 0);
+  const sort_order = Math.max(0, parseInt(String(req.body.sort_order ?? existing.sort_order), 10) || 0);
+  let active = existing.active ? 1 : 0;
+  if (req.body.active === false || req.body.active === 0 || req.body.active === '0') active = 0;
+  if (req.body.active === true || req.body.active === 1 || req.body.active === '1') active = 1;
+
+  await run(
+    `UPDATE reimagine_conversions SET
+      from_label=?, to_label=?, from_image=?, to_image=?, price=?, sort_order=?, active=?,
+      updated_at=CURRENT_TIMESTAMP
+     WHERE id=?`,
+    [
+      from_label,
+      to_label,
+      req.body.from_image != null ? String(req.body.from_image).trim() || null : existing.from_image,
+      req.body.to_image != null ? String(req.body.to_image).trim() || null : existing.to_image,
+      price,
+      sort_order,
+      active,
+      req.params.id,
+    ]
+  );
+  const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [req.params.id]);
+  res.json({ success: true, conversion: parseConversion(row) });
+});
+
+router.delete('/admin/conversions/:id', authenticateAdmin, async (req, res) => {
+  await run('DELETE FROM reimagine_conversions WHERE id = ?', [req.params.id]);
+  res.json({ success: true });
+});
+
+router.get('/transformations/:garment', async (req, res) => {
+  const garment = String(req.params.garment || '').trim().toLowerCase();
+  const conversions = await listConversions({ activeOnly: true });
+  const matches = conversions.filter((c) => c.from_label.toLowerCase() === garment);
+  if (!matches.length) return res.status(404).json({ success: false });
+  res.json({
+    success: true,
+    transformations: matches.map((c) => c.to_label),
+    conversions: matches,
+  });
 });
 
 router.post('/requests', authenticateUser, upload.array('images', 5), async (req, res) => {
@@ -70,9 +164,13 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
     request_callback,
     pickup_date,
     payment_method,
+    conversion_id,
   } = req.body;
 
-  if (!user_name?.trim() || !user_phone?.trim() || !garment_type?.trim() || !transformation?.trim()) {
+  if (!user_name?.trim() || !user_phone?.trim()) {
+    return res.status(400).json({ success: false, message: 'Missing required fields' });
+  }
+  if (!conversion_id && (!garment_type?.trim() || !transformation?.trim())) {
     return res.status(400).json({ success: false, message: 'Missing required fields' });
   }
   if (!address?.trim()) {
@@ -112,11 +210,25 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
 
   const settings = await getReimagineCustomizeSettings();
   const consultationFee = consultation ? settings.price : 0;
-  const paymentAmount = Math.max(
-    0,
-    consultation ? consultationFee : Number(req.body.payment_amount) || 0
-  );
+
+  let conversion = null;
+  if (!consultation && !callbackRequested && conversion_id) {
+    conversion = await getConversionById(String(conversion_id).trim());
+    if (!conversion || !conversion.active) {
+      return res.status(400).json({ success: false, message: 'Selected reimagine conversion is unavailable.' });
+    }
+  }
+
+  const remakePrice = conversion ? Number(conversion.price) || 0 : 0;
+  const paymentAmount = Math.max(0, consultation ? consultationFee : remakePrice);
   const wantsRazorpay = payment_method === 'razorpay' && paymentAmount > 0;
+
+  const resolvedGarment = conversion ? conversion.from_label : garment_type.trim();
+  const resolvedTransform = conversion
+    ? conversion.to_label
+    : callbackRequested
+      ? 'Customize Consultation — Callback requested'
+      : transformation.trim();
 
   let consultationDate = null;
   let consultationTime = null;
@@ -143,19 +255,17 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
   }
 
   const pickupDate = pickup_date?.trim() ? toISODateString(pickup_date.trim()) : null;
-  const transformationLabel = callbackRequested
-    ? 'Customize Consultation — Callback requested'
-    : transformation.trim();
+  const transformationLabel = resolvedTransform;
 
   const status = wantsRazorpay ? 'pending_payment' : 'pending_review';
   const paymentStatus = wantsRazorpay ? 'pending' : callbackRequested || consultationFee === 0 ? 'not_required' : 'pending';
 
   await run(
     `INSERT INTO reimagine_requests (
-      id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,notes,images,status,
+      id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,conversion_id,notes,images,status,
       is_custom,consultation_paid,consultation_slot_id,consultation_date,consultation_time,callback_requested,
       pickup_date,payment_status,consultation_fee
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id,
       user_id,
@@ -163,8 +273,9 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       user_phone.trim(),
       user_email?.trim() || null,
       address.trim(),
-      garment_type.trim(),
+      resolvedGarment,
       transformationLabel,
+      conversion ? conversion.id : null,
       notes?.trim() || null,
       JSON.stringify(images),
       status,
@@ -324,26 +435,88 @@ router.post('/requests/:id/razorpay/verify', authenticateUser, async (req, res) 
   });
 });
 
+const { parsePagination, paginationMeta } = require('../lib/pagination');
+
+/** Columns for list views — excludes heavy `images` LONGTEXT (base64 payloads). */
+const REIMAGINE_LIST_SELECT = `
+  id, user_id, user_name, user_phone, user_email, address, garment_type, transformation,
+  conversion_id, notes, status, admin_notes, pickup_date, payment_status, consultation_fee,
+  is_custom, consultation_paid, callback_requested, consultation_date, consultation_time,
+  consultation_slot_id, created_at, updated_at,
+  CASE
+    WHEN images IS NULL OR TRIM(images) IN ('', '[]', 'null') THEN 0
+    ELSE JSON_LENGTH(images)
+  END AS image_count
+`;
+
+function mapReimagineListRow(r) {
+  const normalized = normalizeReimagineRequest(r);
+  const { image_count, ...rest } = normalized;
+  return {
+    ...rest,
+    is_custom: Boolean(r.is_custom),
+    consultation_paid: Boolean(r.consultation_paid),
+    callback_requested: Boolean(r.callback_requested),
+    image_count: Number(image_count) || 0,
+    images: [],
+  };
+}
+
 router.get('/requests', authenticateAdmin, async (req, res) => {
-  const { status } = req.query;
-  let q = 'SELECT * FROM reimagine_requests WHERE 1=1';
-  const params = [];
-  if (status) { q += ' AND status=?'; params.push(status); }
-  q += ' ORDER BY created_at DESC';
-  const rows = await all(q, params);
-  res.json({
-    success: true,
-    requests: rows.map((r) => {
-      const normalized = normalizeReimagineRequest(r);
-      return {
-        ...normalized,
-        is_custom: Boolean(r.is_custom),
-        consultation_paid: Boolean(r.consultation_paid),
-        callback_requested: Boolean(r.callback_requested),
-        images: JSON.parse(r.images || '[]'),
-      };
-    }),
-  });
+  try {
+    const { status } = req.query;
+    const { page, limit, offset } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
+    const where = [];
+    const params = [];
+    if (status) {
+      where.push('status = ?');
+      params.push(status);
+    }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    const countRow = await get(
+      `SELECT COUNT(*) AS total FROM reimagine_requests ${whereSql}`,
+      params
+    );
+    const total = Number(countRow?.total) || 0;
+
+    const rows = await all(
+      `SELECT ${REIMAGINE_LIST_SELECT}
+       FROM reimagine_requests
+       ${whereSql}
+       ORDER BY created_at DESC
+       LIMIT ${limit} OFFSET ${offset}`,
+      params
+    );
+
+    res.json({
+      success: true,
+      requests: rows.map(mapReimagineListRow),
+      pagination: paginationMeta({ page, limit, total }),
+    });
+  } catch (err) {
+    console.error('[reimagine] GET /requests failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to load requests' });
+  }
+});
+
+/** Lazy-load garment photos for one request (avoids shipping all base64 on list). */
+router.get('/requests/:id/images', authenticateAdmin, async (req, res) => {
+  try {
+    const row = await get('SELECT id, images FROM reimagine_requests WHERE id = ?', [req.params.id]);
+    if (!row) return res.status(404).json({ success: false, message: 'Request not found' });
+    let images = [];
+    try {
+      images = JSON.parse(row.images || '[]');
+      if (!Array.isArray(images)) images = [];
+    } catch {
+      images = [];
+    }
+    res.json({ success: true, id: row.id, images });
+  } catch (err) {
+    console.error('[reimagine] GET /requests/:id/images failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to load images' });
+  }
 });
 
 router.patch('/requests/:id/status', authenticateAdmin, async (req, res) => {

@@ -8,6 +8,7 @@ import { Input, Textarea } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
+import ZoomableImage, { ZoomableImageRow } from '../../components/ui/ZoomableImage';
 
 const MAX_REVIEW_IMAGES = 3;
 
@@ -184,7 +185,7 @@ export default function TestimonialsTab() {
         {editingId && (
           <div className="flex items-center justify-between pb-3 border-b border-[#241621]/8">
             <span className="text-sm font-bold text-[#241621] font-display flex items-center gap-2">
-              <Pencil size={14} className="text-[#0b4722]" /> Editing testimonial
+              <Pencil size={14} className="text-[#a8e000]" /> Editing testimonial
             </span>
             <button type="button" onClick={resetForm} className="text-xs text-[#e34334] font-semibold hover:underline">
               Cancel edit
@@ -243,9 +244,12 @@ export default function TestimonialsTab() {
                     onChange={(e) => onFilePick(i, e)}
                   />
                   {slot.preview ? (
-                    <div className="w-20 h-20 rounded-xl overflow-hidden border-2 border-[#241621]/15 bg-white shrink-0">
-                      <img src={slot.preview} alt="" className="w-full h-full object-cover object-center" />
-                    </div>
+                    <ZoomableImage
+                      src={slot.preview}
+                      alt={`Review photo ${i + 1}`}
+                      wrapperClassName="w-20 h-20 rounded-xl overflow-hidden border-2 border-[#241621]/15 bg-white shrink-0"
+                      imgClassName="w-full h-full object-cover object-center"
+                    />
                   ) : (
                     <div className="w-20 h-20 rounded-xl border-2 border-dashed border-[#241621]/25 flex items-center justify-center text-[10px] font-bold font-display text-[#241621]/35 uppercase">
                       Empty
@@ -312,22 +316,22 @@ export default function TestimonialsTab() {
                     {t.name} · {t.city}
                     {!t.is_active && <span className="ml-2 text-[10px] uppercase text-[#e34334]">Hidden</span>}
                     {paths.length > 0 && (
-                      <span className="ml-2 text-[10px] uppercase text-[#0b4722]">{paths.length} photo{paths.length > 1 ? 's' : ''}</span>
+                      <span className="ml-2 text-[10px] uppercase text-[#a8e000]">{paths.length} photo{paths.length > 1 ? 's' : ''}</span>
                     )}
                   </p>
                   <p className="text-xs text-[#241621]/55 font-body line-clamp-2 mt-0.5">&ldquo;{t.quote}&rdquo;</p>
                   {paths.length > 0 && (
-                    <div className="flex gap-2 mt-2">
-                      {paths.map((p, i) => (
-                        <div key={i} className="w-10 h-10 rounded-lg overflow-hidden border border-[#241621]/10">
-                          <img src={uploadUrl(p)} alt="" className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                    </div>
+                    <ZoomableImageRow
+                      images={paths}
+                      getSrc={(p) => uploadUrl(p)}
+                      getAlt={(_, i) => `Review photo ${i + 1}`}
+                      className="mt-2"
+                      thumbClassName="w-10 h-10 rounded-lg object-cover border border-[#241621]/10"
+                    />
                   )}
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <button type="button" onClick={() => startEdit(t)} className="p-2 rounded-lg hover:bg-[#0b4722]/10 text-[#0b4722]" aria-label="Edit">
+                  <button type="button" onClick={() => startEdit(t)} className="p-2 rounded-lg hover:bg-[#a8e000]/10 text-[#a8e000]" aria-label="Edit">
                     <Pencil size={15} />
                   </button>
                   <button type="button" onClick={() => setDeleteId(t.id)} className="p-2 rounded-lg hover:bg-[#e34334]/10 text-[#e34334]" aria-label="Delete">

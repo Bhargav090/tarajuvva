@@ -7,7 +7,7 @@ export default function PageBanner({ badge, badgeColor, title, subtitle, childre
   return (
     <section
       className="px-4 pt-6 pb-10 sm:pt-8 sm:pb-12"
-      style={{ background: darkBg ? '#a8c74a' : '#ffffff' }}
+      style={{ background: darkBg ? '#c8ff2e' : '#ffffff' }}
     >
       <div className="max-w-5xl mx-auto">
         {badge && (

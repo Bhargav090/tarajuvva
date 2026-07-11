@@ -9,8 +9,10 @@ const { authenticateAdmin } = require('../middleware/auth');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const TOKEN_TTL = process.env.JWT_EXPIRES_IN || '90d';
+
 const signToken = (user) =>
-  jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: TOKEN_TTL });
 
 const safeUser = (u) => ({ id: u.id, name: u.name, email: u.email, avatar: u.avatar, phone: u.phone, address: u.address, role: u.role, created_at: u.created_at });
 
@@ -47,7 +49,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { id: adminRow.id, username: adminRow.username, role: 'admin' },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: TOKEN_TTL }
     );
     return res.json({ success: true, token, admin: { username: adminRow.username, role: 'admin' } });
   }
@@ -63,7 +65,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign(
       { id: row.id, username: row.username, role: 'admin' },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: TOKEN_TTL }
     );
     return res.json({ success: true, token, admin: { username: row.username, role: 'admin' } });
   }

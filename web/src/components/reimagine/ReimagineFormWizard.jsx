@@ -2,42 +2,51 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import DropZone from '../ui/DropZone';
+import { REIMAGINE_FORM_CARD } from './formCardStyles';
 
 const FIELD =
-  'w-full px-4 py-3 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm';
+  'w-full px-3.5 py-2.5 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm';
 
+const LABEL = 'block text-[0.65rem] font-mono-tj uppercase tracking-[0.16em] text-black/45 mb-1.5';
+
+/**
+ * Short section slides (same pattern as before the one-field experiment):
+ * 1) name / email / phone  2) address / pincode  3) photos  4) notes / pickup
+ */
 export const REIMAGINE_FORM_STEPS = [
-  { key: 'user_name', label: 'Full name', type: 'text', required: true, placeholder: 'Your name' },
-  { key: 'user_email', label: 'Email', type: 'email', required: false, placeholder: 'you@inbox.com' },
-  { key: 'user_phone', label: 'Phone', type: 'tel', required: true, placeholder: '+91 …' },
-  {
-    key: 'address',
-    label: 'Pickup / delivery address',
-    type: 'textarea',
-    required: true,
-    placeholder: 'House / flat, street, area, city, state',
-  },
-  {
-    key: 'pincode',
-    label: 'Pincode',
-    type: 'pincode',
-    required: true,
-    placeholder: '6-digit PIN',
-  },
-  { key: 'photos', label: 'Upload a photo of the garment', type: 'dropzone', required: false },
-  {
-    key: 'notes',
-    label: 'Notes (optional)',
-    type: 'textarea',
-    required: false,
-    placeholder: 'Any specifics? Sentimental value? Don\'t touch the buttons?',
-  },
+  { key: 'identity', label: 'Who should we contact?', type: 'identity', required: true },
+  { key: 'delivery', label: 'Where do we pick up?', type: 'delivery', required: true },
+  { key: 'photos', label: 'Upload garment photos', type: 'photos', required: true },
+  { key: 'garment_notes', label: 'Notes & pickup', type: 'garment_notes', required: true },
 ];
 
-/** Contact-only steps for preset remake (photos/notes/pickup live on the page). */
-export const REIMAGINE_CONTACT_STEPS = REIMAGINE_FORM_STEPS.filter(
-  (s) => !['photos', 'notes'].includes(s.key)
-);
+/** @deprecated alias */
+export const REIMAGINE_CONTACT_STEPS = REIMAGINE_FORM_STEPS;
+
+function identityComplete(details) {
+  return Boolean(
+    String(details.user_name || '').trim() && String(details.user_phone || '').trim()
+  );
+}
+
+function deliveryComplete(details) {
+  return Boolean(
+    String(details.address || '').trim() &&
+      /^\d{6}$/.test(String(details.pincode || '').trim())
+  );
+}
+
+function contactComplete(details) {
+  return identityComplete(details) && deliveryComplete(details);
+}
+
+function stepHint(type) {
+  if (type === 'identity') return ' · You';
+  if (type === 'delivery') return ' · Address';
+  if (type === 'photos') return ' · Photos';
+  if (type === 'garment_notes') return ' · Details';
+  return '';
+}
 
 export default function ReimagineFormWizard({
   details,
@@ -51,24 +60,35 @@ export default function ReimagineFormWizard({
   submitLabel = 'Submit remake request',
   steps = REIMAGINE_FORM_STEPS,
   completeLabel = 'Continue',
+  preferGarmentStep = false,
 }) {
-  const [cardStep, setCardStep] = useState(0);
+  const lastIdx = Math.max(0, steps.length - 1);
+  const [cardStep, setCardStep] = useState(() => {
+    if (preferGarmentStep && contactComplete(details) && lastIdx > 0) return lastIdx;
+    return 0;
+  });
   const step = steps[cardStep];
-  const isLast = cardStep === steps.length - 1;
+  const isLast = cardStep === lastIdx;
 
   const valueFor = (key) => details[key] ?? '';
+  const setField = (key) => (e) => setDetails((p) => ({ ...p, [key]: e.target.value }));
 
   const canNext = () => {
-    if (!step.required) return true;
-    if (step.key === 'photos') return true;
-    const val = String(valueFor(step.key)).trim();
-    if (step.key === 'pincode') return /^\d{6}$/.test(val);
-    return val.length > 0;
+    if (!step) return false;
+    if (step.type === 'identity') return identityComplete(details);
+    if (step.type === 'delivery') return deliveryComplete(details);
+    if (step.type === 'photos') return Array.isArray(files) && files.length > 0;
+    if (step.type === 'garment_notes') {
+      return (
+        String(valueFor('notes')).trim().length > 0 &&
+        String(valueFor('pickup_date')).trim().length > 0
+      );
+    }
+    return true;
   };
 
   const goNext = () => {
-    if (!canNext()) return;
-    if (isLast) return;
+    if (!canNext() || isLast) return;
     setCardStep((s) => s + 1);
   };
 
@@ -89,64 +109,151 @@ export default function ReimagineFormWizard({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="tj-card p-5 md:p-6 w-full shadow-[4px_4px_0_0_rgba(0,0,0,0.06)]">
+    <form onSubmit={handleSubmit} className={REIMAGINE_FORM_CARD}>
+      <div className="flex items-center gap-1.5 mb-3 shrink-0" aria-hidden>
+        {steps.map((_, i) => (
+          <span
+            key={i}
+            className={`h-1 flex-1 rounded-full transition-colors ${
+              i <= cardStep ? 'bg-black' : 'bg-black/10'
+            }`}
+          />
+        ))}
+      </div>
+      <p className="text-[0.65rem] font-mono-tj uppercase tracking-[0.16em] text-black/40 mb-3 shrink-0">
+        Step {cardStep + 1} of {steps.length}
+        {stepHint(step.type)}
+      </p>
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
       <AnimatePresence mode="wait">
         <motion.div
           key={step.key}
-          initial={{ opacity: 0, x: 12 }}
+          initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -12 }}
-          transition={{ duration: 0.2 }}
+          exit={{ opacity: 0, x: -10 }}
+          transition={{ duration: 0.18 }}
         >
-          <label className="block text-xs font-mono-tj uppercase tracking-[0.16em] text-black/60 mb-3">
-            {step.label}{step.required && ' *'}
-          </label>
+          <h3 className="font-display text-base md:text-lg font-extrabold text-[#0a0a0a] mb-3">
+            {step.label}
+          </h3>
 
-          {step.type === 'dropzone' ? (
-            <DropZone files={files} onAdd={addFiles} onRemove={removeFile} variant="compact" />
-          ) : step.type === 'textarea' ? (
-            <textarea
-              name={step.key}
-              value={valueFor(step.key)}
-              onChange={(e) => setDetails((p) => ({ ...p, [step.key]: e.target.value }))}
-              required={step.required}
-              rows={step.key === 'address' ? 4 : 3}
-              placeholder={step.placeholder}
-              className={`${FIELD} resize-none`}
-            />
-          ) : step.type === 'pincode' ? (
-            <input
-              name={step.key}
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              value={valueFor(step.key)}
-              onChange={(e) => setDetails((p) => ({ ...p, [step.key]: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
-              required={step.required}
-              placeholder={step.placeholder}
-              className={FIELD}
-            />
-          ) : (
-            <input
-              name={step.key}
-              type={step.type}
-              value={valueFor(step.key)}
-              onChange={(e) => setDetails((p) => ({ ...p, [step.key]: e.target.value }))}
-              required={step.required}
-              placeholder={step.placeholder}
-              className={FIELD}
-            />
-          )}
+          {step.type === 'identity' ? (
+            <div className="space-y-3">
+              <div>
+                <label className={LABEL}>Full name *</label>
+                <input
+                  name="user_name"
+                  type="text"
+                  value={valueFor('user_name')}
+                  onChange={setField('user_name')}
+                  required
+                  placeholder="Your name"
+                  className={FIELD}
+                />
+              </div>
+              <div>
+                <label className={LABEL}>Email</label>
+                <input
+                  name="user_email"
+                  type="email"
+                  value={valueFor('user_email')}
+                  onChange={setField('user_email')}
+                  placeholder="you@inbox.com"
+                  className={FIELD}
+                />
+              </div>
+              <div>
+                <label className={LABEL}>Phone *</label>
+                <input
+                  name="user_phone"
+                  type="tel"
+                  value={valueFor('user_phone')}
+                  onChange={setField('user_phone')}
+                  required
+                  placeholder="+91 …"
+                  className={FIELD}
+                />
+              </div>
+            </div>
+          ) : step.type === 'delivery' ? (
+            <div className="space-y-3">
+              <div>
+                <label className={LABEL}>Pickup / delivery address *</label>
+                <textarea
+                  name="address"
+                  value={valueFor('address')}
+                  onChange={setField('address')}
+                  required
+                  rows={2}
+                  placeholder="House / flat, street, area, city, state"
+                  className={`${FIELD} resize-none`}
+                />
+              </div>
+              <div>
+                <label className={LABEL}>Pincode *</label>
+                <input
+                  name="pincode"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  value={valueFor('pincode')}
+                  onChange={(e) =>
+                    setDetails((p) => ({
+                      ...p,
+                      pincode: e.target.value.replace(/\D/g, '').slice(0, 6),
+                    }))
+                  }
+                  required
+                  placeholder="6-digit PIN"
+                  className={`${FIELD} max-w-[9rem]`}
+                />
+              </div>
+            </div>
+          ) : step.type === 'photos' ? (
+            <div className="space-y-2">
+              <p className="text-xs text-black/50">At least one photo is required.</p>
+              <DropZone files={files} onAdd={addFiles} onRemove={removeFile} variant="compact" />
+            </div>
+          ) : step.type === 'garment_notes' ? (
+            <div className="space-y-3">
+              <div>
+                <label className={LABEL}>Notes / description *</label>
+                <textarea
+                  name="notes"
+                  value={valueFor('notes')}
+                  onChange={setField('notes')}
+                  required
+                  rows={2}
+                  placeholder="Fit preferences, sentimental details…"
+                  className={`${FIELD} resize-none`}
+                />
+              </div>
+              <div>
+                <label className={LABEL}>Preferred pickup date *</label>
+                <input
+                  type="date"
+                  name="pickup_date"
+                  value={valueFor('pickup_date')}
+                  onChange={setField('pickup_date')}
+                  required
+                  min={new Date().toISOString().slice(0, 10)}
+                  className={`${FIELD} max-w-[12rem]`}
+                />
+              </div>
+            </div>
+          ) : null}
         </motion.div>
       </AnimatePresence>
+      </div>
 
-      <div className="mt-5 flex items-center gap-3">
+      <div className="mt-4 pt-3 border-t border-black/10 flex items-center gap-3 shrink-0">
         {cardStep > 0 && (
           <button
             type="button"
             onClick={goBack}
-            className="inline-flex items-center gap-2 px-4 py-2.5 border border-black/20 text-xs font-mono-tj uppercase tracking-[0.16em] hover:border-black"
+            className="inline-flex items-center gap-2 px-3.5 py-2 border border-black/20 text-xs font-mono-tj uppercase tracking-[0.16em] hover:border-black"
           >
             <ArrowLeft size={14} /> Back
           </button>
@@ -156,7 +263,7 @@ export default function ReimagineFormWizard({
             type="button"
             onClick={goNext}
             disabled={!canNext()}
-            className="ml-auto inline-flex items-center gap-2 px-5 py-2.5 bg-black text-white text-xs font-mono-tj uppercase tracking-[0.16em] disabled:opacity-40"
+            className="ml-auto inline-flex items-center gap-2 px-5 py-2 bg-black text-white text-xs font-mono-tj uppercase tracking-[0.16em] disabled:opacity-40"
           >
             Next <ArrowRight size={14} />
           </button>
@@ -164,16 +271,18 @@ export default function ReimagineFormWizard({
           <button
             type="submit"
             disabled={loading || !canNext()}
-            className="ml-auto flex-1 tj-btn-reimagine justify-center disabled:opacity-60"
+            className="ml-auto flex-1 tj-btn-reimagine justify-center disabled:opacity-60 min-h-[2.5rem]"
           >
-            {loading ? 'Submitting…' : onWizardComplete ? completeLabel : submitLabel}
+            {loading ? 'Opening payment…' : onWizardComplete ? completeLabel : submitLabel}
           </button>
         )}
       </div>
 
-      {isLast && (
-        <p className="text-xs text-black/45 mt-3 text-center">
-          We&apos;ll respond within 24 hours with a quote and timeline.
+      {isLast && !loading && (
+        <p className="text-[0.7rem] text-black/45 mt-2 text-center leading-snug shrink-0">
+          {String(completeLabel).startsWith('Pay')
+            ? 'Secure checkout opens next.'
+            : "We'll respond within 24 hours."}
         </p>
       )}
     </form>

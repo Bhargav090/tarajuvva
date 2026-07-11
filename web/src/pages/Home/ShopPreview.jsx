@@ -1,34 +1,21 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import ProductCard from '../../components/ui/ProductCard';
 import { useProducts } from '../../hooks/useProducts';
 
-const AUTO_SLIDE_MS = 5000;
-const SWIPE_THRESHOLD_PX = 48;
+function HomeProductSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="aspect-[3/4] bg-black/5" />
+      <div className="pt-3 px-1 space-y-2">
+        <div className="h-3 bg-black/5 rounded w-3/4" />
+        <div className="h-3 bg-black/5 rounded w-1/2" />
+      </div>
+    </div>
+  );
+}
 
-const slideTransition = {
-  duration: 0.58,
-  ease: [0.22, 1, 0.36, 1],
-};
-
-const slideVariants = {
-  enter: (direction) => ({
-    x: direction > 0 ? '100%' : '-100%',
-    zIndex: 1,
-  }),
-  center: {
-    x: 0,
-    zIndex: 1,
-  },
-  exit: (direction) => ({
-    x: direction > 0 ? '-100%' : '100%',
-    zIndex: 0,
-  }),
-};
-
-function MobileProductSkeleton() {
+function DesktopProductSkeleton() {
   return (
     <div className="tj-card p-3 animate-pulse">
       <div className="aspect-[3/4] bg-black/5" />
@@ -36,154 +23,6 @@ function MobileProductSkeleton() {
         <div className="h-4 bg-black/5 rounded w-3/4" />
         <div className="h-3 bg-black/5 rounded w-full" />
       </div>
-    </div>
-  );
-}
-
-function MobileProductSlider({ products }) {
-  const [index, setIndex] = useState(0);
-  const [direction, setDirection] = useState(1);
-  const touchStartX = useRef(null);
-  const didSwipe = useRef(false);
-  const timerRef = useRef(null);
-
-  const resetAutoSlide = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (products.length <= 1) return;
-    timerRef.current = setInterval(() => {
-      setDirection(1);
-      setIndex((prev) => (prev + 1) % products.length);
-    }, AUTO_SLIDE_MS);
-  }, [products.length]);
-
-  const goNext = useCallback(() => {
-    setDirection(1);
-    setIndex((prev) => (prev + 1) % products.length);
-    resetAutoSlide();
-  }, [products.length, resetAutoSlide]);
-
-  const goPrev = useCallback(() => {
-    setDirection(-1);
-    setIndex((prev) => (prev - 1 + products.length) % products.length);
-    resetAutoSlide();
-  }, [products.length, resetAutoSlide]);
-
-  useEffect(() => {
-    setIndex(0);
-    setDirection(1);
-  }, [products.length]);
-
-  useEffect(() => {
-    resetAutoSlide();
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [resetAutoSlide]);
-
-  const goTo = (i) => {
-    if (i === index) return;
-    setDirection(i > index ? 1 : -1);
-    setIndex(i);
-    resetAutoSlide();
-  };
-
-  const onTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
-    didSwipe.current = false;
-  };
-
-  const onTouchEnd = (e) => {
-    if (touchStartX.current == null) return;
-    const delta = e.changedTouches[0].clientX - touchStartX.current;
-    touchStartX.current = null;
-    if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return;
-    didSwipe.current = true;
-    if (delta < 0) goNext();
-    else goPrev();
-  };
-
-  const onClickCapture = (e) => {
-    if (didSwipe.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      didSwipe.current = false;
-    }
-  };
-
-  const current = products[index];
-
-  return (
-    <div className="md:hidden">
-      <div className="relative w-full">
-        {products.length > 1 && (
-          <div
-            className="absolute left-3 right-3 top-3 aspect-[3/4] pointer-events-none z-10"
-          >
-            <button
-              type="button"
-              onClick={goPrev}
-              className="tj-scroll-arrow absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 pointer-events-auto"
-              aria-label="Previous product"
-            >
-              <ChevronLeft size={16} strokeWidth={2.5} />
-            </button>
-            <button
-              type="button"
-              onClick={goNext}
-              className="tj-scroll-arrow absolute right-0 top-1/2 translate-x-full -translate-y-1/2 pointer-events-auto"
-              aria-label="Next product"
-            >
-              <ChevronRight size={16} strokeWidth={2.5} />
-            </button>
-          </div>
-        )}
-
-        <div
-          className="relative w-full overflow-hidden touch-pan-y"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          onClickCapture={onClickCapture}
-        >
-          <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
-            <AnimatePresence initial={false} custom={direction} mode="sync">
-              <motion.div
-                key={current.id}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={slideTransition}
-                className="col-start-1 row-start-1 w-full will-change-transform"
-              >
-                <ProductCard product={current} disableEntrance />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-
-      {products.length > 1 && (
-        <div className="mt-5 flex items-center justify-center gap-3">
-          <div className="flex items-center gap-2">
-            {products.map((p, i) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => goTo(i)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  i === index ? 'w-7 bg-black' : 'w-2.5 bg-black/25 hover:bg-black/45'
-                }`}
-                aria-label={`View product ${i + 1}`}
-                aria-current={i === index ? 'true' : undefined}
-              />
-            ))}
-          </div>
-          <span className="text-[10px] font-mono-tj uppercase tracking-[0.14em] text-black/45 tabular-nums">
-            {index + 1}/{products.length}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
@@ -215,27 +54,50 @@ export default function ShopPreview() {
 
         {loading ? (
           <>
-            <div className="md:hidden">
-              <div className="relative w-full">
-                <MobileProductSkeleton />
-              </div>
-              <div className="mt-5 flex items-center justify-center gap-3">
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <span key={i} className="h-2.5 w-2.5 rounded-full bg-black/15" />
-                  ))}
+            <div className="md:hidden grid grid-cols-2 border border-black">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={[
+                    'min-w-0',
+                    i % 2 === 0 ? 'border-r border-black' : '',
+                    i < 2 ? 'border-b border-black' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <HomeProductSkeleton />
                 </div>
-              </div>
+              ))}
             </div>
             <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
-                <MobileProductSkeleton key={i} />
+                <DesktopProductSkeleton key={i} />
               ))}
             </div>
           </>
         ) : (
           <>
-            <MobileProductSlider products={products} />
+            {/* Mobile only: 2×2 hairline grid */}
+            <div className="md:hidden grid grid-cols-2 border border-black">
+              {products.map((p, i) => (
+                <div
+                  key={p.id}
+                  className={[
+                    'min-w-0',
+                    i % 2 === 0 ? 'border-r border-black' : '',
+                    i < 2 ? 'border-b border-black' : '',
+                    products.length === 3 && i === 2 ? 'border-r border-black' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <ProductCard product={p} variant="home" disableEntrance={i > 1} />
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop / tablet: original product cards */}
             <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.map((p) => (
                 <ProductCard key={p.id} product={p} />

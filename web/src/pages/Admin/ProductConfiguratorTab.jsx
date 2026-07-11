@@ -10,6 +10,7 @@ import { Spinner } from '../../components/ui/Skeleton';
 import { SHOP_CATEGORIES } from '../../utils/constants';
 import { productHeroImage, resolveProductImageSrc } from '../../utils/productImage';
 import { LETTER_SIZES, NUMERIC_SIZES, inferGarmentType } from '../../utils/sizeConstants';
+import ZoomableImage from '../../components/ui/ZoomableImage';
 
 const CATEGORIES = SHOP_CATEGORIES.filter(c => c.value).map(c => c.value);
 
@@ -30,7 +31,7 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
     if (exists) {
       onSizesChange(sizes.filter(s => s.label !== label));
     } else {
-      onSizesChange([...sizes, { label, available: true }]);
+      onSizesChange([...sizes, { label, available: true, stock: 1 }]);
     }
   };
 
@@ -45,8 +46,17 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
       toast.error('Numeric sizes use numbers like 28, 30, 32');
       return;
     }
-    onSizesChange([...sizes, { label, available: true }]);
+    onSizesChange([...sizes, { label, available: true, stock: 1 }]);
     setCustom('');
+  };
+
+  const setSizeStock = (label, stockRaw) => {
+    const stock = Math.max(0, parseInt(String(stockRaw), 10) || 0);
+    onSizesChange(
+      sizes.map((s) =>
+        s.label === label ? { ...s, stock, available: stock > 0 } : s
+      )
+    );
   };
 
   return (
@@ -64,7 +74,7 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
               onClick={() => switchType(opt.id)}
               className={`px-3.5 py-2 text-xs font-bold font-display border transition-all ${
                 sizeType === opt.id
-                  ? 'bg-[#0b4722] text-white border-[#0b4722]'
+                  ? 'bg-[#a8e000] text-white border-[#a8e000]'
                   : 'bg-white text-[#341631]/60 border-[#341631]/20 hover:border-[#341631]/50'
               }`}
             >
@@ -103,7 +113,7 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
                 onClick={() => toggle(label)}
                 className={`px-3.5 py-1.5 text-xs font-bold font-display border transition-all ${
                   active
-                    ? 'bg-[#0b4722] text-white border-[#0b4722]'
+                    ? 'bg-[#a8e000] text-white border-[#a8e000]'
                     : 'bg-white text-[#341631]/60 border-[#341631]/20 hover:border-[#341631]/50'
                 }`}
               >
@@ -118,7 +128,7 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
             onChange={e => setCustom(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
             placeholder={sizeType === 'numeric' ? 'Custom number (e.g. 48)' : 'Custom (e.g. XXXL)'}
-            className="px-3 py-2 text-xs border border-[#341631]/20 bg-white text-[#341631] placeholder:text-[#341631]/35 focus:outline-none focus:border-[#0b4722] w-48"
+            className="px-3 py-2 text-xs border border-[#341631]/20 bg-white text-[#341631] placeholder:text-[#341631]/35 focus:outline-none focus:border-[#a8e000] w-48"
           />
           <button type="button" onClick={addCustom}
             className="px-3 py-2 text-xs font-bold bg-white border border-[#341631]/20 hover:border-[#341631]/50 text-[#341631] flex items-center gap-1">
@@ -126,15 +136,32 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
           </button>
         </div>
         {sizes.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 space-y-2">
             {sizes.map(s => (
-              <span key={s.label} className="inline-flex items-center gap-1.5 bg-[#0b4722]/8 border border-[#0b4722]/20 px-2.5 py-1 text-xs font-bold text-[#0b4722] font-display">
-                {s.label}
-                <button type="button" onClick={() => onSizesChange(sizes.filter(x => x.label !== s.label))} className="hover:text-[#e34334]">
+              <div
+                key={s.label}
+                className="flex flex-wrap items-center gap-2 bg-[#a8e000]/8 border border-[#a8e000]/20 px-2.5 py-2 text-xs font-bold text-[#a8e000] font-display"
+              >
+                <span className="min-w-[2.5rem]">{s.label}</span>
+                <label className="flex items-center gap-1.5 font-normal text-[#341631]/70">
+                  Stock
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={s.stock ?? (s.available === false ? 0 : 1)}
+                    onChange={(e) => setSizeStock(s.label, e.target.value)}
+                    className="w-16 px-2 py-1 border border-[#341631]/20 bg-white text-[#341631] font-mono text-xs"
+                  />
+                </label>
+                <button type="button" onClick={() => onSizesChange(sizes.filter(x => x.label !== s.label))} className="ml-auto hover:text-[#e34334]">
                   <X size={10} />
                 </button>
-              </span>
+              </div>
             ))}
+            <p className="text-[11px] font-normal text-[#341631]/45 font-body">
+              Total stock: {sizes.reduce((sum, s) => sum + (Number(s.stock) || 0), 0)}
+            </p>
           </div>
         )}
       </div>
@@ -148,9 +175,13 @@ function ProductSizeControls({ product, authHeader, onUpdate }) {
   const [saving, setSaving] = useState(false);
 
   const toggle = async (label) => {
-    const updated = sizes.map(s =>
-      s.label === label ? { ...s, available: !s.available } : s
-    );
+    const updated = sizes.map((s) => {
+      if (s.label !== label) return s;
+      const currentStock =
+        typeof s.stock === 'number' ? s.stock : s.available === false ? 0 : 1;
+      const nextStock = currentStock > 0 ? 0 : 1;
+      return { ...s, stock: nextStock, available: nextStock > 0 };
+    });
     setSizes(updated);
     setSaving(true);
     try {
@@ -170,22 +201,27 @@ function ProductSizeControls({ product, authHeader, onUpdate }) {
   return (
     <div className="flex flex-wrap gap-1.5 items-center">
       {saving && <Spinner size={12} />}
-      {sizes.map(s => (
+      {sizes.map(s => {
+        const inStock = typeof s.stock === 'number' ? s.stock > 0 : s.available !== false;
+        const qty = typeof s.stock === 'number' ? s.stock : inStock ? 1 : 0;
+        return (
         <button
           key={s.label}
           type="button"
           onClick={() => toggle(s.label)}
-          title={s.available ? 'Click to mark Out of Stock' : 'Click to mark Available'}
+          title={inStock ? 'Click to mark Out of Stock' : 'Click to mark Available'}
           className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold font-display border transition-all ${
-            s.available
-              ? 'bg-[#0b4722] text-white border-[#0b4722] hover:bg-[#e34334] hover:border-[#e34334]'
-              : 'bg-[#e34334]/10 text-[#e34334] border-[#e34334]/30 line-through hover:bg-[#0b4722]/10 hover:text-[#0b4722] hover:border-[#0b4722]/30 hover:no-underline'
+            inStock
+              ? 'bg-[#a8e000] text-white border-[#a8e000] hover:bg-[#e34334] hover:border-[#e34334]'
+              : 'bg-[#e34334]/10 text-[#e34334] border-[#e34334]/30 line-through hover:bg-[#a8e000]/10 hover:text-[#a8e000] hover:border-[#a8e000]/30 hover:no-underline'
           }`}
         >
-          {s.available ? <ToggleRight size={10} /> : <ToggleLeft size={10} />}
+          {inStock ? <ToggleRight size={10} /> : <ToggleLeft size={10} />}
           {s.label}
+          <span className="opacity-80 font-mono">×{qty}</span>
         </button>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -214,6 +250,7 @@ const emptyForm = () => ({
   description: '',
   waysRaw: '',
   tagsRaw: '',
+  image_tag: 'Modular',
   stock: '100',
   featured: false,
   sizes: [],
@@ -278,7 +315,10 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
     description: form.description.trim() || null,
     ways_to_wear,
     tags,
-    stock: stock || 100,
+    image_tag: (form.image_tag || 'Modular').trim() || 'Modular',
+    stock: sizes.length
+      ? sizes.reduce((sum, s) => sum + (Number(s.stock) || 0), 0)
+      : stock || 100,
     sizes,
     size_type: sizes.length ? sizeType : null,
     garment_type: sizes.length ? garmentType : null,
@@ -398,6 +438,7 @@ export default function ProductConfiguratorTab() {
       description: p.description || '',
       waysRaw: (p.ways_to_wear || []).join('\n'),
       tagsRaw: (p.tags || []).join(', '),
+      image_tag: p.image_tag || 'Modular',
       stock: String(p.stock ?? 100),
       featured: !!p.featured,
       sizes: [],
@@ -410,7 +451,17 @@ export default function ProductConfiguratorTab() {
         retained,
       }));
     });
-    setSizes(p.sizes || []);
+    setSizes(
+      (p.sizes || []).map((s) => {
+        const stock =
+          typeof s.stock === 'number'
+            ? s.stock
+            : s.available === false
+              ? 0
+              : 1;
+        return { label: s.label, stock, available: stock > 0 };
+      })
+    );
     setSizeType(
       p.size_type ||
         (p.sizes?.[0] && /^\d{1,2}$/.test(String(p.sizes[0].label)) ? 'numeric' : 'letter')
@@ -480,7 +531,7 @@ export default function ProductConfiguratorTab() {
         {editingId && (
           <div className="flex items-center justify-between pb-3 border-b border-[#341631]/8">
             <span className="text-sm font-bold text-[#341631] font-display flex items-center gap-2">
-              <Pencil size={14} className="text-[#0b4722]" /> Editing product
+              <Pencil size={14} className="text-[#a8e000]" /> Editing product
             </span>
             <button type="button" onClick={resetAll} className="text-xs text-[#e34334] font-semibold hover:underline font-display">
               Cancel edit
@@ -510,7 +561,21 @@ export default function ProductConfiguratorTab() {
             placeholder="Leave empty if not on sale"
           />
         </div>
-        <Input label="Stock count" name="stock" type="number" min="0" step="1" value={form.stock} onChange={onChange} required />
+        <Input
+          label="Image tag (shown on product card)"
+          name="image_tag"
+          value={form.image_tag}
+          onChange={onChange}
+          placeholder="Modular"
+        />
+        {sizes.length === 0 ? (
+          <Input label="Stock count" name="stock" type="number" min="0" step="1" value={form.stock} onChange={onChange} required />
+        ) : (
+          <p className="text-sm text-[#341631]/55 font-body">
+            Stock is managed per size below (total{' '}
+            {sizes.reduce((sum, s) => sum + (Number(s.stock) || 0), 0)}).
+          </p>
+        )}
         <Textarea
           label="Description"
           name="description"
@@ -557,17 +622,22 @@ export default function ProductConfiguratorTab() {
             <ul className="mt-4 flex flex-wrap gap-3">
               {imageSlots.map((slot, i) => (
                 <li key={slot.key} className="relative group w-28 h-36 rounded-xl overflow-hidden border border-[#341631]/12 bg-gray-50">
-                  <img src={slot.preview} alt="" className="w-full h-full object-cover" />
+                  <ZoomableImage
+                    src={slot.preview}
+                    alt={`Product image ${i + 1}`}
+                    wrapperClassName="absolute inset-0 w-full h-full"
+                    imgClassName="w-full h-full object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => removeImageSlot(slot.key)}
-                    className="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-[#341631]/85 text-[#eef4d1] flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
+                    className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-lg bg-[#341631]/85 text-[#eef4d1] flex items-center justify-center opacity-90 hover:opacity-100 transition-opacity"
                     aria-label={`Remove image ${i + 1}`}
                   >
                     <X size={14} />
                   </button>
                   {i === 0 && (
-                    <span className="absolute bottom-0 inset-x-0 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-[#eef4d1] bg-[#0b4722]/90 font-display">
+                    <span className="absolute bottom-0 inset-x-0 z-10 py-1 text-center text-[10px] font-bold uppercase tracking-wide text-[#eef4d1] bg-[#a8e000]/90 font-display pointer-events-none">
                       Cover
                     </span>
                   )}
@@ -595,7 +665,7 @@ export default function ProductConfiguratorTab() {
           onSizesChange={setSizes}
         />
         <label className="flex items-center gap-3 cursor-pointer select-none">
-          <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#0b4722] focus:ring-[#0b4722]" />
+          <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#a8e000] focus:ring-[#a8e000]" />
           <span className="text-sm font-semibold text-[#341631] font-display">Featured product</span>
         </label>
         <div className="flex flex-wrap gap-3 pt-2">
@@ -620,10 +690,11 @@ export default function ProductConfiguratorTab() {
           {products.map((p) => (
             <div key={p.id} className="bg-white rounded-xl border border-[#341631]/8 overflow-hidden">
               <div className="px-4 py-3 flex items-center gap-3">
-                <img
+                <ZoomableImage
                   src={productHeroImage(p.images)}
                   alt={p.name}
-                  className="w-14 h-[4.5rem] rounded-lg object-cover border border-[#341631]/10 shrink-0 bg-[#341631]/3"
+                  wrapperClassName="w-14 h-[4.5rem] rounded-lg overflow-hidden border border-[#341631]/10 shrink-0 bg-[#341631]/3"
+                  imgClassName="w-full h-full object-cover"
                 />
                 <div className="flex-1 min-w-0 flex flex-wrap items-center gap-3 justify-between">
                 <div className="min-w-0">
@@ -638,7 +709,7 @@ export default function ProductConfiguratorTab() {
                   <button
                     type="button"
                     onClick={() => startEdit(p)}
-                    className="p-2 rounded-lg text-[#0b4722]/80 hover:bg-[#0b4722]/10 transition-colors"
+                    className="p-2 rounded-lg text-[#a8e000]/80 hover:bg-[#a8e000]/10 transition-colors"
                     aria-label="Edit product"
                   >
                     <Pencil size={15} />
@@ -647,7 +718,7 @@ export default function ProductConfiguratorTab() {
                     to={`/shop/${p.id}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0b4722] font-display hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#a8e000] font-display hover:underline"
                   >
                     View <ExternalLink size={12} />
                   </Link>

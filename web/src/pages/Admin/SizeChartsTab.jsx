@@ -168,7 +168,7 @@ export default function SizeChartsTab() {
             onClick={() => setActiveKey(opt.key)}
             className={`px-3.5 py-2 text-xs font-bold font-display border transition-colors ${
               activeKey === opt.key
-                ? 'bg-[#0b4722] text-white border-[#0b4722]'
+                ? 'bg-[#a8e000] text-white border-[#a8e000]'
                 : 'bg-white text-[#341631]/60 border-[#341631]/20 hover:border-[#341631]/50'
             }`}
           >
@@ -185,7 +185,7 @@ export default function SizeChartsTab() {
               <button
                 type="button"
                 onClick={addColumn}
-                className="text-xs font-bold text-[#0b4722] flex items-center gap-1 hover:underline font-display"
+                className="text-xs font-bold text-[#a8e000] flex items-center gap-1 hover:underline font-display"
               >
                 <Plus size={12} /> Add column
               </button>
@@ -197,7 +197,7 @@ export default function SizeChartsTab() {
                     value={col.label}
                     onChange={(e) => updateColumn(i, 'label', e.target.value)}
                     placeholder="Column label"
-                    className="flex-1 px-3 py-2 text-sm border border-[#341631]/20 focus:outline-none focus:border-[#0b4722]"
+                    className="flex-1 px-3 py-2 text-sm border border-[#341631]/20 focus:outline-none focus:border-[#a8e000]"
                   />
                   <button
                     type="button"
@@ -219,7 +219,7 @@ export default function SizeChartsTab() {
               <button
                 type="button"
                 onClick={addRow}
-                className="text-xs font-bold text-[#0b4722] flex items-center gap-1 hover:underline font-display"
+                className="text-xs font-bold text-[#a8e000] flex items-center gap-1 hover:underline font-display"
               >
                 <Plus size={12} /> Add row
               </button>
@@ -245,7 +245,7 @@ export default function SizeChartsTab() {
                           value={row.size}
                           onChange={(e) => updateRowSize(rowIndex, e.target.value)}
                           placeholder="M / 32"
-                          className="w-20 px-2 py-1.5 text-sm border border-[#341631]/20 focus:outline-none focus:border-[#0b4722]"
+                          className="w-20 px-2 py-1.5 text-sm border border-[#341631]/20 focus:outline-none focus:border-[#a8e000]"
                         />
                       </td>
                       {draft.columns.map((col) => (
@@ -253,7 +253,7 @@ export default function SizeChartsTab() {
                           <input
                             value={row.values?.[col.key] ?? ''}
                             onChange={(e) => updateRowCell(rowIndex, col.key, e.target.value)}
-                            className="w-full min-w-[4rem] px-2 py-1.5 text-sm border border-[#341631]/20 focus:outline-none focus:border-[#0b4722]"
+                            className="w-full min-w-[4rem] px-2 py-1.5 text-sm border border-[#341631]/20 focus:outline-none focus:border-[#a8e000]"
                           />
                         </td>
                       ))}

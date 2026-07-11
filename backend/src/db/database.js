@@ -427,6 +427,7 @@ async function initializeDatabase() {
   const productSizeAlters = [
     "ALTER TABLE products ADD COLUMN size_type VARCHAR(16) NULL AFTER sizes",
     "ALTER TABLE products ADD COLUMN garment_type VARCHAR(16) NULL AFTER size_type",
+    "ALTER TABLE products ADD COLUMN image_tag VARCHAR(64) NULL DEFAULT 'Modular' AFTER tags",
   ];
   for (const sql of productSizeAlters) {
     try {
@@ -437,6 +438,42 @@ async function initializeDatabase() {
       }
     }
   }
+
+  try {
+    await pool.execute(
+      "UPDATE products SET image_tag = 'Modular' WHERE image_tag IS NULL OR TRIM(image_tag) = ''"
+    );
+  } catch (e) {
+    console.warn('[db] products.image_tag backfill skipped:', e.message);
+  }
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS reimagine_conversions (
+      id VARCHAR(36) PRIMARY KEY,
+      from_label VARCHAR(128) NOT NULL,
+      to_label VARCHAR(128) NOT NULL,
+      from_image LONGTEXT NULL,
+      to_image LONGTEXT NULL,
+      price INT NOT NULL DEFAULT 0,
+      sort_order INT NOT NULL DEFAULT 0,
+      active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  try {
+    await pool.execute(
+      'ALTER TABLE reimagine_requests ADD COLUMN conversion_id VARCHAR(36) NULL AFTER transformation'
+    );
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] reimagine_requests.conversion_id add skipped:', e.message);
+    }
+  }
+
+  const { ensureReimagineConversionsSeeded } = require('../lib/reimagineConversions');
+  await ensureReimagineConversionsSeeded();
 
   const row = await get('SELECT COUNT(*) AS count FROM products');
   const productCount = Number(row.count);

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { useTestimonials } from '../../hooks/useTestimonials';
 import { Spinner } from '../../components/ui/Skeleton';
 import AsyncImage from '../../components/ui/AsyncImage';
+import ImageLightbox from '../../components/ui/ImageLightbox';
 
 const GOOGLE_REVIEWS_URL =
   import.meta.env.VITE_GOOGLE_REVIEWS_URL || 'https://www.google.com/search?q=Tarajuvva+reviews';
@@ -21,6 +22,7 @@ function initials(name) {
 export default function Testimonials() {
   const { testimonials, loading } = useTestimonials();
   const [index, setIndex] = useState(0);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
 
   useEffect(() => {
     setIndex(0);
@@ -101,9 +103,12 @@ export default function Testimonials() {
                 {current.images?.length > 0 && (
                   <div className="mt-6 flex flex-wrap gap-3">
                     {current.images.map((src, i) => (
-                      <div
+                      <button
                         key={`${current.id}-review-${i}`}
-                        className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-black/15 overflow-hidden bg-white shadow-sm"
+                        type="button"
+                        onClick={() => setLightboxSrc(src)}
+                        className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-black/15 overflow-hidden bg-white shadow-sm cursor-zoom-in p-0"
+                        aria-label={`View review photo ${i + 1} full size`}
                       >
                         <AsyncImage
                           src={src}
@@ -111,7 +116,7 @@ export default function Testimonials() {
                           fill
                           imgClassName="object-center"
                         />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -165,6 +170,7 @@ export default function Testimonials() {
           </a>
         </div>
       </div>
+      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </section>
   );
 }

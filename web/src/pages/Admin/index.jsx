@@ -27,10 +27,13 @@ import SizeChartsTab from './SizeChartsTab';
 // import HeroImagesTab from './HeroImagesTab'; // disabled — heroes use static assets
 // import ReimaginePresetsTab from './ReimaginePresetsTab'; // disabled — reimagine images use static assets
 import ReimagineCustomizeTab from './ReimagineCustomizeTab';
+import ReimagineConversionsTab from './ReimagineConversionsTab';
 import TestimonialsTab from './TestimonialsTab';
-import { uploadUrl } from '../../utils/uploadUrl';
+import { downloadCsv, flattenOrderItems } from '../../utils/exportCsv';
 import { formatConsultationSlot } from '../../utils/dates';
 import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
+import PaginationBar from '../../components/ui/PaginationBar';
+import LazyReimagineImages from '../../components/reimagine/LazyReimagineImages';
 
 function formatDate(value) {
   if (!value) return '—';
@@ -56,7 +59,7 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
         <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: color + '18' }}>
           <Icon size={20} style={{ color }} />
         </div>
-        {sub && <span className="text-xs text-[#a8c74a] font-semibold font-display">{sub}</span>}
+        {sub && <span className="text-xs text-[#a8e000] font-semibold font-display">{sub}</span>}
       </div>
       <p className="text-2xl font-black text-[#241621] font-display">{value ?? '—'}</p>
       <p className="text-xs text-[#241621]/45 font-body mt-1">{label}</p>
@@ -75,6 +78,7 @@ const TABS = [
   // { id: 'reimagine-hero',   label: 'Reimagine hero',   icon: ImageIcon },
   // { id: 'reimagine-images', label: 'Reimagine images', icon: Sparkles },
   { id: 'reimagine-customize', label: 'Customize', icon: PhoneCall },
+  { id: 'reimagine-conversions', label: 'Conversions', icon: Scissors },
   { id: 'testimonials',     label: 'Testimonials',     icon: MessageSquareQuote },
 ];
 
@@ -231,6 +235,7 @@ export default function Admin() {
           {/* {tab === 'reimagine-hero' && <HeroImagesTab context="reimagine" />} */}
           {/* {tab === 'reimagine-images' && <ReimaginePresetsTab />} */}
           {tab === 'reimagine-customize' && <ReimagineCustomizeTab />}
+          {tab === 'reimagine-conversions' && <ReimagineConversionsTab />}
           {tab === 'testimonials' && <TestimonialsTab />}
         </div>
       </div>
@@ -260,7 +265,7 @@ function OverviewTab() {
     <div>
       <h1 className="text-2xl font-black text-[#241621] font-display mb-8">Overview</h1>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#a8c74a" sub={`${stats?.orders?.pending ?? 0} pending`} />
+        <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#c8ff2e" sub={`${stats?.orders?.pending ?? 0} pending`} />
         <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#7A063C" />
         <StatCard icon={Scissors} label="Reimagine Requests" value={stats?.reimagine?.total ?? 0} color="#e34334" sub={`${stats?.reimagine?.pending ?? 0} pending`} />
         <StatCard icon={Package} label="Products" value={stats?.products ?? 0} color="#1b4e81" />
@@ -283,12 +288,44 @@ function formatPayment(order) {
 }
 
 function OrdersTab() {
-  const { orders, loading, updateStatus } = useAdminOrders();
-  if (loading) return <TableSkeleton rows={6} cols={5} />;
+  const { orders, loading, updateStatus, pagination, page, setPage } = useAdminOrders();
+  if (loading && !orders.length) return <TableSkeleton rows={6} cols={5} />;
+
+  const exportOrders = () => {
+    downloadCsv(
+      `tarajuvva-orders-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        'id', 'created_at', 'user_name', 'user_email', 'user_phone', 'address',
+        'items', 'total', 'status', 'payment_method', 'payment_status', 'notes',
+      ],
+      orders.map((o) => [
+        o.id,
+        o.created_at,
+        o.user_name,
+        o.user_email,
+        o.user_phone,
+        o.address,
+        flattenOrderItems(o.items),
+        o.total,
+        o.status,
+        o.payment_method,
+        o.payment_status,
+        o.notes,
+      ])
+    );
+  };
+
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#241621] font-display mb-6">Orders ({orders.length})</h1>
-      <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="text-2xl font-black text-[#241621] font-display">
+          Orders ({pagination.total || orders.length})
+        </h1>
+        <Button type="button" variant="outline-green" size="sm" onClick={exportOrders} disabled={!orders.length}>
+          Download CSV
+        </Button>
+      </div>
+      <div className={`space-y-3 ${loading ? 'opacity-60' : ''}`}>
         {orders.map(o => (
           <div key={o.id} className="bg-white rounded-2xl p-5 border border-[#241621]/8">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
@@ -298,7 +335,7 @@ function OrdersTab() {
                 <p className="text-xs text-[#241621]/50 font-body">{o.user_phone}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-black text-[#a8c74a] font-display">₹{o.total.toLocaleString('en-IN')}</span>
+                <span className="font-black text-[#a8e000] font-display">₹{o.total.toLocaleString('en-IN')}</span>
                 <StatusSelect value={o.status} options={ORDER_STATUSES} onUpdate={s => updateStatus(o.id, s)} />
               </div>
             </div>
@@ -306,22 +343,67 @@ function OrdersTab() {
               {o.items.map((it, i) => `${it.name} ×${it.qty}`).join(', ')}
             </div>
             <p className="text-xs text-[#241621]/50 font-body mt-1">{formatPayment(o)}</p>
-            <p className="text-xs text-[#241621]/35 font-body mt-1">{o.address}</p>
+            <p className="text-xs text-[#241621]/35 font-body mt-1 whitespace-pre-wrap">{o.address}</p>
           </div>
         ))}
-        {orders.length === 0 && <p className="text-center text-[#241621]/40 font-body py-12">No orders yet.</p>}
+        {orders.length === 0 && !loading && (
+          <p className="text-center text-[#241621]/40 font-body py-12">No orders yet.</p>
+        )}
       </div>
+      <PaginationBar
+        page={pagination.page || page}
+        totalPages={pagination.totalPages || 1}
+        total={pagination.total || 0}
+        onPageChange={setPage}
+        loading={loading}
+      />
     </div>
   );
 }
 
 function ReimagineTab() {
-  const { requests, loading, updateStatus } = useAdminReimagine();
-  if (loading) return <TableSkeleton rows={6} cols={4} />;
+  const { requests, loading, updateStatus, pagination, page, setPage } = useAdminReimagine();
+  if (loading && !requests.length) return <TableSkeleton rows={6} cols={4} />;
+
+  const exportRequests = () => {
+    downloadCsv(
+      `tarajuvva-reimagine-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        'id', 'created_at', 'user_name', 'user_email', 'user_phone', 'address',
+        'garment_type', 'transformation', 'is_custom', 'notes', 'status',
+        'pickup_date', 'payment_status', 'consultation_fee', 'callback_requested',
+      ],
+      requests.map((r) => [
+        r.id,
+        r.created_at,
+        r.user_name,
+        r.user_email,
+        r.user_phone,
+        r.address,
+        r.garment_type,
+        r.transformation,
+        r.is_custom ? 'yes' : 'no',
+        r.notes,
+        r.status,
+        r.pickup_date,
+        r.payment_status,
+        r.consultation_fee,
+        r.callback_requested ? 'yes' : 'no',
+      ])
+    );
+  };
+
   return (
     <div>
-      <h1 className="text-2xl font-black text-[#241621] font-display mb-6">Reimagine Requests ({requests.length})</h1>
-      <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <h1 className="text-2xl font-black text-[#241621] font-display">
+          Reimagine Requests ({pagination.total || requests.length})
+        </h1>
+        <Button type="button" variant="outline-green" size="sm" onClick={exportRequests} disabled={!requests.length}>
+          Download CSV
+        </Button>
+      </div>
+      <div className={`space-y-4 ${loading ? 'opacity-60' : ''}`}>
         {requests.map(r => (
           <div key={r.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
@@ -389,30 +471,25 @@ function ReimagineTab() {
               )}
             </dl>
 
-            {r.images?.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-[#241621]/8">
-                <p className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-2">
-                  Garment photos ({r.images.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {r.images.map((img, i) => (
-                    <a
-                      key={i}
-                      href={uploadUrl(img)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block border border-[#241621]/15 rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
-                    >
-                      <img src={uploadUrl(img)} alt={`Garment photo ${i + 1}`} className="w-16 h-16 object-cover" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
+            <LazyReimagineImages
+              requestId={r.id}
+              imageCount={r.image_count || r.images?.length || 0}
+              endpoint={`/reimagine/requests/${r.id}/images`}
+              useAdminAuth
+            />
           </div>
         ))}
-        {requests.length === 0 && <p className="text-center text-[#241621]/40 font-body py-12">No reimagine requests yet.</p>}
+        {requests.length === 0 && !loading && (
+          <p className="text-center text-[#241621]/40 font-body py-12">No reimagine requests yet.</p>
+        )}
       </div>
+      <PaginationBar
+        page={pagination.page || page}
+        totalPages={pagination.totalPages || 1}
+        total={pagination.total || 0}
+        onPageChange={setPage}
+        loading={loading}
+      />
     </div>
   );
 }

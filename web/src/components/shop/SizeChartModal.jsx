@@ -28,7 +28,7 @@ export default function SizeChartModal({ chart, onClose }) {
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#241621]/8">
             <div className="flex items-center gap-2 min-w-0">
-              <Ruler size={16} className="text-[#a8c74a] shrink-0" />
+              <Ruler size={16} className="text-[#a8e000] shrink-0" />
               <h3 className="font-black font-display text-[#241621] truncate">{title}</h3>
               <span className="text-xs text-[#241621]/45 font-body shrink-0">cm</span>
             </div>

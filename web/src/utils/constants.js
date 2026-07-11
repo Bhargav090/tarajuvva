@@ -7,13 +7,13 @@ export const BRAND = {
   bg:        '#ffffff',   // background
   bgCard:    '#ffffff',
   bgAlt:     '#f5f5f5',
-  primary:   '#a8c74a',   // lime green – SHOP / primary
+  primary:   '#c8ff2e',   // FUN green – SHOP / primary
   secondary: '#7A063C',   // burgundy – REIMAGINE
   tertiary:  '#e2a3c9',   // blush pink – accent
   red:       '#e34334',   // warm red – REPAIR
   blue:      '#1b4e81',   // navy – DONATE
   dark:      '#241621',   // plum – text / dark sections
-  green:     '#a8c74a',   // alias → primary
+  green:     '#c8ff2e',   // alias → primary
   burgundy:  '#7A063C',   // alias → secondary
   pink:      '#e2a3c9',   // alias → tertiary
   // Text

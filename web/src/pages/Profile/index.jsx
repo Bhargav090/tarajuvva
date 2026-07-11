@@ -11,9 +11,11 @@ import UserAvatar from '../../components/ui/UserAvatar';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import api from '../../utils/api';
-import { uploadUrl } from '../../utils/uploadUrl';
+import { formatAddressWithPincode, parseAddressWithPincode } from '../../utils/address';
 import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../../utils/constants';
 import OrderItemLine from '../../components/orders/OrderItemLine';
+import PaginationBar from '../../components/ui/PaginationBar';
+import LazyReimagineImages from '../../components/reimagine/LazyReimagineImages';
 
 const TABS = [
   { id: 'profile', label: 'Profile',           icon: User     },
@@ -30,10 +32,14 @@ export default function Profile() {
     section && TABS.some((t) => t.id === section) ? section : 'profile'
   );
   const [editing, setEditing] = useState(false);
-  const [form, setForm]     = useState({ name: '', phone: '', address: '' });
+  const [form, setForm]     = useState({ name: '', phone: '', address: '', pincode: '' });
   const [saving, setSaving]  = useState(false);
   const [orders, setOrders]  = useState([]);
   const [reimagine, setReimagine] = useState([]);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [reimaginePage, setReimaginePage] = useState(1);
+  const [ordersPagination, setOrdersPagination] = useState({ page: 1, totalPages: 1, total: 0 });
+  const [reimaginePagination, setReimaginePagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loadingData, setLoadingData] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
 
@@ -48,30 +54,63 @@ export default function Profile() {
       navigate('/login', { replace: true, state: { from: location.pathname + location.search } });
       return;
     }
-    setForm({ name: user.name || '', phone: user.phone || '', address: user.address || '' });
+    const parsed = parseAddressWithPincode(user.address);
+    setForm({
+      name: user.name || '',
+      phone: user.phone || '',
+      address: parsed.address_line,
+      pincode: parsed.pincode,
+    });
   }, [user, authLoading, navigate, location.pathname, location.search]);
 
   useEffect(() => {
-    if (tab === 'orders' && orders.length === 0)   fetchOrders();
-    if (tab === 'reimagine' && reimagine.length === 0) fetchReimagine();
-  }, [tab]);
+    if (tab === 'orders') fetchOrders(ordersPage);
+  }, [tab, ordersPage]);
 
-  const fetchOrders = async () => {
+  useEffect(() => {
+    if (tab === 'reimagine') fetchReimagine(reimaginePage);
+  }, [tab, reimaginePage]);
+
+  const fetchOrders = async (page = 1) => {
     setLoadingData(true);
-    try { const { data } = await api.get('/users/me/orders'); setOrders(data.orders || []); }
-    catch {} finally { setLoadingData(false); }
+    try {
+      const { data } = await api.get('/users/me/orders', { params: { page, limit: 10 } });
+      setOrders(data.orders || []);
+      setOrdersPagination(data.pagination || { page, totalPages: 1, total: data.orders?.length || 0 });
+    } catch {
+      setOrders([]);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
-  const fetchReimagine = async () => {
+  const fetchReimagine = async (page = 1) => {
     setLoadingData(true);
-    try { const { data } = await api.get('/users/me/reimagine'); setReimagine(data.requests || []); }
-    catch {} finally { setLoadingData(false); }
+    try {
+      const { data } = await api.get('/users/me/reimagine', { params: { page, limit: 10 } });
+      setReimagine(data.requests || []);
+      setReimaginePagination(data.pagination || { page, totalPages: 1, total: data.requests?.length || 0 });
+    } catch {
+      setReimagine([]);
+    } finally {
+      setLoadingData(false);
+    }
   };
 
   const onSave = async () => {
+    const pin = String(form.pincode || '').trim();
+    if (form.address.trim() && !/^\d{6}$/.test(pin)) {
+      toast.error('Enter a valid 6-digit pincode');
+      return;
+    }
     setSaving(true);
     try {
-      const { data } = await api.put('/users/me', form);
+      const payload = {
+        name: form.name,
+        phone: form.phone,
+        address: formatAddressWithPincode(form.address, pin),
+      };
+      const { data } = await api.put('/users/me', payload);
       updateUser(data.user);
       setEditing(false);
       toast.success('Profile updated!');
@@ -94,12 +133,12 @@ export default function Profile() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-[#241621]/55 hover:text-[#a8c74a] font-display mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-[#241621]/55 hover:text-[#a8e000] font-display mb-6 transition-colors"
         >
           <ArrowLeft size={15} /> Back to Home
         </Link>
         {/* Header */}
-        <div className="flex items-center gap-5 mb-10 p-6 bg-[#a8c74a] rounded-3xl">
+        <div className="flex items-center gap-5 mb-10 p-6 bg-[#c8ff2e] rounded-3xl">
           <UserAvatar
             src={user.avatar}
             name={user.name}
@@ -130,8 +169,8 @@ export default function Profile() {
               }}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold font-display whitespace-nowrap transition-all ${
                 tab === t.id
-                  ? 'bg-[#a8c74a] text-[#241621]'
-                  : 'text-[#241621] hover:text-[#a8c74a] bg-white border border-[#241621]/8'
+                  ? 'bg-[#c8ff2e] text-[#241621]'
+                  : 'text-[#241621] hover:text-[#a8e000] bg-white border border-[#241621]/8'
               }`}
             >
               <t.icon size={15} /> {t.label}
@@ -158,8 +197,18 @@ export default function Profile() {
                 <>
                   <Input label="Full Name" name="name" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
                   <Input label="Phone" name="phone" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2 flex flex-col gap-4">
                     <Input label="Address" name="address" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
+                    <Input
+                      label="Pincode"
+                      name="pincode"
+                      value={form.pincode}
+                      onChange={e => setForm(p => ({ ...p, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                      required={!!form.address.trim()}
+                      pattern="[0-9]{6}"
+                      inputMode="numeric"
+                      placeholder="6-digit PIN"
+                    />
                   </div>
                 </>
               ) : (
@@ -169,9 +218,9 @@ export default function Profile() {
                   { l: 'Phone',     v: user.phone || '—' },
                   { l: 'Address',   v: user.address || '—' },
                 ].map(f => (
-                  <div key={f.l}>
+                  <div key={f.l} className={f.l === 'Address' ? 'sm:col-span-2' : ''}>
                     <p className="text-xs font-bold uppercase tracking-wider text-[#241621]/40 mb-1 font-display">{f.l}</p>
-                    <p className="text-[#241621] font-body text-sm">{f.v}</p>
+                    <p className="text-[#241621] font-body text-sm whitespace-pre-wrap">{f.v}</p>
                   </div>
                 ))
               )}
@@ -187,7 +236,7 @@ export default function Profile() {
               <div className="bg-white rounded-3xl p-12 text-center border border-[#241621]/8">
                 <Package size={40} className="text-[#241621]/20 mx-auto mb-4" />
                 <p className="text-[#241621]/50 font-body">No orders yet.</p>
-                <Link to="/shop" className="mt-4 inline-block text-[#a8c74a] font-semibold text-sm font-display hover:underline">
+                <Link to="/shop" className="mt-4 inline-block text-[#a8e000] font-semibold text-sm font-display hover:underline">
                   Start shopping →
                 </Link>
               </div>
@@ -249,6 +298,15 @@ export default function Profile() {
                 </div>
               </article>
             );})}
+            {!loadingData && orders.length > 0 && (
+              <PaginationBar
+                page={ordersPagination.page || ordersPage}
+                totalPages={ordersPagination.totalPages || 1}
+                total={ordersPagination.total || 0}
+                onPageChange={setOrdersPage}
+                loading={loadingData}
+              />
+            )}
           </div>
         )}
 
@@ -307,15 +365,12 @@ export default function Profile() {
                     </div>
                   )}
                 </dl>
-                {r.images?.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {r.images.map((img, i) => (
-                      <a key={i} href={uploadUrl(img)} target="_blank" rel="noreferrer">
-                        <img src={uploadUrl(img)} alt="" className="w-14 h-14 rounded-lg object-cover border border-[#241621]/10 hover:opacity-80" />
-                      </a>
-                    ))}
-                  </div>
-                )}
+                <LazyReimagineImages
+                  requestId={r.id}
+                  imageCount={r.image_count || r.images?.length || 0}
+                  endpoint={`/users/me/reimagine/${r.id}/images`}
+                  thumbClassName="w-14 h-14 rounded-lg object-cover border border-[#241621]/10"
+                />
                 {r.admin_notes && (
                   <div className="mt-4 p-3 bg-[#7A063C]/5 rounded-xl border border-[#7A063C]/10">
                     <p className="text-xs font-bold text-[#241621]/50 mb-1 font-display">Note from team</p>
@@ -324,6 +379,15 @@ export default function Profile() {
                 )}
               </div>
             ))}
+            {!loadingData && reimagine.length > 0 && (
+              <PaginationBar
+                page={reimaginePagination.page || reimaginePage}
+                totalPages={reimaginePagination.totalPages || 1}
+                total={reimaginePagination.total || 0}
+                onPageChange={setReimaginePage}
+                loading={loadingData}
+              />
+            )}
           </div>
         )}
       </div>

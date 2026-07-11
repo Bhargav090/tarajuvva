@@ -8,7 +8,8 @@
     "dev": "node --watch server.js",
     "migrate:sqlite": "node scripts/migrate-sqlite-to-mysql.js",
     "migrate:uploads-base64": "node scripts/migrate-uploads-to-base64.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "verify": "node scripts/verify.js",
+    "test": "npm run verify"
   },
   "keywords": [],
   "author": "",

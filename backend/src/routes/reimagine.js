@@ -13,6 +13,8 @@ const {
   listConversions,
   getConversionById,
   parseConversion,
+  saveConversionImageFile,
+  normalizeConversionImageRef,
 } = require('../lib/reimagineConversions');
 
 const upload = multer({
@@ -23,6 +25,56 @@ const upload = multer({
     cb(ok ? null : new Error('Only JPEG, PNG, WebP, or GIF images are allowed.'), ok);
   },
 });
+
+const conversionImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 6 * 1024 * 1024, files: 2 },
+  fileFilter: (req, file, cb) => {
+    const ok = /^image\/(jpeg|jpg|png|webp|gif)$/i.test(file.mimetype);
+    cb(ok ? null : new Error('Only JPEG, PNG, WebP, or GIF images are allowed.'), ok);
+  },
+});
+
+function maybeConversionUpload(req, res, next) {
+  const ct = String(req.headers['content-type'] || '');
+  if (!ct.includes('multipart/form-data')) return next();
+  conversionImageUpload.fields([
+    { name: 'from_file', maxCount: 1 },
+    { name: 'to_file', maxCount: 1 },
+  ])(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'Image upload failed.',
+      });
+    }
+    next();
+  });
+}
+
+function resolveConversionImages(req, existing = {}) {
+  const fromFile = req.files?.from_file?.[0];
+  const toFile = req.files?.to_file?.[0];
+  const clearFrom = req.body.clear_from_image === '1' || req.body.clear_from_image === true;
+  const clearTo = req.body.clear_to_image === '1' || req.body.clear_to_image === true;
+
+  let from_image = existing.from_image ?? null;
+  let to_image = existing.to_image ?? null;
+
+  if (fromFile) from_image = saveConversionImageFile(fromFile);
+  else if (clearFrom) from_image = null;
+  else if (req.body.from_image != null) {
+    from_image = normalizeConversionImageRef(req.body.from_image);
+  }
+
+  if (toFile) to_image = saveConversionImageFile(toFile);
+  else if (clearTo) to_image = null;
+  else if (req.body.to_image != null) {
+    to_image = normalizeConversionImageRef(req.body.to_image);
+  }
+
+  return { from_image, to_image };
+}
 
 
 async function bookConsultationSlot(requestId, slotId) {
@@ -60,7 +112,8 @@ router.get('/conversions', async (req, res) => {
 
 router.get('/admin/conversions', authenticateAdmin, async (req, res) => {
   try {
-    const conversions = await listConversions({ activeOnly: false });
+    // Raw stored refs for editing (data URLs / uploads); public list uses media URLs.
+    const conversions = await listConversions({ activeOnly: false, publicUrls: false });
     res.json({ success: true, conversions });
   } catch (err) {
     console.error('[reimagine] GET /admin/conversions failed:', err);
@@ -68,7 +121,7 @@ router.get('/admin/conversions', authenticateAdmin, async (req, res) => {
   }
 });
 
-router.post('/admin/conversions', authenticateAdmin, async (req, res) => {
+router.post('/admin/conversions', authenticateAdmin, maybeConversionUpload, async (req, res) => {
   const from_label = String(req.body.from_label || '').trim();
   const to_label = String(req.body.to_label || '').trim();
   if (!from_label || !to_label) {
@@ -77,27 +130,19 @@ router.post('/admin/conversions', authenticateAdmin, async (req, res) => {
   const price = Math.max(0, parseInt(String(req.body.price ?? 0), 10) || 0);
   const sort_order = Math.max(0, parseInt(String(req.body.sort_order ?? 0), 10) || 0);
   const active = req.body.active === false || req.body.active === 0 || req.body.active === '0' ? 0 : 1;
+  const { from_image, to_image } = resolveConversionImages(req);
   const id = uuidv4();
   await run(
     `INSERT INTO reimagine_conversions
       (id, from_label, to_label, from_image, to_image, price, sort_order, active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      from_label,
-      to_label,
-      req.body.from_image ? String(req.body.from_image).trim() : null,
-      req.body.to_image ? String(req.body.to_image).trim() : null,
-      price,
-      sort_order,
-      active,
-    ]
+    [id, from_label, to_label, from_image, to_image, price, sort_order, active]
   );
   const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [id]);
   res.status(201).json({ success: true, conversion: parseConversion(row) });
 });
 
-router.put('/admin/conversions/:id', authenticateAdmin, async (req, res) => {
+router.put('/admin/conversions/:id', authenticateAdmin, maybeConversionUpload, async (req, res) => {
   const existing = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [req.params.id]);
   if (!existing) return res.status(404).json({ success: false, message: 'Not found' });
 
@@ -112,21 +157,14 @@ router.put('/admin/conversions/:id', authenticateAdmin, async (req, res) => {
   if (req.body.active === false || req.body.active === 0 || req.body.active === '0') active = 0;
   if (req.body.active === true || req.body.active === 1 || req.body.active === '1') active = 1;
 
+  const { from_image, to_image } = resolveConversionImages(req, existing);
+
   await run(
     `UPDATE reimagine_conversions SET
       from_label=?, to_label=?, from_image=?, to_image=?, price=?, sort_order=?, active=?,
       updated_at=CURRENT_TIMESTAMP
      WHERE id=?`,
-    [
-      from_label,
-      to_label,
-      req.body.from_image != null ? String(req.body.from_image).trim() || null : existing.from_image,
-      req.body.to_image != null ? String(req.body.to_image).trim() || null : existing.to_image,
-      price,
-      sort_order,
-      active,
-      req.params.id,
-    ]
+    [from_label, to_label, from_image, to_image, price, sort_order, active, req.params.id]
   );
   const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [req.params.id]);
   res.json({ success: true, conversion: parseConversion(row) });

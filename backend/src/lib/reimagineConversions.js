@@ -1,5 +1,48 @@
 const { v4: uuidv4 } = require('uuid');
 const { all, get, run } = require('../db/database');
+const { isHttpUrl, isDataUrl, bufferToDataUrl } = require('./imageDataUrl');
+
+/**
+ * Persist an uploaded conversion image as a data URL in MySQL.
+ * No disk copy — shared remote DB is the source of truth across environments.
+ */
+function saveConversionImageFile(file) {
+  if (!file?.buffer) return null;
+  return bufferToDataUrl(file.buffer, file.mimetype || 'image/jpeg');
+}
+
+/** Accept http(s) URL, /uploads/ path, data URL, or empty → null. */
+function normalizeConversionImageRef(value) {
+  const s = String(value || '').trim();
+  if (!s) return null;
+  if (isHttpUrl(s) || s.startsWith('/uploads/') || isDataUrl(s)) return s;
+  return null;
+}
+
+function conversionMediaUrl(id, side) {
+  return `/api/media/conversion/${id}/${side === 'to' ? 'to' : 'from'}`;
+}
+
+/** Public/admin API: never ship raw data URLs — use stable media URLs. */
+function publicImageRef(id, side, stored) {
+  const s = String(stored || '').trim();
+  if (!s) return null;
+  if (isHttpUrl(s)) return s;
+  if (isDataUrl(s) || s.startsWith('/uploads/')) return conversionMediaUrl(id, side);
+  return s;
+}
+
+function parseConversion(row, { publicUrls = true } = {}) {
+  if (!row) return null;
+  return {
+    ...row,
+    price: Number(row.price) || 0,
+    sort_order: Number(row.sort_order) || 0,
+    active: row.active === 1 || row.active === true,
+    from_image: publicUrls ? publicImageRef(row.id, 'from', row.from_image) : row.from_image || null,
+    to_image: publicUrls ? publicImageRef(row.id, 'to', row.to_image) : row.to_image || null,
+  };
+}
 
 /** Seed from legacy hardcoded pairs so production isn't empty after deploy. */
 const SEED_PAIRS = [
@@ -96,16 +139,6 @@ const BROKEN_URL_FRAGMENTS = [
   'photo-1551488831-00f20ec8561d',
 ];
 
-function parseConversion(row) {
-  if (!row) return null;
-  return {
-    ...row,
-    price: Number(row.price) || 0,
-    sort_order: Number(row.sort_order) || 0,
-    active: row.active === 1 || row.active === true,
-  };
-}
-
 function isBrokenUrl(url) {
   const s = String(url || '');
   if (!s.trim()) return true;
@@ -159,17 +192,17 @@ async function ensureReimagineConversionsSeeded() {
   console.log(`[db] Seeded ${SEED_PAIRS.length} reimagine conversions`);
 }
 
-async function listConversions({ activeOnly = false } = {}) {
+async function listConversions({ activeOnly = false, publicUrls = true } = {}) {
   let q = 'SELECT * FROM reimagine_conversions';
   if (activeOnly) q += ' WHERE active = 1';
   q += ' ORDER BY sort_order ASC, from_label ASC, to_label ASC';
   const rows = await all(q);
-  return rows.map(parseConversion);
+  return rows.map((row) => parseConversion(row, { publicUrls }));
 }
 
-async function getConversionById(id) {
+async function getConversionById(id, { publicUrls = true } = {}) {
   const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [id]);
-  return parseConversion(row);
+  return parseConversion(row, { publicUrls });
 }
 
 module.exports = {
@@ -177,4 +210,7 @@ module.exports = {
   listConversions,
   getConversionById,
   parseConversion,
+  saveConversionImageFile,
+  normalizeConversionImageRef,
+  conversionMediaUrl,
 };

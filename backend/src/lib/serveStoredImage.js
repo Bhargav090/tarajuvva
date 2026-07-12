@@ -21,7 +21,10 @@ function resolveStoredImage(ref) {
   }
 
   if (isLocalUploadPath(v)) {
-    const full = path.join(UPLOADS_DIR, path.basename(v));
+    // Preserve nested dirs: /uploads/conversions/x.jpg → uploads/conversions/x.jpg
+    const relative = v.replace(/^\/uploads\//i, '').replace(/^\/+/, '');
+    const full = path.normalize(path.join(UPLOADS_DIR, relative));
+    if (!full.startsWith(UPLOADS_DIR)) return null;
     if (!fs.existsSync(full)) return null;
     const buffer = fs.readFileSync(full);
     return { mime: mimeFromExt(path.extname(full)), buffer };

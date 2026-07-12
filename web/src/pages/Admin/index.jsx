@@ -10,7 +10,6 @@ import {
 import {
   useAdminAuth,
   useAdminStats,
-  useAdminOrders,
   useAdminReimagine,
   useAdminWaitlist,
   changeAdminPassword,
@@ -21,7 +20,7 @@ import { Badge } from '../../components/ui/Badge';
 import StatusSelect from '../../components/ui/StatusSelect';
 import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
-import { ORDER_STATUSES, REIMAGINE_STATUSES, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../../utils/constants';
+import { REIMAGINE_STATUSES } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
 import SizeChartsTab from './SizeChartsTab';
 // import HeroImagesTab from './HeroImagesTab'; // disabled — heroes use static assets
@@ -29,6 +28,7 @@ import SizeChartsTab from './SizeChartsTab';
 import ReimagineCustomizeTab from './ReimagineCustomizeTab';
 import ReimagineConversionsTab from './ReimagineConversionsTab';
 import TestimonialsTab from './TestimonialsTab';
+import OrdersTab from './OrdersTab';
 import { downloadCsv, flattenOrderItems } from '../../utils/exportCsv';
 import { formatConsultationSlot } from '../../utils/dates';
 import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
@@ -274,89 +274,6 @@ function OverviewTab() {
         <StatCard icon={Users} label="Repair Waitlist" value={stats?.waitlist?.repair ?? 0} color="#e34334" />
         <StatCard icon={Users} label="Donate Waitlist" value={stats?.waitlist?.donate ?? 0} color="#1b4e81" />
       </div>
-    </div>
-  );
-}
-
-function formatPayment(order) {
-  const method = PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method || '—';
-  const status = PAYMENT_STATUS_LABELS[order.payment_status] || order.payment_status;
-  if (order.payment_method === 'razorpay' && order.razorpay_payment_id) {
-    return `${method} · ${status} · ${order.razorpay_payment_id.slice(0, 12)}…`;
-  }
-  return status ? `${method} · ${status}` : method;
-}
-
-function OrdersTab() {
-  const { orders, loading, updateStatus, pagination, page, setPage } = useAdminOrders();
-  if (loading && !orders.length) return <TableSkeleton rows={6} cols={5} />;
-
-  const exportOrders = () => {
-    downloadCsv(
-      `tarajuvva-orders-${new Date().toISOString().slice(0, 10)}.csv`,
-      [
-        'id', 'created_at', 'user_name', 'user_email', 'user_phone', 'address',
-        'items', 'total', 'status', 'payment_method', 'payment_status', 'notes',
-      ],
-      orders.map((o) => [
-        o.id,
-        o.created_at,
-        o.user_name,
-        o.user_email,
-        o.user_phone,
-        o.address,
-        flattenOrderItems(o.items),
-        o.total,
-        o.status,
-        o.payment_method,
-        o.payment_status,
-        o.notes,
-      ])
-    );
-  };
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-black text-[#241621] font-display">
-          Orders ({pagination.total || orders.length})
-        </h1>
-        <Button type="button" variant="outline-green" size="sm" onClick={exportOrders} disabled={!orders.length}>
-          Download CSV
-        </Button>
-      </div>
-      <div className={`space-y-3 ${loading ? 'opacity-60' : ''}`}>
-        {orders.map(o => (
-          <div key={o.id} className="bg-white rounded-2xl p-5 border border-[#241621]/8">
-            <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-              <div>
-                <p className="text-xs text-[#241621]/40 font-body">#{o.id.slice(0,8).toUpperCase()}</p>
-                <p className="font-bold text-[#241621] font-display">{o.user_name}</p>
-                <p className="text-xs text-[#241621]/50 font-body">{o.user_phone}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="font-black text-[#a8e000] font-display">₹{o.total.toLocaleString('en-IN')}</span>
-                <StatusSelect value={o.status} options={ORDER_STATUSES} onUpdate={s => updateStatus(o.id, s)} />
-              </div>
-            </div>
-            <div className="text-xs text-[#241621]/45 font-body">
-              {o.items.map((it, i) => `${it.name} ×${it.qty}`).join(', ')}
-            </div>
-            <p className="text-xs text-[#241621]/50 font-body mt-1">{formatPayment(o)}</p>
-            <p className="text-xs text-[#241621]/35 font-body mt-1 whitespace-pre-wrap">{o.address}</p>
-          </div>
-        ))}
-        {orders.length === 0 && !loading && (
-          <p className="text-center text-[#241621]/40 font-body py-12">No orders yet.</p>
-        )}
-      </div>
-      <PaginationBar
-        page={pagination.page || page}
-        totalPages={pagination.totalPages || 1}
-        total={pagination.total || 0}
-        onPageChange={setPage}
-        loading={loading}
-      />
     </div>
   );
 }

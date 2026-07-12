@@ -11,6 +11,10 @@ function testimonialMediaUrl(id, index = 0) {
   return `/api/media/testimonial/${id}/${index}`;
 }
 
+function conversionMediaUrl(id, side = 'from') {
+  return `/api/media/conversion/${id}/${side === 'to' ? 'to' : 'from'}`;
+}
+
 // function withHeroMediaUrl(row) {
 //   if (!row) return null;
 //   return {
@@ -36,5 +40,6 @@ function withReimagineMediaUrl(row) {
 module.exports = {
   reimagineMediaUrl,
   testimonialMediaUrl,
+  conversionMediaUrl,
   withReimagineMediaUrl,
 };

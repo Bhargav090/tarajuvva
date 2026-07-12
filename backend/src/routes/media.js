@@ -78,4 +78,30 @@ router.get('/testimonial/:id/:index', async (req, res) => {
   return sendStoredImage(req, res, ref, etag);
 });
 
+router.get('/conversion/:id/:side', async (req, res) => {
+  const side = String(req.params.side || '').toLowerCase();
+  if (side !== 'from' && side !== 'to') {
+    return res.status(400).json({ success: false, message: 'Invalid image side.' });
+  }
+
+  const col = side === 'to' ? 'to_image' : 'from_image';
+  const row = await get(
+    `SELECT \`${col}\` AS image_path, updated_at FROM reimagine_conversions WHERE id = ?`,
+    [req.params.id]
+  );
+  if (!row?.image_path) {
+    return res.status(404).json({ success: false, message: 'Image not found.' });
+  }
+
+  const stamp = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+  const etag = `"conversion-${req.params.id}-${side}-${stamp}"`;
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.set('ETag', etag);
+  if (req.headers['if-none-match'] === etag) {
+    return res.status(304).end();
+  }
+
+  return sendStoredImage(req, res, row.image_path, etag);
+});
+
 module.exports = router;

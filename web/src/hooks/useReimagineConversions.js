@@ -31,16 +31,19 @@ export function useReimagineConversions({ admin = false } = {}) {
   const fromOptions = (() => {
     const map = new Map();
     for (const c of conversions) {
-      if (!c.active && admin) {
-        /* include inactive in admin list raw; public already filtered */
-      }
       const key = c.from_label;
       if (!map.has(key)) {
         map.set(key, {
           id: key,
           label: c.from_label,
-          image: c.from_image,
+          image: c.from_image || null,
         });
+        continue;
+      }
+      // Prefer a real image if the first conversion for this label had none
+      const existing = map.get(key);
+      if (!existing.image && c.from_image) {
+        existing.image = c.from_image;
       }
     }
     return [...map.values()];

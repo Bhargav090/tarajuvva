@@ -59,7 +59,9 @@ function pathRefToDataUrl(ref, uploadsDir) {
   if (isHttpUrl(v)) return v;
 
   if (isLocalUploadPath(v)) {
-    const full = path.join(uploadsDir, path.basename(v));
+    const relative = v.replace(/^\/uploads\//i, '').replace(/^\/+/, '');
+    const full = path.normalize(path.join(uploadsDir, relative));
+    if (!full.startsWith(path.normalize(uploadsDir))) return null;
     if (!fs.existsSync(full)) return null;
     return readFileToDataUrl(full);
   }

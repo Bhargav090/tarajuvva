@@ -1,21 +1,59 @@
+const fs = require('fs');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { all, get, run } = require('../db/database');
-const { isHttpUrl, isDataUrl, bufferToDataUrl } = require('./imageDataUrl');
+const { isHttpUrl, isDataUrl, parseDataUrl } = require('./imageDataUrl');
 
-/**
- * Persist an uploaded conversion image as a data URL in MySQL.
- * No disk copy — shared remote DB is the source of truth across environments.
- */
-function saveConversionImageFile(file) {
-  if (!file?.buffer) return null;
-  return bufferToDataUrl(file.buffer, file.mimetype || 'image/jpeg');
+const EXT_BY_MIME = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+};
+
+/** Max upload size before save (bytes). Keeps DB rows small and avoids packet limits. */
+const MAX_CONVERSION_IMAGE_BYTES = 2 * 1024 * 1024;
+
+function getConversionsUploadDir() {
+  return path.join(__dirname, '../../uploads/conversions');
 }
 
-/** Accept http(s) URL, /uploads/ path, data URL, or empty → null. */
+function writeConversionBuffer(buffer, mimetype) {
+  if (!buffer?.length) return null;
+  if (buffer.length > MAX_CONVERSION_IMAGE_BYTES) {
+    const err = new Error(
+      'Image is too large. Use a file under 2MB (recommended 1200×1200 or 1200×1500 px).'
+    );
+    err.status = 400;
+    throw err;
+  }
+  const ext = EXT_BY_MIME[String(mimetype || '').toLowerCase()] || '.jpg';
+  const dir = getConversionsUploadDir();
+  fs.mkdirSync(dir, { recursive: true });
+  const filename = `${uuidv4()}${ext}`;
+  fs.writeFileSync(path.join(dir, filename), buffer);
+  return `/uploads/conversions/${filename}`;
+}
+
+/** Save upload to disk; DB stores a short path (not base64). */
+function saveConversionImageFile(file) {
+  if (!file?.buffer) return null;
+  return writeConversionBuffer(file.buffer, file.mimetype || 'image/jpeg');
+}
+
+function saveDataUrlConversionImage(dataUrl) {
+  const parsed = parseDataUrl(dataUrl);
+  if (!parsed) return null;
+  return writeConversionBuffer(parsed.buffer, parsed.mime);
+}
+
+/** Accept http(s) URL or /uploads/ path; legacy data URLs are migrated to disk on save. */
 function normalizeConversionImageRef(value) {
   const s = String(value || '').trim();
   if (!s) return null;
-  if (isHttpUrl(s) || s.startsWith('/uploads/') || isDataUrl(s)) return s;
+  if (isDataUrl(s)) return saveDataUrlConversionImage(s);
+  if (isHttpUrl(s) || s.startsWith('/uploads/')) return s;
   return null;
 }
 
@@ -211,6 +249,8 @@ module.exports = {
   getConversionById,
   parseConversion,
   saveConversionImageFile,
+  saveDataUrlConversionImage,
   normalizeConversionImageRef,
   conversionMediaUrl,
+  MAX_CONVERSION_IMAGE_BYTES,
 };

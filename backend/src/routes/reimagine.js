@@ -28,7 +28,7 @@ const upload = multer({
 
 const conversionImageUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 6 * 1024 * 1024, files: 2 },
+  limits: { fileSize: 2 * 1024 * 1024, files: 2 },
   fileFilter: (req, file, cb) => {
     const ok = /^image\/(jpeg|jpg|png|webp|gif)$/i.test(file.mimetype);
     cb(ok ? null : new Error('Only JPEG, PNG, WebP, or GIF images are allowed.'), ok);
@@ -52,24 +52,46 @@ function maybeConversionUpload(req, res, next) {
   });
 }
 
-function resolveConversionImages(req, existing = {}) {
+function conversionDbErrorMessage(err) {
+  if (!err) return 'Could not save conversion';
+  if (err.status === 400 && err.message) return err.message;
+  if (err.code === 'ER_DATA_TOO_LONG') {
+    return 'Image data is too large. Upload a smaller file (under 2MB, ~1200px wide).';
+  }
+  return err.sqlMessage || err.message || 'Could not save conversion';
+}
+
+async function resolveConversionImages(req, existing = {}, from_label = '') {
   const fromFile = req.files?.from_file?.[0];
   const toFile = req.files?.to_file?.[0];
   const clearFrom = req.body.clear_from_image === '1' || req.body.clear_from_image === true;
   const clearTo = req.body.clear_to_image === '1' || req.body.clear_to_image === true;
+  const inheritFrom =
+    req.body.inherit_from_image === '1' || req.body.inherit_from_image === true;
 
   let from_image = existing.from_image ?? null;
   let to_image = existing.to_image ?? null;
 
   if (fromFile) from_image = saveConversionImageFile(fromFile);
   else if (clearFrom) from_image = null;
-  else if (req.body.from_image != null) {
+  else if (req.body.from_image != null && String(req.body.from_image).trim() !== '') {
     from_image = normalizeConversionImageRef(req.body.from_image);
+  } else if (inheritFrom && !existing.from_image) {
+    const label = String(from_label || req.body.from_label || '').trim();
+    if (label) {
+      const sibling = await get(
+        `SELECT from_image FROM reimagine_conversions
+         WHERE from_label = ? AND from_image IS NOT NULL AND TRIM(from_image) != ''
+         LIMIT 1`,
+        [label]
+      );
+      if (sibling?.from_image) from_image = sibling.from_image;
+    }
   }
 
   if (toFile) to_image = saveConversionImageFile(toFile);
   else if (clearTo) to_image = null;
-  else if (req.body.to_image != null) {
+  else if (req.body.to_image != null && String(req.body.to_image).trim() !== '') {
     to_image = normalizeConversionImageRef(req.body.to_image);
   }
 
@@ -122,52 +144,74 @@ router.get('/admin/conversions', authenticateAdmin, async (req, res) => {
 });
 
 router.post('/admin/conversions', authenticateAdmin, maybeConversionUpload, async (req, res) => {
-  const from_label = String(req.body.from_label || '').trim();
-  const to_label = String(req.body.to_label || '').trim();
-  if (!from_label || !to_label) {
-    return res.status(400).json({ success: false, message: 'From and to labels are required' });
+  try {
+    const from_label = String(req.body.from_label || '').trim();
+    const to_label = String(req.body.to_label || '').trim();
+    if (!from_label || !to_label) {
+      return res.status(400).json({ success: false, message: 'From and to labels are required' });
+    }
+    if (from_label.length > 128 || to_label.length > 128) {
+      return res.status(400).json({
+        success: false,
+        message: 'From and to names must be 128 characters or fewer.',
+      });
+    }
+    const price = Math.max(0, parseInt(String(req.body.price ?? 0), 10) || 0);
+    const sort_order = Math.max(0, parseInt(String(req.body.sort_order ?? 0), 10) || 0);
+    const active = req.body.active === false || req.body.active === 0 || req.body.active === '0' ? 0 : 1;
+    const { from_image, to_image } = await resolveConversionImages(req, {}, from_label);
+    const id = uuidv4();
+    await run(
+      `INSERT INTO reimagine_conversions
+        (id, from_label, to_label, from_image, to_image, price, sort_order, active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, from_label, to_label, from_image, to_image, price, sort_order, active]
+    );
+    const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [id]);
+    res.status(201).json({ success: true, conversion: parseConversion(row) });
+  } catch (err) {
+    console.error('[reimagine] POST /admin/conversions failed:', err);
+    res.status(err.status || 500).json({ success: false, message: conversionDbErrorMessage(err) });
   }
-  const price = Math.max(0, parseInt(String(req.body.price ?? 0), 10) || 0);
-  const sort_order = Math.max(0, parseInt(String(req.body.sort_order ?? 0), 10) || 0);
-  const active = req.body.active === false || req.body.active === 0 || req.body.active === '0' ? 0 : 1;
-  const { from_image, to_image } = resolveConversionImages(req);
-  const id = uuidv4();
-  await run(
-    `INSERT INTO reimagine_conversions
-      (id, from_label, to_label, from_image, to_image, price, sort_order, active)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, from_label, to_label, from_image, to_image, price, sort_order, active]
-  );
-  const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [id]);
-  res.status(201).json({ success: true, conversion: parseConversion(row) });
 });
 
 router.put('/admin/conversions/:id', authenticateAdmin, maybeConversionUpload, async (req, res) => {
-  const existing = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [req.params.id]);
-  if (!existing) return res.status(404).json({ success: false, message: 'Not found' });
+  try {
+    const existing = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [req.params.id]);
+    if (!existing) return res.status(404).json({ success: false, message: 'Not found' });
 
-  const from_label = String(req.body.from_label ?? existing.from_label).trim();
-  const to_label = String(req.body.to_label ?? existing.to_label).trim();
-  if (!from_label || !to_label) {
-    return res.status(400).json({ success: false, message: 'From and to labels are required' });
+    const from_label = String(req.body.from_label ?? existing.from_label).trim();
+    const to_label = String(req.body.to_label ?? existing.to_label).trim();
+    if (!from_label || !to_label) {
+      return res.status(400).json({ success: false, message: 'From and to labels are required' });
+    }
+    if (from_label.length > 128 || to_label.length > 128) {
+      return res.status(400).json({
+        success: false,
+        message: 'From and to names must be 128 characters or fewer.',
+      });
+    }
+    const price = Math.max(0, parseInt(String(req.body.price ?? existing.price), 10) || 0);
+    const sort_order = Math.max(0, parseInt(String(req.body.sort_order ?? existing.sort_order), 10) || 0);
+    let active = existing.active ? 1 : 0;
+    if (req.body.active === false || req.body.active === 0 || req.body.active === '0') active = 0;
+    if (req.body.active === true || req.body.active === 1 || req.body.active === '1') active = 1;
+
+    const { from_image, to_image } = await resolveConversionImages(req, existing, from_label);
+
+    await run(
+      `UPDATE reimagine_conversions SET
+        from_label=?, to_label=?, from_image=?, to_image=?, price=?, sort_order=?, active=?,
+        updated_at=CURRENT_TIMESTAMP
+       WHERE id=?`,
+      [from_label, to_label, from_image, to_image, price, sort_order, active, req.params.id]
+    );
+    const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [req.params.id]);
+    res.json({ success: true, conversion: parseConversion(row) });
+  } catch (err) {
+    console.error('[reimagine] PUT /admin/conversions failed:', err);
+    res.status(err.status || 500).json({ success: false, message: conversionDbErrorMessage(err) });
   }
-  const price = Math.max(0, parseInt(String(req.body.price ?? existing.price), 10) || 0);
-  const sort_order = Math.max(0, parseInt(String(req.body.sort_order ?? existing.sort_order), 10) || 0);
-  let active = existing.active ? 1 : 0;
-  if (req.body.active === false || req.body.active === 0 || req.body.active === '0') active = 0;
-  if (req.body.active === true || req.body.active === 1 || req.body.active === '1') active = 1;
-
-  const { from_image, to_image } = resolveConversionImages(req, existing);
-
-  await run(
-    `UPDATE reimagine_conversions SET
-      from_label=?, to_label=?, from_image=?, to_image=?, price=?, sort_order=?, active=?,
-      updated_at=CURRENT_TIMESTAMP
-     WHERE id=?`,
-    [from_label, to_label, from_image, to_image, price, sort_order, active, req.params.id]
-  );
-  const row = await get('SELECT * FROM reimagine_conversions WHERE id = ?', [req.params.id]);
-  res.json({ success: true, conversion: parseConversion(row) });
 });
 
 router.delete('/admin/conversions/:id', authenticateAdmin, async (req, res) => {

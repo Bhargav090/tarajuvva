@@ -116,6 +116,15 @@ function urlFieldValue(stored) {
   return isEditableUrl(stored) ? stored : '';
 }
 
+/** Only send short refs the API accepts — never /api/media or data: URLs. */
+function retainableImageRef(value) {
+  const s = String(value || '').trim();
+  if (/^https?:\/\//i.test(s) || s.startsWith('/uploads/')) return s;
+  return null;
+}
+
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
 export default function ReimagineConversionsTab() {
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
   const fromFileRef = useRef(null);
@@ -287,8 +296,8 @@ export default function ReimagineConversionsTab() {
       toast.error('Use JPEG, PNG, WebP, or GIF');
       return;
     }
-    if (file.size > 6 * 1024 * 1024) {
-      toast.error('Max 6MB per image');
+    if (file.size > MAX_IMAGE_BYTES) {
+      toast.error('Max 2MB per image (try 1200×1200 or 1200×1500 px)');
       return;
     }
     const setter = side === 'from' ? setFromSlot : setToSlot;
@@ -342,6 +351,10 @@ export default function ReimagineConversionsTab() {
       toast.error('To style is required');
       return;
     }
+    if (fromLabel.length > 128 || form.to_label.trim().length > 128) {
+      toast.error('From and to names must be 128 characters or fewer');
+      return;
+    }
     if (isCreatingFrom && !fromSlot.file && !form.from_image.trim() && !fromSlot.existingPath) {
       toast.error('Add a from image for the new section');
       return;
@@ -349,19 +362,36 @@ export default function ReimagineConversionsTab() {
 
     setSaving(true);
     const headers = { ...authHeader };
-    const hasFiles = Boolean(fromSlot.file || toSlot.file);
 
     const retainedFrom =
       fromSlot.file || fromSlot.cleared
         ? null
-        : form.from_image.trim() || (fromSlot.existingPath && !fromSlot.cleared ? fromSlot.existingPath : null);
+        : retainableImageRef(form.from_image) || retainableImageRef(fromSlot.existingPath);
     const retainedTo =
       toSlot.file || toSlot.cleared
         ? null
-        : form.to_image.trim() || (toSlot.existingPath && !toSlot.cleared ? toSlot.existingPath : null);
+        : retainableImageRef(form.to_image) || retainableImageRef(toSlot.existingPath);
+
+    const inheritFromImage =
+      !editingId &&
+      !isCreatingFrom &&
+      !fromSlot.file &&
+      !fromSlot.cleared &&
+      !retainedFrom &&
+      Boolean(form.fromMode);
+
+    const needsMultipart = Boolean(
+      fromSlot.file ||
+        toSlot.file ||
+        fromSlot.cleared ||
+        toSlot.cleared ||
+        retainedFrom ||
+        retainedTo ||
+        inheritFromImage
+    );
 
     try {
-      if (hasFiles || fromSlot.cleared || toSlot.cleared || retainedFrom?.startsWith('data:') || retainedTo?.startsWith('data:')) {
+      if (needsMultipart) {
         const fd = new FormData();
         fd.append('from_label', fromLabel);
         fd.append('to_label', form.to_label.trim());
@@ -372,6 +402,7 @@ export default function ReimagineConversionsTab() {
         if (fromSlot.file) fd.append('from_file', fromSlot.file);
         else if (fromSlot.cleared) fd.append('clear_from_image', '1');
         else if (retainedFrom) fd.append('from_image', retainedFrom);
+        else if (inheritFromImage) fd.append('inherit_from_image', '1');
 
         if (toSlot.file) fd.append('to_file', toSlot.file);
         else if (toSlot.cleared) fd.append('clear_to_image', '1');
@@ -388,8 +419,6 @@ export default function ReimagineConversionsTab() {
         const payload = {
           from_label: fromLabel,
           to_label: form.to_label.trim(),
-          from_image: retainedFrom || null,
-          to_image: retainedTo || null,
           price: Math.max(0, parseInt(form.price, 10) || 0),
           sort_order: Math.max(0, parseInt(form.sort_order, 10) || 0),
           active: !!form.active,
@@ -518,7 +547,7 @@ export default function ReimagineConversionsTab() {
                 label="From image"
                 hint={
                   isCreatingFrom
-                    ? 'Shown on the garment card in the Reimagine flow.'
+                    ? '4:5 ratio recommended — 1200×1500 px, under 2MB.'
                     : 'Shared look for this section — change only if you want to update it.'
                 }
                 slot={fromSlot}
@@ -530,7 +559,7 @@ export default function ReimagineConversionsTab() {
               />
               <ConversionImageField
                 label="To image"
-                hint="Shown when the customer picks this transformation."
+                hint="1:1 ratio recommended — 1200×1200 px, under 2MB."
                 slot={toSlot}
                 fileRef={toFileRef}
                 urlValue={form.to_image}

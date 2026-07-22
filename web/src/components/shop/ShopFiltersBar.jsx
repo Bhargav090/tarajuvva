@@ -10,6 +10,7 @@ const CATEGORY_TINT = {
   Bottoms: '#5a7a2e',
   Sets: '#3d6b4f',
   Dresses: '#8b6f4e',
+  Accessories: '#6b5b8a',
   Sale: '#c43d2b',
 };
 

@@ -70,6 +70,7 @@ export const SHOP_CATEGORIES = [
   { label: 'Bottoms',    value: 'Bottoms' },
   { label: 'Sets',       value: 'Co-ords' },
   { label: 'Dresses',    value: 'Dresses' },
+  { label: 'Accessories', value: 'Accessories' },
   { label: 'Sale',       value: '__sale__' },
 ];
 

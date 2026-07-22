@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, ArrowLeft, Tag, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Tag, ChevronLeft, ChevronRight, Heart, ShieldCheck, RefreshCw, Hand } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../context/CartContext';
@@ -334,10 +334,18 @@ export default function ProductPage() {
 
             {/* Assurance */}
             <div className="mt-6 grid grid-cols-3 gap-3">
-              {['Repair guaranteed', 'Circular fashion', 'Handmade'].map((l) => (
-                <div key={l} className="text-center p-3 bg-white rounded-xl border border-[#241621]/8">
+              {[
+                { label: 'Repair guaranteed', Icon: ShieldCheck },
+                { label: 'Circular fashion', Icon: RefreshCw },
+                { label: 'Handmade', Icon: Hand },
+              ].map(({ label, Icon }) => (
+                <div
+                  key={label}
+                  className="text-center p-3 bg-white rounded-xl border border-[#241621]/8 flex flex-col items-center gap-1.5"
+                >
+                  <Icon size={18} strokeWidth={1.75} className="text-[#241621]/55" aria-hidden />
                   <span className="text-[10px] sm:text-[11px] font-semibold text-[#241621]/70 font-display leading-snug block">
-                    {l}
+                    {label}
                   </span>
                 </div>
               ))}

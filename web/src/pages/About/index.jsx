@@ -31,7 +31,7 @@ export default function About() {
               alt="Founders"
               className="w-full aspect-[4/5] object-cover border border-black" */}
             {/* /> */}
-            <p className="tj-eyebrow">Founder: Anjali, Based in Hyderabad, India</p>
+            <p className="tj-eyebrow">Founder: Anjali · Sainikpuri, Hyderabad</p>
           </div>
           <div className="md:col-span-7 space-y-6 text-lg text-black/75 leading-relaxed font-body">
             <p className="tj-eyebrow !normal-case tracking-normal text-black/45">Our Story</p>
@@ -73,7 +73,7 @@ export default function About() {
           <p className="tj-eyebrow">Our Mission</p>
           <h2 className="tj-h2 text-[#0a0a0a]">Longevity over landfill.</h2>
           <p>
-            Based in Hyderabad, we&apos;re here to build a fashion system that values longevity over
+            Based in Sainikpuri, Hyderabad, we&apos;re here to build a fashion system that values longevity over
             landfill. Not by asking you to buy less, but by giving every garment more ways to exist.
           </p>
           <p className="tj-eyebrow pt-4">Be a Part of the Loop</p>
@@ -91,7 +91,7 @@ export default function About() {
             <a href="mailto:contact@tarajuvva.com" className="underline text-black">
               contact@tarajuvva.com
             </a>
-            . Location: Hyderabad.
+            . Location: Sainikpuri, Hyderabad.
           </p>
         </div>
       </section>

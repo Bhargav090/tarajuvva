@@ -89,7 +89,7 @@ export default function Footer() {
                 </li>
                 <li className="flex items-baseline gap-2 flex-wrap">
                   <span className="font-display text-base text-[#0a0a0a]">Location</span>
-                  <span className="text-sm text-black/55 font-body">Hyderabad</span>
+                  <span className="text-sm text-black/55 font-body">Sainikpuri, Hyderabad</span>
                 </li>
               </ul>
             </div>

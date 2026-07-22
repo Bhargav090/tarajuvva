@@ -71,16 +71,34 @@ export default function Hero() {
         </div>
 
         <div className="relative z-[2] grid grid-cols-2 md:grid-cols-4 gap-px mt-10 md:mt-12 border border-black bg-black">
-          {HERO_STATS.map(stat => (
-            <div key={stat.label} className="bg-white p-6">
-              <div className="font-display text-4xl md:text-5xl font-extrabold tracking-tighter text-[#0a0a0a]">
-                {stat.value}
+          {HERO_STATS.map(stat => {
+            const inner = (
+              <>
+                <div className="font-display text-4xl md:text-5xl font-extrabold tracking-tighter text-[#0a0a0a]">
+                  {stat.value}
+                </div>
+                <p className="text-xs text-black/55 mt-1 font-mono-tj uppercase tracking-wider">
+                  {stat.label}
+                </p>
+              </>
+            );
+            if (stat.to) {
+              return (
+                <Link
+                  key={stat.label}
+                  to={stat.to}
+                  className="bg-white p-6 transition-colors block hover:bg-[#c8ff2e]/40"
+                >
+                  {inner}
+                </Link>
+              );
+            }
+            return (
+              <div key={stat.label} className="bg-white p-6">
+                {inner}
               </div>
-              <p className="text-xs text-black/55 mt-1 font-mono-tj uppercase tracking-wider">
-                {stat.label}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

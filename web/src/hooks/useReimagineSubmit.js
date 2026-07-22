@@ -21,7 +21,12 @@ function emptyDetails() {
     address: '',
     pincode: '',
     notes: '',
+    garment_size: '',
+    transformation_size: '',
+    height_ft: '',
+    height_in: '',
     pickup_date: '',
+    pickup_period: '',
     consultation_date: '',
     consultation_slot_id: '',
     consultation_time: '',
@@ -270,10 +275,10 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     const status = err.response?.status;
     if (status === 401 || status === 403) {
       redirectToLogin();
-      toast.error(err.response?.data?.message || 'Please sign in to submit your request.');
+      toast.error(err.response?.data?.message || 'Please sign in to submit your order.');
       return;
     }
-    const msg = err.response?.data?.message || err.message || 'Could not submit your request. Please try again.';
+    const msg = err.response?.data?.message || err.message || 'Could not submit your order. Please try again.';
     if (msg !== 'Payment cancelled') toast.error(msg);
   };
 
@@ -312,8 +317,22 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
         toast.error('Please upload at least one garment photo');
         return false;
       }
+      if (!String(details.garment_size || '').trim() || !String(details.transformation_size || '').trim()) {
+        toast.error('Please select current and desired garment sizes');
+        return false;
+      }
+      const ft = Number(details.height_ft);
+      const inch = Number(details.height_in);
+      if (!Number.isFinite(ft) || ft < 4 || ft > 7 || !Number.isFinite(inch) || inch < 0 || inch > 11) {
+        toast.error('Please enter your height in feet and inches');
+        return false;
+      }
       if (!String(details.pickup_date || '').trim()) {
         toast.error('Please select a preferred pickup date');
+        return false;
+      }
+      if (!['morning', 'afternoon', 'evening'].includes(String(details.pickup_period || '').trim())) {
+        toast.error('Please choose morning, afternoon, or evening for pickup');
         return false;
       }
     }
@@ -323,7 +342,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
   const submitRequest = async (extraFields = {}) => {
     if (!user) {
       redirectToLogin();
-      toast.error('Please sign in to submit your request.');
+      toast.error('Please sign in to submit your order.');
       return;
     }
     setLoading(true);

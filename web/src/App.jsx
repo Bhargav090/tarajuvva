@@ -3,11 +3,13 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from 're
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { WishlistProvider } from './context/WishlistContext';
 import { FONT_STACK } from './utils/fontStack';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
 import Ticker from './components/layout/Ticker';
+import WhatsAppFloat from './components/layout/WhatsAppFloat';
 
 import Home       from './pages/Home';
 import Shop       from './pages/Shop';
@@ -17,6 +19,7 @@ import Reimagine  from './pages/Reimagine';
 import Repair     from './pages/Repair';
 import Donate     from './pages/Donate';
 import About      from './pages/About';
+import Help       from './pages/Help';
 import Admin      from './pages/Admin';
 import Login      from './pages/Auth/Login';
 import Register   from './pages/Auth/Register';
@@ -62,6 +65,7 @@ function Layout({ children }) {
       <CartDrawer />
       <main>{children}</main>
       <Footer />
+      <WhatsAppFloat />
     </div>
   );
 }
@@ -71,6 +75,7 @@ export default function App() {
     <BrowserRouter>
       <ScrollToTop />
       <AuthProvider>
+        <WishlistProvider>
         <CartProvider>
           <Toaster
             position="top-right"
@@ -97,6 +102,7 @@ export default function App() {
               <Route path="/repair"            element={<Repair />} />
               <Route path="/donate"            element={<Donate />} />
               <Route path="/about"             element={<About />} />
+              <Route path="/help"              element={<Help />} />
               <Route path="/login"             element={<Login />} />
               <Route path="/register"          element={<Register />} />
               <Route path="/profile"                    element={<Profile />} />
@@ -113,6 +119,7 @@ export default function App() {
             </Routes>
           </Layout>
         </CartProvider>
+        </WishlistProvider>
       </AuthProvider>
     </BrowserRouter>
   );

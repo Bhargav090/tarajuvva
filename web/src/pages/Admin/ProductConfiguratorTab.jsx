@@ -250,7 +250,7 @@ const emptyForm = () => ({
   description: '',
   waysRaw: '',
   tagsRaw: '',
-  image_tag: 'Modular',
+  image_tag: '',
   stock: '100',
   featured: false,
   sizes: [],
@@ -315,7 +315,7 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
     description: form.description.trim() || null,
     ways_to_wear,
     tags,
-    image_tag: (form.image_tag || 'Modular').trim() || 'Modular',
+    image_tag: (form.image_tag || '').trim() || null,
     stock: sizes.length
       ? sizes.reduce((sum, s) => sum + (Number(s.stock) || 0), 0)
       : stock || 100,
@@ -438,7 +438,7 @@ export default function ProductConfiguratorTab() {
       description: p.description || '',
       waysRaw: (p.ways_to_wear || []).join('\n'),
       tagsRaw: (p.tags || []).join(', '),
-      image_tag: p.image_tag || 'Modular',
+      image_tag: p.image_tag || '',
       stock: String(p.stock ?? 100),
       featured: !!p.featured,
       sizes: [],
@@ -562,11 +562,11 @@ export default function ProductConfiguratorTab() {
           />
         </div>
         <Input
-          label="Image tag (shown on product card)"
+          label="Image tag (optional — shown on product card)"
           name="image_tag"
           value={form.image_tag}
           onChange={onChange}
-          placeholder="Modular"
+          placeholder="e.g. Modular — leave empty for none"
         />
         {sizes.length === 0 ? (
           <Input label="Stock count" name="stock" type="number" min="0" step="1" value={form.stock} onChange={onChange} required />

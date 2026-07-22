@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronDown,
   MapPin,
@@ -10,12 +12,15 @@ import {
   StickyNote,
   Copy,
   Check,
+  Truck,
+  ExternalLink,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAdminOrders } from '../../hooks/useAdmin';
 import StatusSelect from '../../components/ui/StatusSelect';
 import { Badge } from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
+import { Input } from '../../components/ui/FormField';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import PaginationBar from '../../components/ui/PaginationBar';
 import OrderItemLine from '../../components/orders/OrderItemLine';
@@ -73,8 +78,96 @@ function CopyButton({ value, label = 'Copy' }) {
   );
 }
 
+function ShippingLinkDialog({ open, order, onClose, onConfirm }) {
+  const [url, setUrl] = useState(order?.tracking_url || '');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  if (typeof document === 'undefined') return null;
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const trimmed = url.trim();
+    setErr('');
+    if (!trimmed) {
+      setErr('Tracking URL is required');
+      return;
+    }
+    try {
+      // eslint-disable-next-line no-new
+      new URL(trimmed);
+    } catch {
+      setErr('Enter a valid URL starting with https://');
+      return;
+    }
+    setSaving(true);
+    try {
+      await onConfirm(trimmed);
+      onClose();
+    } catch (error) {
+      setErr(error.response?.data?.message || error.message || 'Could not update status');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return createPortal(
+    <AnimatePresence>
+      {open && order && (
+        <motion.div
+          key="ship-overlay"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <button type="button" aria-label="Close" className="absolute inset-0 bg-black/40" onClick={onClose} />
+          <motion.form
+            onSubmit={submit}
+            role="dialog"
+            aria-modal="true"
+            className="relative z-[1] w-full max-w-md rounded-2xl border border-[#241621]/10 bg-white p-6 shadow-xl"
+            initial={{ opacity: 0, scale: 0.96, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -8 }}
+          >
+            <h2 className="text-lg font-black text-[#241621] font-display flex items-center gap-2">
+              <Truck size={18} /> Mark as shipped
+            </h2>
+            <p className="mt-2 text-sm text-[#241621]/65 font-body leading-relaxed">
+              Add the courier tracking link for order #{String(order.id).slice(0, 8).toUpperCase()}. The customer
+              will see it on their order page and receive an email.
+            </p>
+            <div className="mt-4">
+              <Input
+                label="Shipping / tracking URL"
+                name="tracking_url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://…"
+                required
+              />
+            </div>
+            {err && <p className="mt-2 text-xs text-[#e34334] font-body">{err}</p>}
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="ghost" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" loading={saving}>
+                Save &amp; ship
+              </Button>
+            </div>
+          </motion.form>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+}
+
 function OrderCard({ order, updateStatus }) {
   const [open, setOpen] = useState(false);
+  const [shipOpen, setShipOpen] = useState(false);
   const shortId = String(order.id || '').slice(0, 8).toUpperCase();
   const items = Array.isArray(order.items) ? order.items : [];
   const itemCount = items.reduce((n, i) => n + (i.qty || 1), 0);
@@ -83,9 +176,32 @@ function OrderCard({ order, updateStatus }) {
     ? PAYMENT_STATUS_LABELS[order.payment_status] || order.payment_status
     : null;
 
+  const onStatusChange = async (next) => {
+    if (next === 'shipped') {
+      setShipOpen(true);
+      return;
+    }
+    try {
+      await updateStatus(order.id, next);
+      toast.success(`Status → ${next.replace(/_/g, ' ')}`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not update status');
+    }
+  };
+
   return (
     <article className="bg-white rounded-2xl border border-[#241621]/10 overflow-hidden">
-      {/* Summary row */}
+      <ShippingLinkDialog
+        key={shipOpen ? `ship-${order.id}` : 'ship-closed'}
+        open={shipOpen}
+        order={order}
+        onClose={() => setShipOpen(false)}
+        onConfirm={async (tracking_url) => {
+          await updateStatus(order.id, 'shipped', { tracking_url });
+          toast.success('Marked shipped — tracking email sent');
+        }}
+      />
+
       <div className="p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -112,12 +228,11 @@ function OrderCard({ order, updateStatus }) {
             <StatusSelect
               value={order.status}
               options={ORDER_STATUSES}
-              onUpdate={(s) => updateStatus(order.id, s)}
+              onUpdate={onStatusChange}
             />
           </div>
         </div>
 
-        {/* Compact item preview when collapsed */}
         {!open && (
           <p className="mt-3 text-xs text-[#241621]/50 font-body line-clamp-2">
             {itemCount} {itemCount === 1 ? 'item' : 'items'}
@@ -125,6 +240,17 @@ function OrderCard({ order, updateStatus }) {
               ? ` — ${items.map((it) => `${it.name}${it.size ? ` (${it.size})` : ''} ×${it.qty}`).join(', ')}`
               : ''}
           </p>
+        )}
+
+        {order.tracking_url && (
+          <a
+            href={order.tracking_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-mono-tj uppercase tracking-[0.14em] text-[#a8e000] hover:text-[#241621]"
+          >
+            <Truck size={12} /> Track shipment <ExternalLink size={11} />
+          </a>
         )}
 
         <button
@@ -137,11 +263,9 @@ function OrderCard({ order, updateStatus }) {
         </button>
       </div>
 
-      {/* Expanded details */}
       {open && (
         <div className="border-t border-[#241621]/8">
           <div className="grid lg:grid-cols-2 gap-0 lg:divide-x divide-[#241621]/8">
-            {/* Items */}
             <div className="p-4 sm:p-5">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <h3 className="text-[10px] font-mono-tj uppercase tracking-[0.16em] text-[#241621]/40 flex items-center gap-1.5">
@@ -164,12 +288,8 @@ function OrderCard({ order, updateStatus }) {
                   <p className="text-sm text-[#241621]/40 font-body py-4">No line items.</p>
                 )}
               </div>
-              <p className="mt-3 text-[10px] text-[#241621]/35 font-body">
-                Product name opens the shop page in a new tab for review.
-              </p>
             </div>
 
-            {/* Customer / delivery / payment */}
             <div className="p-4 sm:p-5 space-y-4 bg-[#fafafa]/80">
               <h3 className="text-[10px] font-mono-tj uppercase tracking-[0.16em] text-[#241621]/40">
                 Customer & delivery
@@ -195,6 +315,18 @@ function OrderCard({ order, updateStatus }) {
                 <DetailRow icon={MapPin} label="Delivery address">
                   <span className="whitespace-pre-wrap">{order.address || '—'}</span>
                 </DetailRow>
+                {order.tracking_url && (
+                  <DetailRow icon={Truck} label="Tracking link">
+                    <a
+                      href={order.tracking_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="break-all hover:underline text-[#241621]"
+                    >
+                      {order.tracking_url}
+                    </a>
+                  </DetailRow>
+                )}
                 <DetailRow icon={CreditCard} label="Payment">
                   <p className="font-medium">{paymentMethod}</p>
                   {paymentStatus && (
@@ -206,11 +338,6 @@ function OrderCard({ order, updateStatus }) {
                       <span className="ml-2 inline-block align-middle">
                         <CopyButton value={order.razorpay_payment_id} label="Copy" />
                       </span>
-                    </p>
-                  )}
-                  {order.razorpay_order_id && (
-                    <p className="text-[11px] font-mono-tj text-[#241621]/35 mt-0.5 break-all">
-                      Order: {order.razorpay_order_id}
                     </p>
                   )}
                 </DetailRow>
@@ -237,7 +364,7 @@ export default function OrdersTab() {
       `tarajuvva-orders-${new Date().toISOString().slice(0, 10)}.csv`,
       [
         'id', 'created_at', 'user_name', 'user_email', 'user_phone', 'address',
-        'items', 'total', 'status', 'payment_method', 'payment_status', 'notes',
+        'items', 'total', 'status', 'payment_method', 'payment_status', 'tracking_url', 'notes',
       ],
       orders.map((o) => [
         o.id,
@@ -251,6 +378,7 @@ export default function OrdersTab() {
         o.status,
         o.payment_method,
         o.payment_status,
+        o.tracking_url,
         o.notes,
       ])
     );
@@ -264,7 +392,7 @@ export default function OrdersTab() {
             Orders ({pagination.total || orders.length})
           </h1>
           <p className="text-sm text-[#241621]/50 font-body mt-1">
-            Expand an order for items, address, payment, and product links.
+            Expanding an order shows items, address, payment, and tracking. Choosing <strong>Shipped</strong> asks for a tracking URL.
           </p>
         </div>
         <Button type="button" variant="outline-green" size="sm" onClick={exportOrders} disabled={!orders.length}>

@@ -89,16 +89,29 @@ export function useAdminOrders() {
     };
   }, [page]);
 
-  const updateStatus = async (id, status) => {
-    await api.patch(`/shop/orders/${id}/status`, { status }, { headers: authHeader });
-    setOrders((p) => p.map((o) => (o.id === id ? { ...o, status } : o)));
+  const updateStatus = async (id, status, extra = {}) => {
+    const { data } = await api.patch(
+      `/shop/orders/${id}/status`,
+      { status, ...extra },
+      { headers: authHeader }
+    );
+    const next = data?.order;
+    setOrders((p) =>
+      p.map((o) =>
+        o.id === id
+          ? next
+            ? { ...o, ...next, items: o.items }
+            : { ...o, status, ...(extra.tracking_url ? { tracking_url: extra.tracking_url } : {}) }
+          : o
+      )
+    );
   };
 
   return { orders, loading, updateStatus, pagination, page, setPage };
 }
 
 // ── Admin Reimagine ────────────────────────────────────────────────────────────
-export function useAdminReimagine() {
+export function useAdminReimagine({ kind = 'orders' } = {}) {
   const [requests, setRequests] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
   const [page, setPage] = useState(1);
@@ -109,7 +122,10 @@ export function useAdminReimagine() {
     let cancelled = false;
     setLoading(true);
     api
-      .get('/reimagine/requests', { headers: authHeader, params: { page, limit: 10 } })
+      .get('/reimagine/requests', {
+        headers: authHeader,
+        params: { page, limit: 10, kind: kind === 'consultations' ? 'consultations' : 'orders' },
+      })
       .then((r) => {
         if (cancelled) return;
         setRequests(r.data.requests || []);
@@ -124,7 +140,7 @@ export function useAdminReimagine() {
     return () => {
       cancelled = true;
     };
-  }, [page]);
+  }, [page, kind]);
 
   const updateStatus = async (id, status) => {
     await api.patch(`/reimagine/requests/${id}/status`, { status }, { headers: authHeader });

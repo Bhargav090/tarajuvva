@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Package, Scissors, LogOut, Edit2, Save, X, Clock, ArrowLeft } from 'lucide-react';
+import { User, Package, Scissors, LogOut, Edit2, Save, X, Clock, ArrowLeft, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
@@ -12,21 +13,24 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import api from '../../utils/api';
 import { formatAddressWithPincode, parseAddressWithPincode } from '../../utils/address';
-import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../../utils/constants';
+import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS, PICKUP_PERIOD_LABELS } from '../../utils/constants';
 import OrderItemLine from '../../components/orders/OrderItemLine';
 import PaginationBar from '../../components/ui/PaginationBar';
 import LazyReimagineImages from '../../components/reimagine/LazyReimagineImages';
+import ProductCard from '../../components/ui/ProductCard';
 
 const TABS = [
   { id: 'profile', label: 'Profile',           icon: User     },
   { id: 'orders',  label: 'My Orders',         icon: Package  },
-  { id: 'reimagine', label: 'Reimagine Requests', icon: Scissors },
+  { id: 'wishlist', label: 'Wishlist',         icon: Heart    },
+  { id: 'reimagine', label: 'Reimagine Orders', icon: Scissors },
 ];
 
 export default function Profile() {
   const { section } = useParams();
   const location = useLocation();
   const { user, loading: authLoading, logout, updateUser } = useAuth();
+  const { products: wishlistProducts, loading: wishlistLoading, refresh: refreshWishlist } = useWishlist();
   const navigate = useNavigate();
   const [tab, setTab]       = useState(() =>
     section && TABS.some((t) => t.id === section) ? section : 'profile'
@@ -70,6 +74,10 @@ export default function Profile() {
   useEffect(() => {
     if (tab === 'reimagine') fetchReimagine(reimaginePage);
   }, [tab, reimaginePage]);
+
+  useEffect(() => {
+    if (tab === 'wishlist') refreshWishlist();
+  }, [tab, refreshWishlist]);
 
   const fetchOrders = async (page = 1) => {
     setLoadingData(true);
@@ -273,6 +281,11 @@ export default function Profile() {
                     <p className="text-xs text-black/45 font-body mt-1">
                       {paymentLabel}{paymentStatus ? ` · ${paymentStatus}` : ''}
                     </p>
+                    {o.tracking_url && (
+                      <p className="text-xs text-[#0a0a0a] font-body mt-1.5 underline underline-offset-2">
+                        Tracking available →
+                      </p>
+                    )}
                   </div>
                   <Badge status={o.status} />
                 </Link>
@@ -310,6 +323,28 @@ export default function Profile() {
           </div>
         )}
 
+        {tab === 'wishlist' && (
+          <div>
+            {wishlistLoading ? (
+              <div className="flex justify-center py-16"><Spinner size={32} /></div>
+            ) : wishlistProducts.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-[#241621]/8">
+                <Heart size={40} className="text-[#241621]/20 mx-auto mb-4" />
+                <p className="text-[#241621]/50 font-body">No favourites yet.</p>
+                <Link to="/shop" className="mt-4 inline-block text-[#7A063C] font-semibold text-sm font-display hover:underline">
+                  Browse the shop →
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                {wishlistProducts.map((p) => (
+                  <ProductCard key={p.id} product={p} disableEntrance />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {tab === 'reimagine' && (
           <div className="space-y-4">
             {loadingData ? (
@@ -317,7 +352,7 @@ export default function Profile() {
             ) : reimagine.length === 0 ? (
               <div className="bg-white rounded-3xl p-12 text-center border border-[#241621]/8">
                 <Scissors size={40} className="text-[#241621]/20 mx-auto mb-4" />
-                <p className="text-[#241621]/50 font-body">No reimagine requests yet.</p>
+                <p className="text-[#241621]/50 font-body">No reimagine orders yet.</p>
                 <Link to="/reimagine" className="mt-4 inline-block text-[#7A063C] font-semibold text-sm font-display hover:underline">
                   Start Reimagining →
                 </Link>
@@ -326,7 +361,7 @@ export default function Profile() {
               <div key={r.id} className="bg-white rounded-2xl p-5 sm:p-6 border border-[#241621]/8">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs text-[#241621]/40 font-body mb-1">Request #{r.id.slice(0,8).toUpperCase()}</p>
+                    <p className="text-xs text-[#241621]/40 font-body mb-1">Order #{r.id.slice(0,8).toUpperCase()}</p>
                     <p className="font-bold text-[#241621] font-display">
                       {r.garment_type} → {r.transformation}
                       {r.is_custom && (
@@ -356,6 +391,39 @@ export default function Profile() {
                     <div className="sm:col-span-2">
                       <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Address</dt>
                       <dd className="text-[#241621]/75 font-body whitespace-pre-wrap">{r.address}</dd>
+                    </div>
+                  )}
+                  {(r.garment_size || r.transformation_size || r.height_ft != null) && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Fit</dt>
+                      <dd className="text-[#241621]/75 font-body">
+                        {[
+                          r.garment_size ? `Current ${r.garment_size}` : null,
+                          r.transformation_size ? `Desired ${r.transformation_size}` : null,
+                          r.height_ft != null && r.height_in != null
+                            ? `Height ${r.height_ft}'${r.height_in}"`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </dd>
+                    </div>
+                  )}
+                  {(r.pickup_date || r.pickup_period) && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Preferred pickup</dt>
+                      <dd className="text-[#241621]/75 font-body">
+                        {r.pickup_date
+                          ? new Date(r.pickup_date).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '—'}
+                        {r.pickup_period
+                          ? ` · ${PICKUP_PERIOD_LABELS[r.pickup_period] || r.pickup_period}`
+                          : ''}
+                      </dd>
                     </div>
                   )}
                   {r.notes && (

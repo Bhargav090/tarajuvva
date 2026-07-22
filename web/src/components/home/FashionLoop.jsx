@@ -13,6 +13,16 @@ export const LOOP_VERTICALS = [
   },
   {
     num: '02',
+    action: 'Repair',
+    to: '/repair',
+    color: '#1a3df0',
+    textOnColor: '#ffffff',
+    headline: 'Good clothes deserve another chance.',
+    subline: 'Expert repairs that keep your wardrobe in rotation for longer.',
+    cta: 'Book a repair',
+  },
+  {
+    num: '03',
     action: 'Reimagine',
     cardLabel: 'Remake',
     to: '/reimagine',
@@ -21,16 +31,6 @@ export const LOOP_VERTICALS = [
     headline: 'Your old favourites, made new again.',
     subline: 'Transform existing garments into updated pieces through upcycling and customization',
     cta: 'Start a remake',
-  },
-  {
-    num: '03',
-    action: 'Repair',
-    to: '/repair',
-    color: '#1a3df0',
-    textOnColor: '#ffffff',
-    headline: 'Good clothes deserve another chance.',
-    subline: 'Expert repairs that keep your wardrobe in rotation for longer.',
-    cta: 'Book a repair',
   },
   {
     num: '04',

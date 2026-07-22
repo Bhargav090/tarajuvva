@@ -249,6 +249,16 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
     conversion_id,
   } = req.body;
 
+  const pickup_period = String(req.body.pickup_period || '').trim().toLowerCase();
+  const garment_size = String(req.body.garment_size || '').trim().toUpperCase();
+  const transformation_size = String(req.body.transformation_size || '').trim().toUpperCase();
+  const height_ft = req.body.height_ft != null && req.body.height_ft !== ''
+    ? parseInt(String(req.body.height_ft), 10)
+    : null;
+  const height_in = req.body.height_in != null && req.body.height_in !== ''
+    ? parseInt(String(req.body.height_in), 10)
+    : null;
+
   if (!user_name?.trim() || !user_phone?.trim()) {
     return res.status(400).json({ success: false, message: 'Missing required fields' });
   }
@@ -337,6 +347,43 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
   }
 
   const pickupDate = pickup_date?.trim() ? toISODateString(pickup_date.trim()) : null;
+  const allowedPeriods = new Set(['morning', 'afternoon', 'evening']);
+  const pickupPeriod = allowedPeriods.has(pickup_period) ? pickup_period : null;
+
+  if (!consultation && !callbackRequested) {
+    if (!pickupDate) {
+      return res.status(400).json({ success: false, message: 'Preferred pickup date is required.' });
+    }
+    if (!pickupPeriod) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please choose a pickup time of day (morning, afternoon, or evening).',
+      });
+    }
+    const letterSizes = new Set(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
+    if (!letterSizes.has(garment_size) || !letterSizes.has(transformation_size)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select current and desired garment sizes (XS–XXL).',
+      });
+    }
+    if (
+      height_ft == null ||
+      height_in == null ||
+      Number.isNaN(height_ft) ||
+      Number.isNaN(height_in) ||
+      height_ft < 4 ||
+      height_ft > 7 ||
+      height_in < 0 ||
+      height_in > 11
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter your height in feet and inches.',
+      });
+    }
+  }
+
   const transformationLabel = resolvedTransform;
 
   const status = wantsRazorpay ? 'pending_payment' : 'pending_review';
@@ -344,10 +391,12 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
 
   await run(
     `INSERT INTO reimagine_requests (
-      id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,conversion_id,notes,images,status,
+      id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,conversion_id,notes,
+      garment_size,transformation_size,height_ft,height_in,
+      images,status,
       is_custom,consultation_paid,consultation_slot_id,consultation_date,consultation_time,callback_requested,
-      pickup_date,payment_status,consultation_fee
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      pickup_date,pickup_period,payment_status,consultation_fee
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id,
       user_id,
@@ -359,6 +408,10 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       transformationLabel,
       conversion ? conversion.id : null,
       notes?.trim() || null,
+      !consultation && !callbackRequested ? garment_size : null,
+      !consultation && !callbackRequested ? transformation_size : null,
+      !consultation && !callbackRequested ? height_ft : null,
+      !consultation && !callbackRequested ? height_in : null,
       JSON.stringify(images),
       status,
       custom ? 1 : 0,
@@ -368,6 +421,7 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       consultationTime,
       callbackRequested ? 1 : 0,
       pickupDate,
+      pickupPeriod,
       paymentStatus,
       paymentAmount || null,
     ]
@@ -427,14 +481,17 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       consultation_price: consultationFee || null,
       consultation_slot_label: slotLabel,
       pickup_date: pickupDate,
+      pickup_period: pickupPeriod,
     })
-  ).catch(() => {});
+  ).catch((err) => {
+    console.error('[reimagine] notifyReimagineRequest (create) failed:', err?.message || err);
+  });
 
   res.status(201).json({
     success: true,
     message: callbackRequested
       ? "Thank you! Our team will contact you within 24 hours to schedule your consultation."
-      : "Thank you for reimagining with Tarajuvva. We'll review your request and get back within 24 hours.",
+      : "Thank you for reimagining with Tarajuvva. We'll review your order and get back within 24 hours.",
     requestId: id,
     callback_requested: callbackRequested,
   });
@@ -506,13 +563,16 @@ router.post('/requests/:id/razorpay/verify', authenticateUser, async (req, res) 
       consultation_price: updated.consultation_fee,
       consultation_slot_label: slotLabel,
       pickup_date: updated.pickup_date,
+      pickup_period: updated.pickup_period,
       payment_status: 'paid',
     })
-  ).catch(() => {});
+  ).catch((err) => {
+    console.error('[reimagine] notifyReimagineRequest (verify) failed:', err?.message || err);
+  });
 
   res.json({
     success: true,
-    message: "Payment confirmed. Thank you for reimagining with Tarajuvva — we'll review your request within 24 hours.",
+    message: "Payment confirmed. Thank you for reimagining with Tarajuvva — we'll review your order within 24 hours.",
     requestId: row.id,
   });
 });
@@ -522,7 +582,8 @@ const { parsePagination, paginationMeta } = require('../lib/pagination');
 /** Columns for list views — excludes heavy `images` LONGTEXT (base64 payloads). */
 const REIMAGINE_LIST_SELECT = `
   id, user_id, user_name, user_phone, user_email, address, garment_type, transformation,
-  conversion_id, notes, status, admin_notes, pickup_date, payment_status, consultation_fee,
+  conversion_id, notes, garment_size, transformation_size, height_ft, height_in,
+  status, admin_notes, pickup_date, pickup_period, payment_status, consultation_fee,
   is_custom, consultation_paid, callback_requested, consultation_date, consultation_time,
   consultation_slot_id, created_at, updated_at,
   CASE
@@ -544,12 +605,27 @@ function mapReimagineListRow(r) {
   };
 }
 
+const CONSULTATION_WHERE =
+  '(COALESCE(consultation_paid, 0) = 1 OR COALESCE(callback_requested, 0) = 1)';
+const REMAKE_WHERE =
+  '(COALESCE(consultation_paid, 0) = 0 AND COALESCE(callback_requested, 0) = 0)';
+
 router.get('/requests', authenticateAdmin, async (req, res) => {
   try {
-    const { status } = req.query;
+    const { status, kind } = req.query;
     const { page, limit, offset } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
     const where = [];
     const params = [];
+
+    // Default: remake orders only. Consultations live under kind=consultations.
+    if (kind === 'consultations') {
+      where.push(CONSULTATION_WHERE);
+    } else if (kind === 'all') {
+      // no kind filter
+    } else {
+      where.push(REMAKE_WHERE);
+    }
+
     if (status) {
       where.push('status = ?');
       params.push(status);

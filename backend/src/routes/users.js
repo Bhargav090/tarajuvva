@@ -92,7 +92,8 @@ router.get('/me/reimagine', authenticateUser, async (req, res) => {
     const requests = await all(
       `SELECT
         id, user_id, user_name, user_phone, user_email, address, garment_type, transformation,
-        conversion_id, notes, status, admin_notes, pickup_date, payment_status, consultation_fee,
+        conversion_id, notes, garment_size, transformation_size, height_ft, height_in,
+        status, admin_notes, pickup_date, pickup_period, payment_status, consultation_fee,
         is_custom, consultation_paid, callback_requested, consultation_date, consultation_time,
         consultation_slot_id, created_at, updated_at,
         CASE
@@ -148,6 +149,87 @@ router.get('/me/reimagine/:id/images', authenticateUser, async (req, res) => {
   } catch (err) {
     console.error('[users] GET /me/reimagine/:id/images failed:', err);
     res.status(500).json({ success: false, message: err.message || 'Failed to load images' });
+  }
+});
+
+// ── WISHLIST ──────────────────────────────────────────────────────────────────
+function parseWishlistProduct(p) {
+  let images = [];
+  let tags = [];
+  let sizes = [];
+  try { images = JSON.parse(p.images || '[]'); } catch { images = []; }
+  try { tags = JSON.parse(p.tags || '[]'); } catch { tags = []; }
+  try { sizes = JSON.parse(p.sizes || '[]'); } catch { sizes = []; }
+  if (!Array.isArray(images)) images = [];
+  if (!Array.isArray(tags)) tags = [];
+  if (!Array.isArray(sizes)) sizes = [];
+  return {
+    ...p,
+    images,
+    tags,
+    sizes,
+    price: Number(p.price) || 0,
+    original_price: p.original_price != null ? Number(p.original_price) : null,
+    stock: Number(p.stock) || 0,
+    featured: Boolean(p.featured),
+    image_tag: (p.image_tag && String(p.image_tag).trim()) || null,
+  };
+}
+
+router.get('/me/wishlist', authenticateUser, async (req, res) => {
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ success: false, message: 'Customer account required' });
+  }
+  try {
+    const rows = await all(
+      `SELECT p.*, w.created_at AS wishlisted_at
+       FROM wishlists w
+       JOIN products p ON p.id = w.product_id
+       WHERE w.user_id = ?
+       ORDER BY w.created_at DESC`,
+      [req.user.id]
+    );
+    res.json({
+      success: true,
+      products: rows.map(parseWishlistProduct),
+      product_ids: rows.map((r) => r.id),
+    });
+  } catch (err) {
+    console.error('[users] GET /me/wishlist failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to load wishlist' });
+  }
+});
+
+router.post('/me/wishlist/:productId', authenticateUser, async (req, res) => {
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ success: false, message: 'Customer account required' });
+  }
+  try {
+    const productId = String(req.params.productId || '').trim();
+    const product = await get('SELECT id FROM products WHERE id = ?', [productId]);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    await run(
+      'INSERT IGNORE INTO wishlists (user_id, product_id) VALUES (?, ?)',
+      [req.user.id, productId]
+    );
+    res.status(201).json({ success: true, product_id: productId, wishlisted: true });
+  } catch (err) {
+    console.error('[users] POST /me/wishlist failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to save wishlist' });
+  }
+});
+
+router.delete('/me/wishlist/:productId', authenticateUser, async (req, res) => {
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ success: false, message: 'Customer account required' });
+  }
+  try {
+    const productId = String(req.params.productId || '').trim();
+    await run('DELETE FROM wishlists WHERE user_id = ? AND product_id = ?', [req.user.id, productId]);
+    res.json({ success: true, product_id: productId, wishlisted: false });
+  } catch (err) {
+    console.error('[users] DELETE /me/wishlist failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to update wishlist' });
   }
 });
 

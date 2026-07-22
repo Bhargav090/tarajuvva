@@ -129,7 +129,7 @@ export default function Reimagine() {
               { to: '/', label: 'Back to Home', variant: 'outline' },
               { label: 'Start another request', variant: 'primary', onClick: resetDone },
               ...(user
-                ? [{ to: '/profile/reimagine', label: 'My requests', variant: 'outline-burgundy' }]
+                ? [{ to: '/profile/reimagine', label: 'My orders', variant: 'outline-burgundy' }]
                 : []),
               { to: '/shop', label: 'Shop', variant: 'outline' },
             ]}

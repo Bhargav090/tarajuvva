@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import DropZone from '../ui/DropZone';
 import { REIMAGINE_FORM_CARD } from './formCardStyles';
+import {
+  PICKUP_PERIODS,
+  REIMAGINE_LETTER_SIZES,
+  HEIGHT_FEET_OPTIONS,
+  HEIGHT_INCH_OPTIONS,
+} from '../../utils/constants';
 
 const FIELD =
   'w-full px-3.5 py-2.5 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm';
@@ -10,14 +16,15 @@ const FIELD =
 const LABEL = 'block text-[0.65rem] font-mono-tj uppercase tracking-[0.16em] text-black/45 mb-1.5';
 
 /**
- * Short section slides (same pattern as before the one-field experiment):
- * 1) name / email / phone  2) address / pincode  3) photos  4) notes / pickup
+ * Remake wizard:
+ * 1) identity  2) delivery  3) photos  4) fit (sizes/height/notes)  5) pickup
  */
 export const REIMAGINE_FORM_STEPS = [
   { key: 'identity', label: 'Who should we contact?', type: 'identity', required: true },
   { key: 'delivery', label: 'Where do we pick up?', type: 'delivery', required: true },
   { key: 'photos', label: 'Upload garment photos', type: 'photos', required: true },
-  { key: 'garment_notes', label: 'Notes & pickup', type: 'garment_notes', required: true },
+  { key: 'garment_fit', label: 'Tell us about your garment', type: 'garment_fit', required: true },
+  { key: 'pickup', label: 'Schedule pickup', type: 'pickup', required: true },
 ];
 
 /** @deprecated alias */
@@ -36,6 +43,28 @@ function deliveryComplete(details) {
   );
 }
 
+function fitComplete(details) {
+  const ft = Number(details.height_ft);
+  const inch = Number(details.height_in);
+  return Boolean(
+    String(details.garment_size || '').trim() &&
+      String(details.transformation_size || '').trim() &&
+      Number.isFinite(ft) &&
+      ft >= 4 &&
+      ft <= 7 &&
+      Number.isFinite(inch) &&
+      inch >= 0 &&
+      inch <= 11 &&
+      String(details.notes || '').trim()
+  );
+}
+
+function pickupComplete(details) {
+  return Boolean(
+    String(details.pickup_date || '').trim() && String(details.pickup_period || '').trim()
+  );
+}
+
 function contactComplete(details) {
   return identityComplete(details) && deliveryComplete(details);
 }
@@ -44,8 +73,25 @@ function stepHint(type) {
   if (type === 'identity') return ' · You';
   if (type === 'delivery') return ' · Address';
   if (type === 'photos') return ' · Photos';
-  if (type === 'garment_notes') return ' · Details';
+  if (type === 'garment_fit') return ' · Fit';
+  if (type === 'pickup') return ' · Pickup';
   return '';
+}
+
+function SizeSelect({ label, name, value, onChange }) {
+  return (
+    <div>
+      <label className={LABEL}>{label}</label>
+      <select name={name} value={value} onChange={onChange} required className={FIELD}>
+        <option value="">Select size</option>
+        {REIMAGINE_LETTER_SIZES.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
 export default function ReimagineFormWizard({
@@ -57,7 +103,7 @@ export default function ReimagineFormWizard({
   onSubmit,
   onWizardComplete,
   loading,
-  submitLabel = 'Submit remake request',
+  submitLabel = 'Submit remake order',
   steps = REIMAGINE_FORM_STEPS,
   completeLabel = 'Continue',
   preferGarmentStep = false,
@@ -78,12 +124,8 @@ export default function ReimagineFormWizard({
     if (step.type === 'identity') return identityComplete(details);
     if (step.type === 'delivery') return deliveryComplete(details);
     if (step.type === 'photos') return Array.isArray(files) && files.length > 0;
-    if (step.type === 'garment_notes') {
-      return (
-        String(valueFor('notes')).trim().length > 0 &&
-        String(valueFor('pickup_date')).trim().length > 0
-      );
-    }
+    if (step.type === 'garment_fit') return fitComplete(details);
+    if (step.type === 'pickup') return pickupComplete(details);
     return true;
   };
 
@@ -126,126 +168,208 @@ export default function ReimagineFormWizard({
       </p>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={step.key}
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -10 }}
-          transition={{ duration: 0.18 }}
-        >
-          <h3 className="font-display text-base md:text-lg font-extrabold text-[#0a0a0a] mb-3">
-            {step.label}
-          </h3>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step.key}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.18 }}
+          >
+            <h3 className="font-display text-base md:text-lg font-extrabold text-[#0a0a0a] mb-3">
+              {step.label}
+            </h3>
 
-          {step.type === 'identity' ? (
-            <div className="space-y-3">
-              <div>
-                <label className={LABEL}>Full name *</label>
-                <input
-                  name="user_name"
-                  type="text"
-                  value={valueFor('user_name')}
-                  onChange={setField('user_name')}
-                  required
-                  placeholder="Your name"
-                  className={FIELD}
-                />
+            {step.type === 'identity' ? (
+              <div className="space-y-3">
+                <div>
+                  <label className={LABEL}>Full name *</label>
+                  <input
+                    name="user_name"
+                    type="text"
+                    value={valueFor('user_name')}
+                    onChange={setField('user_name')}
+                    required
+                    placeholder="Your name"
+                    className={FIELD}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL}>Email</label>
+                  <input
+                    name="user_email"
+                    type="email"
+                    value={valueFor('user_email')}
+                    onChange={setField('user_email')}
+                    placeholder="you@inbox.com"
+                    className={FIELD}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL}>Phone *</label>
+                  <input
+                    name="user_phone"
+                    type="tel"
+                    value={valueFor('user_phone')}
+                    onChange={setField('user_phone')}
+                    required
+                    placeholder="+91 …"
+                    className={FIELD}
+                  />
+                </div>
               </div>
-              <div>
-                <label className={LABEL}>Email</label>
-                <input
-                  name="user_email"
-                  type="email"
-                  value={valueFor('user_email')}
-                  onChange={setField('user_email')}
-                  placeholder="you@inbox.com"
-                  className={FIELD}
-                />
+            ) : step.type === 'delivery' ? (
+              <div className="space-y-3">
+                <div>
+                  <label className={LABEL}>Pickup / delivery address *</label>
+                  <textarea
+                    name="address"
+                    value={valueFor('address')}
+                    onChange={setField('address')}
+                    required
+                    rows={2}
+                    placeholder="House / flat, street, area, city, state"
+                    className={`${FIELD} resize-none`}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL}>Pincode *</label>
+                  <input
+                    name="pincode"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    value={valueFor('pincode')}
+                    onChange={(e) =>
+                      setDetails((p) => ({
+                        ...p,
+                        pincode: e.target.value.replace(/\D/g, '').slice(0, 6),
+                      }))
+                    }
+                    required
+                    placeholder="6-digit PIN"
+                    className={`${FIELD} max-w-[9rem]`}
+                  />
+                </div>
               </div>
-              <div>
-                <label className={LABEL}>Phone *</label>
-                <input
-                  name="user_phone"
-                  type="tel"
-                  value={valueFor('user_phone')}
-                  onChange={setField('user_phone')}
-                  required
-                  placeholder="+91 …"
-                  className={FIELD}
-                />
+            ) : step.type === 'photos' ? (
+              <div className="space-y-2">
+                <p className="text-xs text-black/50">At least one photo is required.</p>
+                <DropZone files={files} onAdd={addFiles} onRemove={removeFile} variant="compact" />
               </div>
-            </div>
-          ) : step.type === 'delivery' ? (
-            <div className="space-y-3">
-              <div>
-                <label className={LABEL}>Pickup / delivery address *</label>
-                <textarea
-                  name="address"
-                  value={valueFor('address')}
-                  onChange={setField('address')}
-                  required
-                  rows={2}
-                  placeholder="House / flat, street, area, city, state"
-                  className={`${FIELD} resize-none`}
-                />
+            ) : step.type === 'garment_fit' ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <SizeSelect
+                    label="Current garment size *"
+                    name="garment_size"
+                    value={valueFor('garment_size')}
+                    onChange={setField('garment_size')}
+                  />
+                  <SizeSelect
+                    label="Desired size after transformation *"
+                    name="transformation_size"
+                    value={valueFor('transformation_size')}
+                    onChange={setField('transformation_size')}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL}>Your height *</label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      name="height_ft"
+                      value={valueFor('height_ft')}
+                      onChange={setField('height_ft')}
+                      required
+                      className={`${FIELD} max-w-[6.5rem]`}
+                    >
+                      <option value="">Ft</option>
+                      {HEIGHT_FEET_OPTIONS.map((n) => (
+                        <option key={n} value={String(n)}>
+                          {n} ft
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      name="height_in"
+                      value={valueFor('height_in')}
+                      onChange={setField('height_in')}
+                      required
+                      className={`${FIELD} max-w-[6.5rem]`}
+                    >
+                      <option value="">In</option>
+                      {HEIGHT_INCH_OPTIONS.map((n) => (
+                        <option key={n} value={String(n)}>
+                          {n} in
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-[11px] text-black/45 mt-1 font-body">
+                    Tailor-style height in feet and inches.
+                  </p>
+                </div>
+                <div>
+                  <label className={LABEL}>Notes / description *</label>
+                  <textarea
+                    name="notes"
+                    value={valueFor('notes')}
+                    onChange={setField('notes')}
+                    required
+                    rows={2}
+                    placeholder="Fit preferences, sentimental details…"
+                    className={`${FIELD} resize-none`}
+                  />
+                </div>
               </div>
-              <div>
-                <label className={LABEL}>Pincode *</label>
-                <input
-                  name="pincode"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  value={valueFor('pincode')}
-                  onChange={(e) =>
-                    setDetails((p) => ({
-                      ...p,
-                      pincode: e.target.value.replace(/\D/g, '').slice(0, 6),
-                    }))
-                  }
-                  required
-                  placeholder="6-digit PIN"
-                  className={`${FIELD} max-w-[9rem]`}
-                />
+            ) : step.type === 'pickup' ? (
+              <div className="space-y-3">
+                <div>
+                  <label className={LABEL}>Preferred pickup date *</label>
+                  <input
+                    type="date"
+                    name="pickup_date"
+                    value={valueFor('pickup_date')}
+                    onChange={setField('pickup_date')}
+                    required
+                    min={new Date().toISOString().slice(0, 10)}
+                    className={`${FIELD} max-w-[12rem]`}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL}>Preferred time of day *</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {PICKUP_PERIODS.map((p) => {
+                      const selected = valueFor('pickup_period') === p.value;
+                      return (
+                        <button
+                          key={p.value}
+                          type="button"
+                          onClick={() => setDetails((prev) => ({ ...prev, pickup_period: p.value }))}
+                          className={`px-2 py-2.5 border text-left transition-colors ${
+                            selected
+                              ? 'border-black bg-black text-white'
+                              : 'border-black/20 bg-white hover:border-black'
+                          }`}
+                        >
+                          <span className="block text-[11px] font-mono-tj uppercase tracking-[0.12em]">
+                            {p.label}
+                          </span>
+                          <span
+                            className={`block text-[10px] mt-0.5 ${selected ? 'text-white/70' : 'text-black/45'}`}
+                          >
+                            {p.hint}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : step.type === 'photos' ? (
-            <div className="space-y-2">
-              <p className="text-xs text-black/50">At least one photo is required.</p>
-              <DropZone files={files} onAdd={addFiles} onRemove={removeFile} variant="compact" />
-            </div>
-          ) : step.type === 'garment_notes' ? (
-            <div className="space-y-3">
-              <div>
-                <label className={LABEL}>Notes / description *</label>
-                <textarea
-                  name="notes"
-                  value={valueFor('notes')}
-                  onChange={setField('notes')}
-                  required
-                  rows={2}
-                  placeholder="Fit preferences, sentimental details…"
-                  className={`${FIELD} resize-none`}
-                />
-              </div>
-              <div>
-                <label className={LABEL}>Preferred pickup date *</label>
-                <input
-                  type="date"
-                  name="pickup_date"
-                  value={valueFor('pickup_date')}
-                  onChange={setField('pickup_date')}
-                  required
-                  min={new Date().toISOString().slice(0, 10)}
-                  className={`${FIELD} max-w-[12rem]`}
-                />
-              </div>
-            </div>
-          ) : null}
-        </motion.div>
-      </AnimatePresence>
+            ) : null}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       <div className="mt-4 pt-3 border-t border-black/10 flex items-center gap-3 shrink-0">

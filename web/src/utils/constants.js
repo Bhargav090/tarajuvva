@@ -183,6 +183,32 @@ export const QUICK_CARDS = [
 // ADMIN
 // ─────────────────────────────────────────────────────────────────────────────
 export const ORDER_STATUSES     = ['pending_payment','received','processing','shipped','delivered','cancelled'];
+
+export const PICKUP_PERIODS = [
+  { value: 'morning', label: 'Morning', hint: '9–11 AM' },
+  { value: 'afternoon', label: 'Afternoon', hint: '12–4 PM' },
+  { value: 'evening', label: 'Evening', hint: '4–8 PM' },
+];
+
+export const PICKUP_PERIOD_LABELS = Object.fromEntries(
+  PICKUP_PERIODS.map((p) => [p.value, p.label])
+);
+
+/** Letter sizes for remake garment / desired size. */
+export const REIMAGINE_LETTER_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+/** Tailor-style height: feet 4–7, inches 0–11. */
+export const HEIGHT_FEET_OPTIONS = [4, 5, 6, 7];
+export const HEIGHT_INCH_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+export const WHATSAPP_NUMBER = '917569930438';
+export const WHATSAPP_DISPLAY = '+91 75699 30438';
+export const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
+
+export const SOCIAL_LINKS = {
+  facebook: 'https://www.facebook.com/share/1LjTZS6m5K/?mibextid=wwXIfr',
+  instagram: 'https://www.instagram.com/tarajuvvaaa/',
+};
 export const PAYMENT_METHOD_LABELS = {
   cod: 'Cash on delivery',
   razorpay: 'Paid online (Razorpay)',
@@ -220,7 +246,7 @@ export const WAITLIST_CONFIGS = {
     blobPosition: 'top',
     eyebrow: '03 · Repair · Coming soon',
     headline: ['The mend', 'is the mood.'],
-    subtext: "Buttons, hems, holes, hearts. Send us anything that's broken and we'll bring it back — visible repairs encouraged. Launching mid-2026.",
+    subtext: "Buttons, hems, holes, hearts. Send us anything that's broken and we'll bring it back — visible repairs encouraged. Launching soon.",
     formLabel: 'Be the first in line',
     stats: [
       { value: '~₹299', label: 'starting price' },
@@ -248,12 +274,12 @@ export const WAITLIST_CONFIGS = {
 // ABOUT PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export const MANIFESTO_LINES = [
-  { title: 'No polyester. Ever.', desc: "Not even blends. Not even 'just 5%'." },
-  { title: 'Every garment ships with a remake guide.', desc: 'So you know what it can become later.' },
-  { title: 'Customer support over influencer marketing.', desc: "We'd rather fix your shirt than promote a new one." },
-  { title: 'Local first.', desc: 'Made within 200km of where it ships from, when possible.' },
-  { title: 'Honest pricing.', desc: 'Margins on the page. We hide nothing.' },
-  { title: 'Not perfect. Just trying.', desc: 'We mess up. We post about it. We fix it.' },
+  { title: 'Made to Change.', desc: 'Every piece is reversible, adjustable, or built to evolve with you.' },
+  { title: 'Made with Intention.', desc: 'Small batches. Thoughtful production. Nothing made just for the sake of it.' },
+  { title: 'Make Less + Make It Count.', desc: "We'd rather create fewer pieces you'll keep reaching for than more you'll forget." },
+  { title: 'Made to Last.', desc: "We'd rather help you wear what you own for years than convince you to buy something new." },
+  { title: 'Move Forward.', desc: "We're always experimenting, learning, and sharing the process as we build a better way of making and wearing clothes." },
+  { title: 'Made to stand out.', desc: 'We design in colours that refuse to blend in.' },
 ];
 
 export const BRAND_VALUES = [
@@ -264,8 +290,8 @@ export const BRAND_VALUES = [
 ];
 
 export const HERO_STATS = [
-  { value: '100+', label: 'looks from 10 pieces' },
+  { value: '100+', label: 'looks from 10 pieces', to: '/shop' },
   { value: '1×',   label: 'garment. many lives.' },
-  { value: '₹299', label: 'book a reimagine session' },
+  { value: '₹299', label: 'book a reimagine session', to: '/reimagine?mode=customize' },
   { value: '0',    label: 'waste built into the design.' },
 ];

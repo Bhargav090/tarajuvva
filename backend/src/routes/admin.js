@@ -16,8 +16,25 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
   const paidOnline = Number(
     (await get("SELECT COUNT(*) AS count FROM orders WHERE payment_status = 'paid'")).count
   );
-  const totalReimagine = Number((await get('SELECT COUNT(*) AS count FROM reimagine_requests')).count);
-  const pendingReimagine = Number((await get("SELECT COUNT(*) AS count FROM reimagine_requests WHERE status = 'pending_review'")).count);
+  const totalReimagine = Number(
+    (await get(
+      `SELECT COUNT(*) AS count FROM reimagine_requests
+       WHERE COALESCE(consultation_paid, 0) = 0 AND COALESCE(callback_requested, 0) = 0`
+    )).count
+  );
+  const pendingReimagine = Number(
+    (await get(
+      `SELECT COUNT(*) AS count FROM reimagine_requests
+       WHERE status = 'pending_review'
+         AND COALESCE(consultation_paid, 0) = 0 AND COALESCE(callback_requested, 0) = 0`
+    )).count
+  );
+  const totalConsultations = Number(
+    (await get(
+      `SELECT COUNT(*) AS count FROM reimagine_requests
+       WHERE COALESCE(consultation_paid, 0) = 1 OR COALESCE(callback_requested, 0) = 1`
+    )).count
+  );
   const repairWaitlist = Number((await get("SELECT COUNT(*) AS count FROM waitlist WHERE type = 'repair'")).count);
   const donateWaitlist = Number((await get("SELECT COUNT(*) AS count FROM waitlist WHERE type = 'donate'")).count);
   const totalProducts = Number((await get('SELECT COUNT(*) AS count FROM products')).count);
@@ -27,7 +44,7 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
     stats: {
       orders: { total: totalOrders, pending: pendingOrders, paid_online: paidOnline },
       revenue: totalRevenue,
-      reimagine: { total: totalReimagine, pending: pendingReimagine },
+      reimagine: { total: totalReimagine, pending: pendingReimagine, consultations: totalConsultations },
       waitlist: { repair: repairWaitlist, donate: donateWaitlist },
       products: totalProducts
     }

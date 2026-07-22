@@ -1,6 +1,11 @@
 const nodemailer = require('nodemailer');
+const path = require('path');
+const fs = require('fs');
 
 const NOTIFY_TO = process.env.NOTIFY_EMAIL || process.env.SMTP_REPLY_TO || 'support@tarajuvva.com';
+
+const EMAIL_LOGO_CID = 'tarajuvva-logo@tarajuvva';
+const EMAIL_LOGO_PATH = path.join(__dirname, '../../assets/email-logo.png');
 
 const BRAND = {
   green: '#c8ff2e',
@@ -21,7 +26,14 @@ const BRAND = {
 let transporter = null;
 
 function siteUrl(path = '/') {
-  const base = String(process.env.FRONTEND_URL || 'https://tarajuvva.com').replace(/\/$/, '');
+  let base = String(process.env.FRONTEND_URL || 'https://tarajuvva.com').replace(/\/$/, '');
+  // Localhost in FRONTEND_URL breaks "View order" links in real inboxes (common prod misconfig).
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(base)) {
+    console.warn(
+      '[notifyEmail] FRONTEND_URL is localhost — email links use https://tarajuvva.com. Set FRONTEND_URL=https://tarajuvva.com on the server.'
+    );
+    base = 'https://tarajuvva.com';
+  }
   const p = path.startsWith('/') ? path : `/${path}`;
   return `${base}${p}`;
 }
@@ -89,6 +101,17 @@ async function sendMail({ to, subject, text, html }) {
     console.warn('[notifyEmail] SMTP_FROM not configured — skipped:', subject);
     return { ok: false, skipped: true };
   }
+
+  const attachments = [];
+  if (html && fs.existsSync(EMAIL_LOGO_PATH)) {
+    attachments.push({
+      filename: 'tarajuvva-logo.png',
+      path: EMAIL_LOGO_PATH,
+      cid: EMAIL_LOGO_CID,
+      contentDisposition: 'inline',
+    });
+  }
+
   try {
     await tx.sendMail({
       from,
@@ -97,6 +120,7 @@ async function sendMail({ to, subject, text, html }) {
       subject,
       text,
       html: html || text.replace(/\n/g, '<br>'),
+      attachments: attachments.length ? attachments : undefined,
     });
     return { ok: true };
   } catch (err) {
@@ -247,10 +271,14 @@ function buildEmailHtml({
           </tr>
           <tr>
             <td style="padding:28px 28px 8px;">
-              <a href="${escapeHtml(home)}" style="text-decoration:none;">
-                <span style="font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;color:${BRAND.ink};">
-                  Tarajuvva
-                </span>
+              <a href="${escapeHtml(home)}" style="text-decoration:none;display:inline-block;">
+                <img
+                  src="cid:${EMAIL_LOGO_CID}"
+                  alt="Tarajuvva"
+                  width="160"
+                  height="auto"
+                  style="display:block;width:160px;max-width:70%;height:auto;border:0;outline:none;"
+                />
               </a>
               <p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:${BRAND.muted};">
                 ${escapeHtml(eyebrow)}
@@ -320,6 +348,40 @@ function formatPickupDate(value) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+const PICKUP_PERIOD_LABELS = {
+  morning: 'Morning (9–11 AM)',
+  afternoon: 'Afternoon (12–4 PM)',
+  evening: 'Evening (4–8 PM)',
+};
+
+function formatPickupPeriod(value) {
+  const key = String(value || '').trim().toLowerCase();
+  return PICKUP_PERIOD_LABELS[key] || null;
+}
+
+function formatPickupSummary(r) {
+  const date = formatPickupDate(r.pickup_date);
+  const period = formatPickupPeriod(r.pickup_period);
+  if (date && period) return `${date} · ${period}`;
+  return date || period || null;
+}
+
+function formatCustomerHeight(r) {
+  const ft = r.height_ft != null ? Number(r.height_ft) : NaN;
+  const inch = r.height_in != null ? Number(r.height_in) : NaN;
+  if (!Number.isFinite(ft) || !Number.isFinite(inch)) return null;
+  return `${ft}'${inch}"`;
+}
+
+function formatFitSummary(r) {
+  const parts = [];
+  if (r.garment_size) parts.push(`Current ${r.garment_size}`);
+  if (r.transformation_size) parts.push(`Desired ${r.transformation_size}`);
+  const h = formatCustomerHeight(r);
+  if (h) parts.push(`Height ${h}`);
+  return parts.length ? parts.join(' · ') : null;
+}
+
 function formatSlotLabelFromRequest(r) {
   if (r.consultation_slot_label) return r.consultation_slot_label;
   if (r.consultation_date && r.consultation_time) {
@@ -337,22 +399,24 @@ function formatReimagineRequestEmail(r) {
   const isCustom = Boolean(r.is_custom);
   const slotLabel = formatSlotLabelFromRequest(r);
   const consultPrice = reimagineConsultPrice(r);
-  const pickup = formatPickupDate(r.pickup_date);
+  const pickup = formatPickupSummary(r);
+  const fit = formatFitSummary(r);
 
   const text = [
-    isCustom ? `New CUSTOM Reimagine consultation #${id}` : `New Reimagine request #${id}`,
+    isCustom ? `New CUSTOM Reimagine consultation #${id}` : `New Reimagine order #${id}`,
     '',
     `Name: ${r.user_name}`,
     `Phone: ${r.user_phone}`,
     `Email: ${r.user_email || '—'}`,
     `Garment: ${r.garment_type}`,
     `Transformation: ${r.transformation}`,
+    fit ? `Fit: ${fit}` : null,
     r.consultation_paid ? `Consultation booked: Yes` : null,
     r.payment_status === 'paid' ? `Payment: Paid` : r.payment_status ? `Payment: ${r.payment_status}` : null,
     consultPrice ? `Consultation price: ${money(consultPrice)}` : null,
     r.callback_requested ? 'Callback requested: Yes — team to contact customer' : null,
     slotLabel ? `Consultation slot: ${slotLabel}` : null,
-    pickup ? `Preferred pickup date: ${pickup}` : null,
+    pickup ? `Preferred pickup: ${pickup}` : null,
     `Custom: ${isCustom ? 'Yes' : 'No'}`,
     '',
     `Address:\n${r.address || '—'}`,
@@ -364,17 +428,17 @@ function formatReimagineRequestEmail(r) {
 
   const html = buildEmailHtml({
     accent: 'burgundy',
-    eyebrow: isCustom ? 'Admin · Custom Reimagine' : 'Admin · Reimagine',
-    title: isCustom ? `Custom consult #${id}` : `New request #${id}`,
+    eyebrow: isCustom ? 'Admin · Custom Reimagine' : 'Admin · Reimagine order',
+    title: isCustom ? `Custom consult #${id}` : `New order #${id}`,
     preheader: isCustom
       ? `${r.user_name} booked a custom Reimagine consultation`
-      : `${r.user_name} submitted a Reimagine request`,
+      : `${r.user_name} placed a Reimagine order`,
     introHtml: `<p style="margin:0 0 8px;">${
       isCustom
         ? r.callback_requested
           ? 'A custom Reimagine consultation callback was requested — contact the customer within 24 hours.'
           : 'A custom Reimagine consultation just came in.'
-        : 'A new Reimagine request just came in.'
+        : 'A new Reimagine order just came in.'
     }</p>`,
     detailRows: [
       { label: 'Customer', value: r.user_name },
@@ -383,6 +447,7 @@ function formatReimagineRequestEmail(r) {
       { label: 'Type', value: isCustom ? 'Custom consultation' : 'Preset transformation' },
       { label: 'Garment', value: r.garment_type },
       { label: 'Transformation', value: r.transformation },
+      fit ? { label: 'Fit', value: fit } : null,
       r.consultation_paid ? { label: 'Consultation', value: 'Booked' } : null,
       r.payment_status ? { label: 'Payment', value: r.payment_status === 'paid' ? 'Paid' : r.payment_status } : null,
       consultPrice ? { label: 'Consult price', value: money(consultPrice) } : null,
@@ -399,7 +464,7 @@ function formatReimagineRequestEmail(r) {
   return {
     subject: isCustom
       ? `[Tarajuvva] Custom Reimagine — ${r.user_name}`
-      : `[Tarajuvva] Reimagine request — ${r.user_name}`,
+      : `[Tarajuvva] Reimagine order — ${r.user_name}`,
     text,
     html,
   };
@@ -409,13 +474,14 @@ function formatReimagineCustomerEmail(r) {
   const id = shortId(r.id);
   const isCustom = Boolean(r.is_custom);
   const slotLabel = formatSlotLabelFromRequest(r);
-  const pickup = formatPickupDate(r.pickup_date);
+  const pickup = formatPickupSummary(r);
+  const fit = formatFitSummary(r);
   const paid = r.payment_status === 'paid' || Boolean(r.consultation_paid);
 
   if (isCustom) {
     const callback = Boolean(r.callback_requested);
     const introLine = callback
-      ? "We've received your custom Reimagine consultation request. Our team will call you within 24 hours to find a time that works."
+      ? "We've received your custom Reimagine consultation. Our team will call you within 24 hours to find a time that works."
       : "We've received your custom Reimagine consultation booking. Our team will review the details and prepare for your session.";
     const highlight = paid
       ? 'Your consultation payment is confirmed.'
@@ -428,7 +494,7 @@ function formatReimagineCustomerEmail(r) {
       '',
       introLine,
       '',
-      `Request #${id}`,
+      `Order #${id}`,
       slotLabel ? `Consultation: ${slotLabel}` : null,
       paid ? 'Your consultation payment is confirmed.' : null,
       callback ? 'Callback requested — we will contact you soon.' : null,
@@ -455,7 +521,7 @@ function formatReimagineCustomerEmail(r) {
             : ''
         }`,
       detailRows: [
-        { label: 'Request', value: `#${id}` },
+        { label: 'Order', value: `#${id}` },
         { label: 'Type', value: 'Custom consultation' },
         slotLabel ? { label: 'Consultation', value: slotLabel } : null,
         callback ? { label: 'Callback', value: 'Yes — we will contact you' } : null,
@@ -463,7 +529,7 @@ function formatReimagineCustomerEmail(r) {
         r.notes ? { label: 'Notes', value: r.notes } : null,
       ].filter(Boolean),
       buttons: [
-        { href: siteUrl('/profile/reimagine'), label: 'View my requests', variant: 'burgundy' },
+        { href: siteUrl('/profile/reimagine'), label: 'View my orders', variant: 'burgundy' },
         { href: siteUrl('/reimagine'), label: 'Explore Reimagine', variant: 'outline' },
       ],
     });
@@ -480,16 +546,17 @@ function formatReimagineCustomerEmail(r) {
   const text = [
     `Hi ${r.user_name},`,
     '',
-    "We've received your Reimagine request at Tarajuvva.",
+    "We've received your Reimagine order at Tarajuvva.",
     '',
-    `Request #${id}`,
+    `Order #${id}`,
     `Garment: ${r.garment_type}`,
     `Transformation: ${r.transformation}`,
+    fit ? `Fit: ${fit}` : null,
     slotLabel ? `Consultation: ${slotLabel}` : null,
     pickup ? `Preferred pickup: ${pickup}` : null,
-    paid ? 'Your consultation payment is confirmed.' : null,
+    paid ? 'Your payment is confirmed.' : null,
     '',
-    "We'll review your request and get back within 24 hours.",
+    "We'll review your order and get back within 24 hours.",
     '',
     `Track it: ${siteUrl('/profile/reimagine')}`,
     '',
@@ -500,32 +567,33 @@ function formatReimagineCustomerEmail(r) {
 
   const html = buildEmailHtml({
     accent: 'burgundy',
-    eyebrow: 'Reimagine',
-    title: 'Request received',
-    preheader: `We've got your Reimagine request #${id}`,
+    eyebrow: 'Reimagine order',
+    title: 'Order received',
+    preheader: `We've got your Reimagine order #${id}`,
     introHtml: `
       <p style="margin:0 0 12px;">Hi ${escapeHtml(r.user_name)},</p>
-      <p style="margin:0;">We've received your Reimagine request. Our team will review it and get back within 24 hours.</p>
+      <p style="margin:0;">We've received your Reimagine order. Our team will review it and get back within 24 hours.</p>
       ${
         paid
-          ? `<p style="margin:14px 0 0;padding:12px 14px;background:${BRAND.soft};border-left:4px solid ${BRAND.burgundy};color:${BRAND.ink};">Your consultation payment is confirmed.</p>`
+          ? `<p style="margin:14px 0 0;padding:12px 14px;background:${BRAND.soft};border-left:4px solid ${BRAND.burgundy};color:${BRAND.ink};">Your payment is confirmed.</p>`
           : ''
       }`,
     detailRows: [
-      { label: 'Request', value: `#${id}` },
+      { label: 'Order', value: `#${id}` },
       { label: 'Garment', value: r.garment_type },
       { label: 'Transformation', value: r.transformation },
+      fit ? { label: 'Fit', value: fit } : null,
       slotLabel ? { label: 'Consultation', value: slotLabel } : null,
       pickup ? { label: 'Preferred pickup', value: pickup } : null,
     ].filter(Boolean),
     buttons: [
-      { href: siteUrl('/profile/reimagine'), label: 'View my requests', variant: 'burgundy' },
+      { href: siteUrl('/profile/reimagine'), label: 'View my orders', variant: 'burgundy' },
       { href: siteUrl('/reimagine'), label: 'Reimagine again', variant: 'outline' },
     ],
   });
 
   return {
-    subject: 'Your Tarajuvva Reimagine request is received',
+    subject: 'Your Tarajuvva Reimagine order is received',
     text,
     html,
   };
@@ -650,6 +718,54 @@ function formatOrderCustomerEmail(order) {
   };
 }
 
+function formatOrderShippedEmail(order) {
+  const id = shortId(order.id);
+  const orderUrl = siteUrl(`/profile/orders/${order.id}`);
+  const tracking = String(order.tracking_url || '').trim();
+  const items = parseOrderItems(order);
+
+  const text = [
+    `Hi ${order.user_name},`,
+    '',
+    `Great news — your Tarajuvva order #${id} has shipped!`,
+    '',
+    tracking ? `Track your shipment:\n${tracking}` : 'Tracking details will follow if available.',
+    '',
+    `Order page: ${orderUrl}`,
+    '',
+    '— Tarajuvva',
+  ].join('\n');
+
+  const html = buildEmailHtml({
+    accent: 'green',
+    eyebrow: 'Shop order',
+    title: 'Your order has shipped',
+    preheader: `Order #${id} is on the way`,
+    introHtml: `
+      <p style="margin:0 0 12px;">Hi ${escapeHtml(order.user_name)},</p>
+      <p style="margin:0;">Your Tarajuvva order is on its way. Use the tracking link below to follow your shipment.</p>`,
+    detailRows: [
+      { label: 'Order', value: `#${id}` },
+      { label: 'Status', value: 'Shipped' },
+      tracking ? { label: 'Tracking', value: tracking } : null,
+      { label: 'Deliver to', value: order.address },
+    ].filter(Boolean),
+    items,
+    buttons: [
+      ...(tracking
+        ? [{ href: tracking, label: 'Track shipment', variant: 'green' }]
+        : []),
+      { href: orderUrl, label: 'View order', variant: 'outline' },
+    ],
+  });
+
+  return {
+    subject: `Your Tarajuvva order #${id} has shipped`,
+    text,
+    html,
+  };
+}
+
 function formatWaitlistAdminEmail(entry) {
   const label = entry.type === 'repair' ? 'Repair' : entry.type === 'donate' ? 'Donate' : entry.type;
   const accent = entry.type === 'repair' ? 'repair' : entry.type === 'donate' ? 'donate' : 'dark';
@@ -723,20 +839,79 @@ function formatWaitlistCustomerEmail(entry) {
 }
 
 async function notifyReimagineRequest(r) {
-  const adminPayload = formatReimagineRequestEmail(r);
-  await sendNotifyEmail(adminPayload);
-  if (r.user_email) {
-    const customerPayload = formatReimagineCustomerEmail(r);
-    await sendCustomerEmail(r.user_email, customerPayload);
+  try {
+    const adminPayload = formatReimagineRequestEmail(r);
+    const adminResult = await sendNotifyEmail(adminPayload);
+    if (!adminResult?.ok && !adminResult?.skipped) {
+      console.error('[notifyEmail] admin reimagine notify failed:', adminResult?.error || adminResult);
+    } else if (adminResult?.skipped) {
+      console.warn('[notifyEmail] admin reimagine notify skipped (SMTP not configured)');
+    } else {
+      console.log('[notifyEmail] admin reimagine notify sent to', NOTIFY_TO, 'for', shortId(r.id));
+    }
+    if (r.user_email) {
+      const customerPayload = formatReimagineCustomerEmail(r);
+      const customerResult = await sendCustomerEmail(r.user_email, customerPayload);
+      if (!customerResult?.ok && !customerResult?.skipped) {
+        console.error('[notifyEmail] customer reimagine notify failed:', customerResult?.error || customerResult);
+      }
+    }
+  } catch (err) {
+    console.error('[notifyEmail] notifyReimagineRequest error:', err.message || err);
+    throw err;
   }
 }
 
 async function notifyOrder(order) {
-  const adminPayload = formatOrderEmail(order);
-  await sendNotifyEmail(adminPayload);
-  if (order.user_email) {
-    const customerPayload = formatOrderCustomerEmail(order);
-    await sendCustomerEmail(order.user_email, customerPayload);
+  try {
+    const adminPayload = formatOrderEmail(order);
+    await sendNotifyEmail(adminPayload);
+    if (order.user_email) {
+      const customerPayload = formatOrderCustomerEmail(order);
+      await sendCustomerEmail(order.user_email, customerPayload);
+    }
+  } catch (err) {
+    console.error('[notifyEmail] notifyOrder error:', err.message || err);
+    throw err;
+  }
+}
+
+async function notifyOrderShipped(order) {
+  try {
+    if (order.user_email) {
+      const result = await sendCustomerEmail(order.user_email, formatOrderShippedEmail(order));
+      if (!result?.ok && !result?.skipped) {
+        console.error('[notifyEmail] customer shipped notify failed:', result?.error || result);
+      } else {
+        console.log('[notifyEmail] shipped email sent to', order.user_email, 'for', shortId(order.id));
+      }
+    } else {
+      console.warn('[notifyEmail] shipped notify skipped — no customer email on order', shortId(order.id));
+    }
+    await sendNotifyEmail({
+      subject: `[Tarajuvva] Order shipped — ${order.user_name}`,
+      text: [
+        `Order #${shortId(order.id)} marked shipped`,
+        `Customer: ${order.user_name}`,
+        `Email: ${order.user_email || '—'}`,
+        order.tracking_url ? `Tracking: ${order.tracking_url}` : 'Tracking: —',
+      ].join('\n'),
+      html: buildEmailHtml({
+        accent: 'green',
+        eyebrow: 'Admin · Shop',
+        title: `Shipped #${shortId(order.id)}`,
+        introHtml: `<p style="margin:0;">Order marked as shipped${order.tracking_url ? ' with tracking link.' : '.'}</p>`,
+        detailRows: [
+          { label: 'Customer', value: order.user_name },
+          { label: 'Email', value: order.user_email || '—' },
+          order.tracking_url ? { label: 'Tracking', value: order.tracking_url } : null,
+        ].filter(Boolean),
+        buttons: [{ href: siteUrl('/admin?tab=orders'), label: 'Open orders', variant: 'green' }],
+      }),
+    });
+  } catch (err) {
+    console.error('[notifyEmail] notifyOrderShipped error:', err.message || err);
+    throw err;
   }
 }
 
@@ -751,5 +926,6 @@ module.exports = {
   sendCustomerEmail,
   notifyReimagineRequest,
   notifyOrder,
+  notifyOrderShipped,
   notifyWaitlistEntry,
 };

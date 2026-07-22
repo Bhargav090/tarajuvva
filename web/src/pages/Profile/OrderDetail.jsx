@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Phone, Mail, CreditCard, Package, User } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Phone, Mail, CreditCard, Package, User, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { Badge } from '../../components/ui/Badge';
@@ -149,6 +149,18 @@ export default function OrderDetail() {
               <InfoRow icon={MapPin} label="Address">
                 <span className="whitespace-pre-wrap">{order.address}</span>
               </InfoRow>
+              {order.tracking_url && (
+                <InfoRow icon={Truck} label="Tracking">
+                  <a
+                    href={order.tracking_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all underline underline-offset-2 hover:opacity-70"
+                  >
+                    {order.tracking_url}
+                  </a>
+                </InfoRow>
+              )}
               {order.notes && (
                 <InfoRow icon={Package} label="Order notes">
                   <span className="whitespace-pre-wrap text-black/70">{order.notes}</span>

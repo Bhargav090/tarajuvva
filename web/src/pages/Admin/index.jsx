@@ -20,7 +20,7 @@ import { Badge } from '../../components/ui/Badge';
 import StatusSelect from '../../components/ui/StatusSelect';
 import Button from '../../components/ui/Button';
 import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
-import { REIMAGINE_STATUSES } from '../../utils/constants';
+import { REIMAGINE_STATUSES, PICKUP_PERIOD_LABELS } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
 import SizeChartsTab from './SizeChartsTab';
 // import HeroImagesTab from './HeroImagesTab'; // disabled — heroes use static assets
@@ -70,7 +70,8 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
 const TABS = [
   { id: 'overview',  label: 'Overview',          icon: LayoutDashboard },
   { id: 'orders',    label: 'Orders',             icon: ShoppingBag    },
-  { id: 'reimagine', label: 'Reimagine',          icon: Scissors       },
+  { id: 'reimagine', label: 'Reimagine Orders',   icon: Scissors       },
+  { id: 'consultations', label: 'Consultations',  icon: PhoneCall      },
   { id: 'waitlist',  label: 'Waitlist',           icon: Users          },
   { id: 'products',  label: 'Products',           icon: Tag            },
   { id: 'size-charts', label: 'Size charts',      icon: Ruler          },
@@ -227,7 +228,8 @@ export default function Admin() {
         <div className="p-5 sm:p-8">
           {tab === 'overview' && <OverviewTab />}
           {tab === 'orders' && <OrdersTab />}
-          {tab === 'reimagine' && <ReimagineTab />}
+          {tab === 'reimagine' && <ReimagineTab kind="orders" />}
+          {tab === 'consultations' && <ReimagineTab kind="consultations" />}
           {tab === 'waitlist' && <WaitlistTab />}
           {tab === 'products' && <ProductConfiguratorTab />}
           {tab === 'size-charts' && <SizeChartsTab />}
@@ -267,10 +269,11 @@ function OverviewTab() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#c8ff2e" sub={`${stats?.orders?.pending ?? 0} pending`} />
         <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#7A063C" />
-        <StatCard icon={Scissors} label="Reimagine Requests" value={stats?.reimagine?.total ?? 0} color="#e34334" sub={`${stats?.reimagine?.pending ?? 0} pending`} />
+        <StatCard icon={Scissors} label="Reimagine Orders" value={stats?.reimagine?.total ?? 0} color="#e34334" sub={`${stats?.reimagine?.pending ?? 0} pending`} />
         <StatCard icon={Package} label="Products" value={stats?.products ?? 0} color="#1b4e81" />
       </div>
-      <div className="mt-6 grid sm:grid-cols-2 gap-4">
+      <div className="mt-6 grid sm:grid-cols-3 gap-4">
+        <StatCard icon={PhoneCall} label="Consultations" value={stats?.reimagine?.consultations ?? 0} color="#7A063C" />
         <StatCard icon={Users} label="Repair Waitlist" value={stats?.waitlist?.repair ?? 0} color="#e34334" />
         <StatCard icon={Users} label="Donate Waitlist" value={stats?.waitlist?.donate ?? 0} color="#1b4e81" />
       </div>
@@ -278,17 +281,19 @@ function OverviewTab() {
   );
 }
 
-function ReimagineTab() {
-  const { requests, loading, updateStatus, pagination, page, setPage } = useAdminReimagine();
+function ReimagineTab({ kind = 'orders' }) {
+  const isConsultations = kind === 'consultations';
+  const { requests, loading, updateStatus, pagination, page, setPage } = useAdminReimagine({ kind });
   if (loading && !requests.length) return <TableSkeleton rows={6} cols={4} />;
 
   const exportRequests = () => {
     downloadCsv(
-      `tarajuvva-reimagine-${new Date().toISOString().slice(0, 10)}.csv`,
+      `tarajuvva-reimagine-${isConsultations ? 'consultations' : 'orders'}-${new Date().toISOString().slice(0, 10)}.csv`,
       [
         'id', 'created_at', 'user_name', 'user_email', 'user_phone', 'address',
-        'garment_type', 'transformation', 'is_custom', 'notes', 'status',
-        'pickup_date', 'payment_status', 'consultation_fee', 'callback_requested',
+        'garment_type', 'transformation', 'garment_size', 'transformation_size', 'height_ft', 'height_in',
+        'is_custom', 'notes', 'status',
+        'pickup_date', 'pickup_period', 'payment_status', 'consultation_fee', 'callback_requested',
       ],
       requests.map((r) => [
         r.id,
@@ -299,10 +304,15 @@ function ReimagineTab() {
         r.address,
         r.garment_type,
         r.transformation,
+        r.garment_size,
+        r.transformation_size,
+        r.height_ft,
+        r.height_in,
         r.is_custom ? 'yes' : 'no',
         r.notes,
         r.status,
         r.pickup_date,
+        r.pickup_period,
         r.payment_status,
         r.consultation_fee,
         r.callback_requested ? 'yes' : 'no',
@@ -313,9 +323,16 @@ function ReimagineTab() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-black text-[#241621] font-display">
-          Reimagine Requests ({pagination.total || requests.length})
-        </h1>
+        <div>
+          <h1 className="text-2xl font-black text-[#241621] font-display">
+            {isConsultations ? 'Consultations' : 'Reimagine Orders'} ({pagination.total || requests.length})
+          </h1>
+          <p className="text-sm text-[#241621]/50 font-body mt-1">
+            {isConsultations
+              ? 'Booked consultations and callback requests.'
+              : 'Garment remake orders only — consultations are listed under Consultations.'}
+          </p>
+        </div>
         <Button type="button" variant="outline-green" size="sm" onClick={exportRequests} disabled={!requests.length}>
           Download CSV
         </Button>
@@ -374,6 +391,39 @@ function ReimagineTab() {
                   </dd>
                 </div>
               )}
+              {(r.garment_size || r.transformation_size || r.height_ft != null) && (
+                <div className="sm:col-span-2">
+                  <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Fit</dt>
+                  <dd className="text-[#241621] font-body">
+                    {[
+                      r.garment_size ? `Current ${r.garment_size}` : null,
+                      r.transformation_size ? `Desired ${r.transformation_size}` : null,
+                      r.height_ft != null && r.height_in != null
+                        ? `Height ${r.height_ft}'${r.height_in}"`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || '—'}
+                  </dd>
+                </div>
+              )}
+              {(r.pickup_date || r.pickup_period) && (
+                <div className="sm:col-span-2">
+                  <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Preferred pickup</dt>
+                  <dd className="text-[#241621] font-body">
+                    {r.pickup_date
+                      ? new Date(r.pickup_date).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
+                      : '—'}
+                    {r.pickup_period
+                      ? ` · ${PICKUP_PERIOD_LABELS[r.pickup_period] || r.pickup_period}`
+                      : ''}
+                  </dd>
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Pickup / delivery address</dt>
                 <dd className="text-[#241621] font-body whitespace-pre-wrap">{r.address || '—'}</dd>
@@ -397,7 +447,9 @@ function ReimagineTab() {
           </div>
         ))}
         {requests.length === 0 && !loading && (
-          <p className="text-center text-[#241621]/40 font-body py-12">No reimagine requests yet.</p>
+          <p className="text-center text-[#241621]/40 font-body py-12">
+            {isConsultations ? 'No consultations yet.' : 'No reimagine orders yet.'}
+          </p>
         )}
       </div>
       <PaginationBar

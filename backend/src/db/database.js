@@ -322,7 +322,8 @@ async function initializeDatabase() {
 
   const reimagineExtraAlters = [
     'ALTER TABLE reimagine_requests ADD COLUMN pickup_date DATE NULL AFTER callback_requested',
-    "ALTER TABLE reimagine_requests ADD COLUMN payment_status VARCHAR(32) NULL AFTER pickup_date",
+    "ALTER TABLE reimagine_requests ADD COLUMN pickup_period VARCHAR(32) NULL AFTER pickup_date",
+    "ALTER TABLE reimagine_requests ADD COLUMN payment_status VARCHAR(32) NULL AFTER pickup_period",
     'ALTER TABLE reimagine_requests ADD COLUMN razorpay_order_id VARCHAR(64) NULL AFTER payment_status',
     'ALTER TABLE reimagine_requests ADD COLUMN razorpay_payment_id VARCHAR(64) NULL AFTER razorpay_order_id',
     'ALTER TABLE reimagine_requests ADD COLUMN paid_at DATETIME NULL AFTER razorpay_payment_id',
@@ -334,6 +335,33 @@ async function initializeDatabase() {
     } catch (e) {
       if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
         console.warn('[db] reimagine_requests column add skipped:', e.message);
+      }
+    }
+  }
+
+  // If pickup_period was added after payment_status on older DBs, ensure column exists.
+  try {
+    await pool.execute(
+      "ALTER TABLE reimagine_requests ADD COLUMN pickup_period VARCHAR(32) NULL AFTER pickup_date"
+    );
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] reimagine_requests.pickup_period add skipped:', e.message);
+    }
+  }
+
+  const reimagineFitAlters = [
+    'ALTER TABLE reimagine_requests ADD COLUMN garment_size VARCHAR(16) NULL AFTER notes',
+    'ALTER TABLE reimagine_requests ADD COLUMN transformation_size VARCHAR(16) NULL AFTER garment_size',
+    'ALTER TABLE reimagine_requests ADD COLUMN height_ft TINYINT NULL AFTER transformation_size',
+    'ALTER TABLE reimagine_requests ADD COLUMN height_in TINYINT NULL AFTER height_ft',
+  ];
+  for (const sql of reimagineFitAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+        console.warn('[db] reimagine fit column add skipped:', e.message);
       }
     }
   }
@@ -413,6 +441,7 @@ async function initializeDatabase() {
     'ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(64) NULL AFTER payment_status',
     'ALTER TABLE orders ADD COLUMN razorpay_payment_id VARCHAR(64) NULL AFTER razorpay_order_id',
     'ALTER TABLE orders ADD COLUMN paid_at DATETIME NULL AFTER razorpay_payment_id',
+    'ALTER TABLE orders ADD COLUMN tracking_url TEXT NULL AFTER paid_at',
   ];
   for (const sql of orderPaymentAlters) {
     try {
@@ -424,10 +453,18 @@ async function initializeDatabase() {
     }
   }
 
+  try {
+    await pool.execute('ALTER TABLE orders ADD COLUMN tracking_url TEXT NULL AFTER paid_at');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] orders.tracking_url add skipped:', e.message);
+    }
+  }
+
   const productSizeAlters = [
     "ALTER TABLE products ADD COLUMN size_type VARCHAR(16) NULL AFTER sizes",
     "ALTER TABLE products ADD COLUMN garment_type VARCHAR(16) NULL AFTER size_type",
-    "ALTER TABLE products ADD COLUMN image_tag VARCHAR(64) NULL DEFAULT 'Modular' AFTER tags",
+    "ALTER TABLE products ADD COLUMN image_tag VARCHAR(64) NULL AFTER tags",
   ];
   for (const sql of productSizeAlters) {
     try {
@@ -439,13 +476,25 @@ async function initializeDatabase() {
     }
   }
 
+  // Modular tag is optional — clear accidental empty defaults; do not force 'Modular'.
   try {
     await pool.execute(
-      "UPDATE products SET image_tag = 'Modular' WHERE image_tag IS NULL OR TRIM(image_tag) = ''"
+      "ALTER TABLE products MODIFY COLUMN image_tag VARCHAR(64) NULL DEFAULT NULL"
     );
   } catch (e) {
-    console.warn('[db] products.image_tag backfill skipped:', e.message);
+    console.warn('[db] products.image_tag null default skipped:', e.message);
   }
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS wishlists (
+      user_id VARCHAR(36) NOT NULL,
+      product_id VARCHAR(36) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (user_id, product_id),
+      CONSTRAINT fk_wishlist_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT fk_wishlist_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
 
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS reimagine_conversions (

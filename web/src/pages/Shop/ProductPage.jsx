@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, ArrowLeft, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Tag, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { PRODUCT_IMAGE_PLACEHOLDER, resolveProductImageSrc } from '../../utils/productImage';
 import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
@@ -13,8 +15,11 @@ import AsyncImage from '../../components/ui/AsyncImage';
 
 export default function ProductPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { product, loading } = useProduct(id);
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const { isWishlisted, toggleWishlist, loading: wishlistLoading } = useWishlist();
   const [activeImg, setActiveImg] = useState(0);
   const [adding, setAdding] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -74,6 +79,21 @@ export default function ProductPage() {
     setTimeout(() => setAdding(false), 600);
   };
 
+  const wishlisted = product ? isWishlisted(product.id) : false;
+  const handleWishlist = async () => {
+    if (!user) {
+      navigate('/login', { state: { from: `/shop/${id}` } });
+      toast.error('Sign in to save favourites');
+      return;
+    }
+    try {
+      const nowOn = await toggleWishlist(product.id);
+      toast.success(nowOn ? 'Saved to wishlist' : 'Removed from wishlist');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not update wishlist');
+    }
+  };
+
   const discount = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
@@ -116,6 +136,11 @@ export default function ProductPage() {
               {discount && (
                 <span className="absolute top-4 left-4 z-[2] bg-[#e34334] text-white text-sm font-black rounded-full px-3 py-1 font-display">
                   -{discount}% OFF
+                </span>
+              )}
+              {String(product.image_tag || '').trim() && (
+                <span className="absolute top-4 right-4 z-[2] bg-[var(--tj-shop)] text-black text-xs font-mono-tj uppercase tracking-wider px-2.5 py-1">
+                  {String(product.image_tag).trim()}
                 </span>
               )}
 
@@ -285,24 +310,35 @@ export default function ProductPage() {
             )}
 
             {/* CTA */}
-            <Button
-              variant="primary" size="xl" fullWidth icon={ShoppingBag}
-              onClick={handleAdd} loading={adding}
-              disabled={isOutOfStock || (hasSizes && remainingStock === 0)}
-            >
-              {isOutOfStock || remainingStock === 0 ? 'Out of Stock' : 'Add to Cart'}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="primary" size="xl" fullWidth icon={ShoppingBag}
+                onClick={handleAdd} loading={adding}
+                disabled={isOutOfStock || (hasSizes && remainingStock === 0)}
+              >
+                {isOutOfStock || remainingStock === 0 ? 'Out of Stock' : 'Add to Cart'}
+              </Button>
+              <button
+                type="button"
+                onClick={handleWishlist}
+                disabled={wishlistLoading}
+                aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                className="shrink-0 w-14 h-14 rounded-xl border border-[#241621]/15 bg-white flex items-center justify-center hover:border-[#241621]/40 transition-colors disabled:opacity-50"
+              >
+                <Heart
+                  size={22}
+                  className={wishlisted ? 'fill-[#e34334] text-[#e34334]' : 'text-[#241621]/50'}
+                />
+              </button>
+            </div>
 
             {/* Assurance */}
             <div className="mt-6 grid grid-cols-3 gap-3">
-              {[
-                ['🚚', 'Fast Delivery'],
-                ['♻️', 'Sustainable'],
-                ['✅', 'Easy Returns'],
-              ].map(([e, l]) => (
+              {['Repair guaranteed', 'Circular fashion', 'Handmade'].map((l) => (
                 <div key={l} className="text-center p-3 bg-white rounded-xl border border-[#241621]/8">
-                  <span className="text-xl block mb-1">{e}</span>
-                  <span className="text-[10px] font-semibold text-[#241621]/55 font-display">{l}</span>
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-[#241621]/70 font-display leading-snug block">
+                    {l}
+                  </span>
                 </div>
               ))}
             </div>

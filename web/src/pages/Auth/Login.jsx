@@ -132,10 +132,10 @@ export default function Login() {
             <span className="text-[#7A063C]">reimagined.</span>
           </h1>
           <p className="text-[#241621]/70 font-body text-lg max-w-md">
-            Sign in to track your orders, manage reimagine requests, and shop your next favourite piece.
+            Sign in to track your orders, manage reimagine orders, and shop your next favourite piece.
           </p>
           <div className="mt-8 space-y-3">
-            {['Track all your orders in one place','Manage reimagine requests easily','Save your address for faster checkout'].map(f => (
+            {['Track all your orders in one place','Manage reimagine orders easily','Save your address for faster checkout'].map(f => (
               <div key={f} className="flex items-center gap-3">
                 <span className="w-5 h-5 rounded-full bg-[#e2a3c9]/20 border border-[#e2a3c9]/40 flex items-center justify-center text-[#e2a3c9] text-xs font-bold">✓</span>
                 <span className="text-[#241621]/75 text-sm font-body">{f}</span>

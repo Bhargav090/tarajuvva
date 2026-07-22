@@ -258,7 +258,7 @@ const parseProduct = (p) => ({
   sizes: parseJsonArray(p.sizes),
   size_type: p.size_type || null,
   garment_type: p.garment_type || null,
-  image_tag: (p.image_tag && String(p.image_tag).trim()) || 'Modular',
+  image_tag: (p.image_tag && String(p.image_tag).trim()) || null,
 });
 
 const LETTER_SIZE_RE = /^(XXS|XS|S|M|L|XL|XXL|XXXL|FREE|[A-Z]{1,4})$/i;
@@ -312,8 +312,8 @@ function totalStockFromSizes(sizeList, fallbackStock) {
 }
 
 function normalizeImageTag(raw) {
-  const t = String(raw ?? 'Modular').trim();
-  return t || 'Modular';
+  const t = String(raw ?? '').trim();
+  return t || null;
 }
 
 function validateProductSizes(sizeType, garmentType, sizes) {
@@ -706,11 +706,47 @@ router.get('/orders', authenticateAdmin, async (req, res) => {
 });
 
 router.patch('/orders/:id/status', authenticateAdmin, async (req, res) => {
-  const { status } = req.body;
+  const { status, tracking_url } = req.body;
   const valid = ['received', 'processing', 'shipped', 'delivered', 'cancelled'];
   if (!valid.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status' });
-  await run('UPDATE orders SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?', [status, req.params.id]);
-  res.json({ success: true });
+
+  const existing = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  if (!existing) return res.status(404).json({ success: false, message: 'Order not found' });
+
+  let trackingUrl = existing.tracking_url || null;
+  if (status === 'shipped') {
+    const next = String(tracking_url ?? '').trim();
+    if (!next) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tracking / shipping URL is required when marking an order as shipped.',
+      });
+    }
+    try {
+      // eslint-disable-next-line no-new
+      new URL(next);
+    } catch {
+      return res.status(400).json({ success: false, message: 'Enter a valid tracking URL (https://…).' });
+    }
+    trackingUrl = next;
+  } else if (tracking_url != null && String(tracking_url).trim()) {
+    trackingUrl = String(tracking_url).trim();
+  }
+
+  await run(
+    'UPDATE orders SET status=?, tracking_url=?, updated_at=CURRENT_TIMESTAMP WHERE id=?',
+    [status, trackingUrl, req.params.id]
+  );
+
+  const updated = await get('SELECT * FROM orders WHERE id = ?', [req.params.id]);
+  if (status === 'shipped' && existing.status !== 'shipped') {
+    const { notifyOrderShipped } = require('../utils/notifyEmail');
+    notifyOrderShipped(updated).catch((err) => {
+      console.error('[shop] notifyOrderShipped failed:', err?.message || err);
+    });
+  }
+
+  res.json({ success: true, order: updated });
 });
 
 module.exports = router;

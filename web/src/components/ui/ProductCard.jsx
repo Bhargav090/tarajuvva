@@ -182,11 +182,16 @@ export default function ProductCard({ product, disableEntrance = false, variant 
     const homeCard = (
       <div className="flex flex-col h-full bg-white">
         {imageBlock('aspect-[3/4]')}
-        <Link to={`/shop/${product.id}`} className="pt-3 px-1 pb-1 block">
+        <Link to={`/shop/${product.id}`} className="pt-3 px-1.5 pb-2 block">
           <p className="font-display font-bold text-[11px] sm:text-xs uppercase tracking-[0.06em] text-[#0a0a0a] leading-snug line-clamp-2">
             {product.name}
           </p>
-          <p className="mt-1 font-mono-tj text-[11px] sm:text-xs uppercase tracking-wide text-[#0a0a0a]">
+          {tagline && (
+            <p className="mt-1 text-[10px] sm:text-[11px] text-black/55 leading-snug line-clamp-2 font-body normal-case tracking-normal">
+              {tagline}
+            </p>
+          )}
+          <p className="mt-1.5 font-mono-tj text-[11px] sm:text-xs uppercase tracking-wide text-[#0a0a0a]">
             RS. {Number(product.price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </Link>

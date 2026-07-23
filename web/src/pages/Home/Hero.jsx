@@ -72,23 +72,19 @@ export default function Hero() {
 
         <div className="relative z-[2] grid grid-cols-2 md:grid-cols-4 gap-px mt-10 md:mt-12 border border-black bg-black">
           {HERO_STATS.map(stat => {
-            const toneClass =
+            const hoverTone =
               stat.tone === 'shop'
-                ? 'bg-[var(--tj-shop)]'
+                ? 'hover:bg-[var(--tj-shop)]'
                 : stat.tone === 'reimagine'
-                  ? 'bg-[var(--tj-reimagine)] text-white'
-                  : 'bg-white';
-            const labelClass =
-              stat.tone === 'reimagine' ? 'text-white/70' : 'text-black/55';
-            const valueClass =
-              stat.tone === 'reimagine' ? 'text-white' : 'text-[#0a0a0a]';
+                  ? 'hover:bg-[var(--tj-reimagine)] hover:text-white group'
+                  : '';
 
             const inner = (
               <>
-                <div className={`font-display text-4xl md:text-5xl font-extrabold tracking-tighter ${valueClass}`}>
+                <div className={`font-display text-4xl md:text-5xl font-extrabold tracking-tighter text-[#0a0a0a] ${stat.tone === 'reimagine' ? 'group-hover:text-white' : ''}`}>
                   {stat.value}
                 </div>
-                <p className={`text-xs mt-1 font-mono-tj uppercase tracking-wider ${labelClass} ${stat.to ? 'underline underline-offset-4 decoration-1' : ''}`}>
+                <p className={`text-xs mt-1 font-mono-tj uppercase tracking-wider text-black/55 ${stat.to ? 'underline underline-offset-4 decoration-1' : ''} ${stat.tone === 'reimagine' ? 'group-hover:text-white/75' : ''}`}>
                   {stat.label}
                 </p>
               </>
@@ -98,14 +94,14 @@ export default function Hero() {
                 <Link
                   key={stat.label}
                   to={stat.to}
-                  className={`${toneClass} p-6 transition-opacity block hover:opacity-90`}
+                  className={`bg-white p-6 transition-colors block ${hoverTone}`}
                 >
                   {inner}
                 </Link>
               );
             }
             return (
-              <div key={stat.label} className={`${toneClass} p-6`}>
+              <div key={stat.label} className="bg-white p-6">
                 {inner}
               </div>
             );

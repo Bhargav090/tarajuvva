@@ -36,14 +36,22 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
   };
 
   const addCustom = () => {
-    const label = sizeType === 'numeric' ? custom.trim() : custom.trim().toUpperCase();
+    const label =
+      sizeType === 'numeric'
+        ? custom.trim()
+        : custom.trim().replace(/\s+/g, '').toUpperCase();
     if (!label) return;
     if (sizes.find(s => s.label === label)) {
       toast.error(`Size ${label} already added`);
       return;
     }
-    if (sizeType === 'numeric' && !/^\d{1,2}$/.test(label)) {
-      toast.error('Numeric sizes use numbers like 28, 30, 32');
+    if (sizeType === 'numeric') {
+      if (!/^\d{1,2}$/.test(label)) {
+        toast.error('Numeric sizes use numbers like 28, 30, 32');
+        return;
+      }
+    } else if (!/^(XXS|XS|S|M|L|XL|XXL|XXXL|FREE|[A-Z]{1,4})(-(XXS|XS|S|M|L|XL|XXL|XXXL|[A-Z]{1,4}))?$/i.test(label)) {
+      toast.error('Use letter sizes (XS–XXXL) or ranges like S-M, M-L');
       return;
     }
     onSizesChange([...sizes, { label, available: true, stock: 1 }]);
@@ -127,7 +135,7 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
             value={custom}
             onChange={e => setCustom(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
-            placeholder={sizeType === 'numeric' ? 'Custom number (e.g. 48)' : 'Custom (e.g. XXXL)'}
+            placeholder={sizeType === 'numeric' ? 'Custom number (e.g. 48)' : 'Custom (e.g. XXXL, S-M)'}
             className="px-3 py-2 text-xs border border-[#341631]/20 bg-white text-[#341631] placeholder:text-[#341631]/35 focus:outline-none focus:border-[#a8e000] w-48"
           />
           <button type="button" onClick={addCustom}

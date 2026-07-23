@@ -261,7 +261,9 @@ const parseProduct = (p) => ({
   image_tag: (p.image_tag && String(p.image_tag).trim()) || null,
 });
 
-const LETTER_SIZE_RE = /^(XXS|XS|S|M|L|XL|XXL|XXXL|FREE|[A-Z]{1,4})$/i;
+/** Letter sizes: XS–XXXL, FREE, short codes, or ranges like S-M / M-L. */
+const LETTER_TOKEN = '(?:XXS|XS|S|M|L|XL|XXL|XXXL|FREE|[A-Z]{1,4})';
+const LETTER_SIZE_RE = new RegExp(`^${LETTER_TOKEN}(?:-${LETTER_TOKEN})?$`, 'i');
 const NUMERIC_SIZE_RE = /^\d{1,2}$/;
 
 function normalizeSizeType(raw) {
@@ -281,7 +283,11 @@ function normalizeSizes(raw, sizeType = null) {
     .filter((s) => s && typeof s.label === 'string' && s.label.trim())
     .map((s) => {
       const labelRaw = String(s.label).trim();
-      const label = sizeType === 'numeric' ? labelRaw : labelRaw.toUpperCase();
+      // Keep hyphen ranges (S-M); collapse other whitespace
+      const label =
+        sizeType === 'numeric'
+          ? labelRaw
+          : labelRaw.replace(/\s+/g, '').toUpperCase();
       let stock;
       if (typeof s.stock === 'number' && Number.isFinite(s.stock)) {
         stock = Math.max(0, Math.floor(s.stock));
@@ -302,6 +308,20 @@ function normalizeSizes(raw, sizeType = null) {
     return sizes.filter((s) => NUMERIC_SIZE_RE.test(s.label));
   }
   return sizes;
+}
+
+function assertSizesAccepted(raw, normalized, sizeType) {
+  if (!raw || !Array.isArray(raw) || !sizeType) return;
+  const incoming = raw.filter((s) => s && typeof s.label === 'string' && s.label.trim()).length;
+  if (incoming > 0 && normalized.length < incoming) {
+    const err = new Error(
+      sizeType === 'numeric'
+        ? 'Invalid size label. Numeric sizes must be 1–2 digit numbers (e.g. 28, 32).'
+        : 'Invalid size label. Use letter sizes (XS–XXXL) or ranges like S-M, M-L.'
+    );
+    err.status = 400;
+    throw err;
+  }
 }
 
 function totalStockFromSizes(sizeList, fallbackStock) {
@@ -396,6 +416,7 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   let sizeList;
   try {
     sizeList = normalizeSizes(parsed.sizes, sizeType);
+    assertSizesAccepted(parsed.sizes, sizeList, sizeType);
     validateProductSizes(sizeType, garmentType, sizeList);
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
@@ -457,6 +478,7 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
   let sizeList;
   try {
     sizeList = normalizeSizes(parsed.sizes, sizeType);
+    assertSizesAccepted(parsed.sizes, sizeList, sizeType);
     validateProductSizes(sizeType, garmentType, sizeList);
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
@@ -499,7 +521,13 @@ router.delete('/products/:id', authenticateAdmin, async (req, res) => {
 router.patch('/products/:id/sizes', authenticateAdmin, async (req, res) => {
   const row = await get('SELECT id, size_type FROM products WHERE id = ?', [req.params.id]);
   if (!row) return res.status(404).json({ success: false, message: 'Product not found' });
-  const sizeList = normalizeSizes(req.body.sizes, row.size_type);
+  let sizeList;
+  try {
+    sizeList = normalizeSizes(req.body.sizes, row.size_type);
+    assertSizesAccepted(req.body.sizes, sizeList, row.size_type);
+  } catch (e) {
+    return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
   const stockNum = totalStockFromSizes(sizeList, 0);
   await run('UPDATE products SET sizes = ?, stock = ? WHERE id = ?', [
     JSON.stringify(sizeList),

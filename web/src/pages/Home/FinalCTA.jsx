@@ -35,7 +35,7 @@ export default function FinalCTA() {
             transition={{ delay: 0.2 }}
             className="mt-5 text-black/65 text-base sm:text-lg max-w-xl mx-auto relative"
           >
-            A circular fashion operating system, made in India. Wear it. Remake it. Repair it. Donate it.
+            A circular fashion operating system, made in India. Wear it. Upcycle it. Repair it. Donate it.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 12 }}

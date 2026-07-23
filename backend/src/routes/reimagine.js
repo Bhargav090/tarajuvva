@@ -9,6 +9,7 @@ const { getReimagineCustomizeSettings } = require('../utils/siteSettings');
 const { formatSlotLabel, toISODateString, toTimeString, normalizeReimagineRequest } = require('../utils/consultationSlots');
 const { bufferToDataUrl } = require('../lib/imageDataUrl');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
+const { normalizeDeliveryZone, getDeliveryFee, DELIVERY_ZONE_LABELS } = require('../utils/delivery');
 const {
   listConversions,
   getConversionById,
@@ -312,7 +313,26 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
   }
 
   const remakePrice = conversion ? Number(conversion.price) || 0 : 0;
-  const paymentAmount = Math.max(0, consultation ? consultationFee : remakePrice);
+  const isRemake = !consultation && !callbackRequested;
+  let deliveryZone = normalizeDeliveryZone(req.body.delivery_zone);
+  let deliveryFee = 0;
+
+  if (isRemake) {
+    if (!deliveryZone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select whether pickup/delivery is in Hyderabad & around or outside Hyderabad.',
+      });
+    }
+    deliveryFee = await getDeliveryFee('reimagine', deliveryZone);
+  } else if (deliveryZone) {
+    deliveryFee = 0;
+  } else {
+    deliveryZone = null;
+  }
+
+  const baseAmount = Math.max(0, consultation ? consultationFee : remakePrice);
+  const paymentAmount = baseAmount + (isRemake ? deliveryFee : 0);
   const wantsRazorpay = payment_method === 'razorpay' && paymentAmount > 0;
 
   const resolvedGarment = conversion ? conversion.from_label : garment_type.trim();
@@ -391,12 +411,13 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
 
   await run(
     `INSERT INTO reimagine_requests (
-      id,user_id,user_name,user_phone,user_email,address,garment_type,transformation,conversion_id,notes,
+      id,user_id,user_name,user_phone,user_email,address,delivery_zone,delivery_fee,
+      garment_type,transformation,conversion_id,notes,
       garment_size,transformation_size,height_ft,height_in,
       images,status,
       is_custom,consultation_paid,consultation_slot_id,consultation_date,consultation_time,callback_requested,
       pickup_date,pickup_period,payment_status,consultation_fee
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id,
       user_id,
@@ -404,6 +425,8 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       user_phone.trim(),
       user_email?.trim() || null,
       address.trim(),
+      deliveryZone,
+      deliveryFee,
       resolvedGarment,
       transformationLabel,
       conversion ? conversion.id : null,
@@ -423,7 +446,7 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       pickupDate,
       pickupPeriod,
       paymentStatus,
-      paymentAmount || null,
+      baseAmount || null,
     ]
   );
 
@@ -455,6 +478,15 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       success: true,
       requestId: id,
       requires_payment: true,
+      delivery: isRemake
+        ? {
+            zone: deliveryZone,
+            zone_label: DELIVERY_ZONE_LABELS[deliveryZone],
+            fee: deliveryFee,
+            subtotal: baseAmount,
+            total: paymentAmount,
+          }
+        : null,
       razorpay: {
         key_id: cfg.key_id,
         order_id: rzpOrder.id,
@@ -581,7 +613,8 @@ const { parsePagination, paginationMeta } = require('../lib/pagination');
 
 /** Columns for list views — excludes heavy `images` LONGTEXT (base64 payloads). */
 const REIMAGINE_LIST_SELECT = `
-  id, user_id, user_name, user_phone, user_email, address, garment_type, transformation,
+  id, user_id, user_name, user_phone, user_email, address, delivery_zone, delivery_fee,
+  garment_type, transformation,
   conversion_id, notes, garment_size, transformation_size, height_ft, height_in,
   status, admin_notes, pickup_date, pickup_period, payment_status, consultation_fee,
   is_custom, consultation_paid, callback_requested, consultation_date, consultation_time,

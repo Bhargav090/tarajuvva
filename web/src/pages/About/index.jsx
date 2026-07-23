@@ -34,7 +34,7 @@ export default function About() {
             <p className="tj-eyebrow">Founder: Anjali · Sainikpuri, Hyderabad</p>
           </div>
           <div className="md:col-span-7 space-y-6 text-lg text-black/75 leading-relaxed font-body">
-            <p className="tj-eyebrow !normal-case tracking-normal text-black/45">Our Story</p>
+            <p className="tj-eyebrow !normal-case tracking-normal text-black/45 text-base md:text-lg font-display font-bold">Our Story</p>
             <p>Fashion told us clothes had an expiry date. We weren&apos;t buying it.</p>
             <p>
               We grew up in homes where a saree got 30 years of love and three afterlives. Then fashion
@@ -44,7 +44,7 @@ export default function About() {
               So we built Tarajuvva — not just to make clothes, but to keep them in motion.
             </p>
 
-            <p className="tj-eyebrow !normal-case tracking-normal text-black/45 pt-4">
+            <p className="tj-eyebrow !normal-case tracking-normal text-black/45 pt-4 text-base md:text-lg font-display font-bold">
               Why Us? — Our Design Philosophy
             </p>
             <p>
@@ -70,13 +70,13 @@ export default function About() {
 
       <section className="tj-section border-t border-black">
         <div className="tj-container max-w-3xl space-y-6 text-lg text-black/75 leading-relaxed font-body">
-          <p className="tj-eyebrow">Our Mission</p>
-          <h2 className="tj-h2 text-[#0a0a0a]">Longevity over landfill.</h2>
+          <p className="tj-eyebrow text-base md:text-lg font-display font-bold tracking-[0.12em]">Our Mission</p>
+          <h2 className="tj-h2 text-[#0a0a0a] text-3xl md:text-4xl">Longevity over landfill.</h2>
           <p>
             Based in Sainikpuri, Hyderabad, we&apos;re here to build a fashion system that values longevity over
             landfill. Not by asking you to buy less, but by giving every garment more ways to exist.
           </p>
-          <p className="tj-eyebrow pt-4">Be a Part of the Loop</p>
+          <p className="tj-eyebrow pt-4 text-base md:text-lg font-display font-bold tracking-[0.12em]">Be a Part of the Loop</p>
           <p>
             Tarajuvva only works because people allow their clothes to tell new stories. Whether you&apos;re
             shopping, repairing, reimagining, donating, or simply following along, you&apos;re helping build
@@ -98,8 +98,8 @@ export default function About() {
 
       <section className="tj-section bg-[var(--tj-bg-soft)] border-y border-black">
         <div className="tj-container">
-          <p className="tj-eyebrow">Manifesto</p>
-          <h2 className="tj-h2 mt-3 max-w-3xl text-[#0a0a0a]">
+          <p className="tj-eyebrow text-base md:text-lg font-display font-bold tracking-[0.12em]">Manifesto</p>
+          <h2 className="tj-h2 mt-3 max-w-3xl text-[#0a0a0a] text-3xl md:text-4xl">
             Six lines we won&apos;t compromise on.
           </h2>
           <div className="grid md:grid-cols-2 gap-px bg-black border border-black mt-10">

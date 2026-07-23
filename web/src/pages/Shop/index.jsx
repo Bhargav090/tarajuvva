@@ -24,11 +24,45 @@ export default function Shop() {
     if (sort === 'sale') return productDiscountPercent(b) - productDiscountPercent(a);
     if (sort === 'price_asc') return a.price - b.price;
     if (sort === 'price_desc') return b.price - a.price;
+    // Featured first (API also orders this way; keep as client safety net)
+    const feat = Number(!!b.featured) - Number(!!a.featured);
+    if (feat !== 0) return feat;
     return 0;
   });
 
   return (
     <div className="bg-white min-h-screen">
+      <section
+        className="border-b border-black relative overflow-hidden bg-[var(--tj-shop)]"
+        data-testid="shop-hero"
+      >
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 55% 120% at 100% 0%, rgba(255,255,255,0.5) 0%, transparent 58%)',
+          }}
+          aria-hidden
+        />
+        <div className="tj-container relative py-6 md:py-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-10">
+            <div className="min-w-0">
+              <p className="tj-eyebrow !text-black/50 m-0">01 · Shop</p>
+              <h1 className="mt-1.5 font-display text-[1.85rem] sm:text-[2.15rem] md:text-[2.5rem] font-extrabold tracking-[-0.03em] leading-[1.08] text-[#0a0a0a] m-0">
+                Designed to{' '}
+                <span className="tj-vertical-hero-highlight whitespace-nowrap">
+                  do more.
+                </span>
+              </h1>
+            </div>
+            <p className="text-sm text-black/60 leading-snug max-w-[22rem] m-0 sm:text-right sm:pb-1">
+              Reversible, adjustable, or packed with utility loops and playful
+              pockets — garments that adapt with you.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <ShopFiltersBar
         category={category}
         onCategoryChange={setCategory}
@@ -52,11 +86,36 @@ export default function Shop() {
             }
           />
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sorted.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <>
+            {/* Mobile: 2-col bordered grid */}
+            <div className="sm:hidden grid grid-cols-2 border border-black">
+              {sorted.map((p, i) => {
+                const isRight = i % 2 === 1;
+                const row = Math.floor(i / 2);
+                const lastRow = Math.floor((sorted.length - 1) / 2);
+                return (
+                  <div
+                    key={p.id}
+                    className={[
+                      'min-w-0',
+                      !isRight ? 'border-r border-black' : '',
+                      row < lastRow ? 'border-b border-black' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    <ProductCard product={p} variant="home" disableEntrance={i > 3} />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {sorted.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

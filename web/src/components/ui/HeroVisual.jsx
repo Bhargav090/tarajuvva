@@ -10,7 +10,7 @@ const VARIANTS = {
     tagClass: '',
   },
   reimagine: {
-    tag: 'Remake · Transform',
+    tag: 'Upcycle · Reimagine',
     ribbon: null,
     showRibbon: false,
     showSecondaryAccent: false,

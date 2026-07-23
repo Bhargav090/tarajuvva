@@ -37,10 +37,10 @@ export default function ShopPreview() {
           <div className="flex flex-col gap-1 max-w-xl">
             <p className="tj-eyebrow m-0 leading-snug">01 · Shop</p>
             <h2 className="tj-h2 m-0 leading-tight text-[#0a0a0a]">
-              Garments that <span className="whitespace-nowrap">do more</span>
+              Designed to do more.
             </h2>
             <p className="text-sm text-black/55 leading-snug m-0 max-w-md">
-              Durable, versatile pieces with utility at their core.
+              Reversible, adjustable, or packed with utility loops and playful pockets, these are garments that adapt with you.
             </p>
           </div>
           <Link

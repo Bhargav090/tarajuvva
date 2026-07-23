@@ -53,9 +53,14 @@ export default function CustomizeFormWizard({
   loading,
   submitLabel = 'Submit customize request',
   completeLabel = 'Continue to payment',
+  cardStep: controlledCardStep,
+  onCardStepChange,
 }) {
-  const [cardStep, setCardStep] = useState(0);
-  const step = STEPS[cardStep];
+  const [uncontrolledCardStep, setUncontrolledCardStep] = useState(0);
+  const isControlled = typeof controlledCardStep === 'number' && typeof onCardStepChange === 'function';
+  const cardStep = isControlled ? controlledCardStep : uncontrolledCardStep;
+  const setCardStep = isControlled ? onCardStepChange : setUncontrolledCardStep;
+  const step = STEPS[cardStep] || STEPS[0];
   const isLast = cardStep === STEPS.length - 1;
   const { dates, loading: datesLoading } = useConsultationSlotDates();
   const selectedDate = details.consultation_date || '';
@@ -104,10 +109,10 @@ export default function CustomizeFormWizard({
   const goNext = () => {
     if (!canNext()) return;
     if (isLast) return;
-    setCardStep((s) => s + 1);
+    setCardStep(cardStep + 1);
   };
 
-  const goBack = () => setCardStep((s) => Math.max(0, s - 1));
+  const goBack = () => setCardStep(Math.max(0, cardStep - 1));
 
   const handleSubmit = (e) => {
     e.preventDefault();

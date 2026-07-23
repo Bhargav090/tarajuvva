@@ -14,14 +14,27 @@ function mapTestimonial(row) {
     name: row.name,
     city: row.city,
     quote: row.quote,
+    vertical: row.vertical === 'shop' ? 'shop' : 'reimagine',
     images: paths.map((p) => uploadUrl(p)).filter(Boolean),
     googleReviewUrl: row.google_review_url || null,
   };
 }
 
+/** Prefer 1 Shop + 2 Reimagine testimonials for the homepage carousel. */
+function pickHomeTestimonials(list) {
+  const shop = list.filter((t) => t.vertical === 'shop');
+  const reimagine = list.filter((t) => t.vertical !== 'shop');
+  const picked = [...shop.slice(0, 1), ...reimagine.slice(0, 2)];
+  if (picked.length >= 3) return picked;
+  const rest = list.filter((t) => !picked.includes(t));
+  return [...picked, ...rest].slice(0, 3);
+}
+
 /** Public — DB testimonials when present, else built-in defaults. */
 export function useTestimonials() {
-  const [items, setItems] = useState(TESTIMONIALS.map((t, i) => ({ ...t, id: `default-${i}`, images: [], googleReviewUrl: null })));
+  const [items, setItems] = useState(
+    pickHomeTestimonials(TESTIMONIALS.map((t, i) => ({ ...t, id: `default-${i}`, images: [], googleReviewUrl: null })))
+  );
   const [loading, setLoading] = useState(true);
   const [fromDb, setFromDb] = useState(false);
 
@@ -30,15 +43,23 @@ export function useTestimonials() {
       .then((r) => {
         const rows = r.data.testimonials || [];
         if (rows.length > 0) {
-          setItems(rows.map(mapTestimonial));
+          setItems(pickHomeTestimonials(rows.map(mapTestimonial)));
           setFromDb(true);
         } else {
-          setItems(TESTIMONIALS.map((t, i) => ({ ...t, id: `default-${i}`, images: [], googleReviewUrl: null })));
+          setItems(
+            pickHomeTestimonials(
+              TESTIMONIALS.map((t, i) => ({ ...t, id: `default-${i}`, images: [], googleReviewUrl: null }))
+            )
+          );
           setFromDb(false);
         }
       })
       .catch(() => {
-        setItems(TESTIMONIALS.map((t, i) => ({ ...t, id: `default-${i}`, images: [], googleReviewUrl: null })));
+        setItems(
+          pickHomeTestimonials(
+            TESTIMONIALS.map((t, i) => ({ ...t, id: `default-${i}`, images: [], googleReviewUrl: null }))
+          )
+        );
         setFromDb(false);
       })
       .finally(() => setLoading(false));
@@ -76,6 +97,7 @@ export function useAdminTestimonials() {
       form.append('name', payload.name);
       form.append('city', payload.city);
       form.append('quote', payload.quote);
+      form.append('vertical', payload.vertical === 'shop' ? 'shop' : 'reimagine');
       form.append('google_review_url', payload.google_review_url || '');
       form.append('sort_order', String(payload.sort_order ?? 0));
       form.append('is_active', payload.is_active ? '1' : '0');

@@ -23,6 +23,14 @@ function FacebookIcon({ size = 18 }) {
   );
 }
 
+function LinkedInIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M6.94 8.5H3.75V20h3.19V8.5zM5.34 3C4.22 3 3.3 3.92 3.3 5.04c0 1.1.9 2.02 2.04 2.02 1.14 0 2.04-.92 2.04-2.02C7.38 3.92 6.48 3 5.34 3zM20.25 20h-3.18v-5.6c0-1.34-.03-3.06-1.86-3.06-1.87 0-2.16 1.46-2.16 2.96V20H9.87V8.5h3.05v1.57h.04c.42-.8 1.46-1.65 3.01-1.65 3.22 0 3.81 2.12 3.81 4.87V20z" />
+    </svg>
+  );
+}
+
 export default function Footer() {
   const verticals = NAV_LINKS.filter((l) => l.to !== '/about');
 
@@ -36,7 +44,7 @@ export default function Footer() {
               className="tj-footer-brand__logo block w-auto object-contain object-left object-top"
             />
             <p className="mt-1 md:-mt-4 lg:-mt-5 text-base leading-relaxed text-black/60 max-w-md font-display">
-              A circular fashion operating system, made in India. Wear it. Remake it. Repair it. Donate it.
+              A circular fashion operating system, made in India. Wear it. Upcycle it. Repair it. Donate it.
             </p>
             <div className="mt-5 flex items-center gap-3">
               <a
@@ -56,6 +64,15 @@ export default function Footer() {
                 className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors"
               >
                 <FacebookIcon size={18} />
+              </a>
+              <a
+                href={SOCIAL_LINKS.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="w-10 h-10 border border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors"
+              >
+                <LinkedInIcon size={18} />
               </a>
             </div>
           </div>

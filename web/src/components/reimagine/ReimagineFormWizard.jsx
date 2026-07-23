@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import DropZone from '../ui/DropZone';
+import DeliveryZonePicker from '../ui/DeliveryZonePicker';
 import { REIMAGINE_FORM_CARD } from './formCardStyles';
 import {
   PICKUP_PERIODS,
@@ -9,6 +10,7 @@ import {
   HEIGHT_FEET_OPTIONS,
   HEIGHT_INCH_OPTIONS,
 } from '../../utils/constants';
+import { isValidDeliveryZone } from '../../utils/delivery';
 
 const FIELD =
   'w-full px-3.5 py-2.5 border border-black bg-white focus:outline-none focus:ring-2 focus:ring-black text-sm';
@@ -39,7 +41,8 @@ function identityComplete(details) {
 function deliveryComplete(details) {
   return Boolean(
     String(details.address || '').trim() &&
-      /^\d{6}$/.test(String(details.pincode || '').trim())
+      /^\d{6}$/.test(String(details.pincode || '').trim()) &&
+      isValidDeliveryZone(details.delivery_zone)
   );
 }
 
@@ -80,9 +83,9 @@ function stepHint(type) {
 
 function SizeSelect({ label, name, value, onChange }) {
   return (
-    <div>
-      <label className={LABEL}>{label}</label>
-      <select name={name} value={value} onChange={onChange} required className={FIELD}>
+    <div className="min-w-0 flex flex-col">
+      <label className={`${LABEL} min-h-[2.25rem] flex items-end`}>{label}</label>
+      <select name={name} value={value} onChange={onChange} required className={`${FIELD} w-full`}>
         <option value="">Select size</option>
         {REIMAGINE_LETTER_SIZES.map((s) => (
           <option key={s} value={s}>
@@ -103,16 +106,29 @@ export default function ReimagineFormWizard({
   onSubmit,
   onWizardComplete,
   loading,
-  submitLabel = 'Submit remake order',
+  submitLabel = 'Submit upcycle order',
   steps = REIMAGINE_FORM_STEPS,
   completeLabel = 'Continue',
   preferGarmentStep = false,
+  cardStep: controlledCardStep,
+  onCardStepChange,
+  deliveryFees,
 }) {
   const lastIdx = Math.max(0, steps.length - 1);
-  const [cardStep, setCardStep] = useState(() => {
+  const isControlled = typeof controlledCardStep === 'number' && typeof onCardStepChange === 'function';
+  const [uncontrolledCardStep, setUncontrolledCardStep] = useState(() => {
     if (preferGarmentStep && contactComplete(details) && lastIdx > 0) return lastIdx;
     return 0;
   });
+  const cardStep = isControlled
+    ? Math.min(Math.max(0, controlledCardStep), lastIdx)
+    : uncontrolledCardStep;
+  const setCardStep = (next) => {
+    const value = typeof next === 'function' ? next(cardStep) : next;
+    const clamped = Math.min(Math.max(0, value), lastIdx);
+    if (isControlled) onCardStepChange(clamped);
+    else setUncontrolledCardStep(clamped);
+  };
   const step = steps[cardStep];
   const isLast = cardStep === lastIdx;
 
@@ -252,6 +268,12 @@ export default function ReimagineFormWizard({
                     className={`${FIELD} max-w-[9rem]`}
                   />
                 </div>
+                <DeliveryZonePicker
+                  channel="reimagine"
+                  value={valueFor('delivery_zone')}
+                  onChange={(zone) => setDetails((p) => ({ ...p, delivery_zone: zone }))}
+                  fees={deliveryFees}
+                />
               </div>
             ) : step.type === 'photos' ? (
               <div className="space-y-2">
@@ -260,7 +282,7 @@ export default function ReimagineFormWizard({
               </div>
             ) : step.type === 'garment_fit' ? (
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 items-stretch">
                   <SizeSelect
                     label="Current garment size *"
                     name="garment_size"
@@ -268,7 +290,7 @@ export default function ReimagineFormWizard({
                     onChange={setField('garment_size')}
                   />
                   <SizeSelect
-                    label="Desired size after transformation *"
+                    label="Desired size after upcycle *"
                     name="transformation_size"
                     value={valueFor('transformation_size')}
                     onChange={setField('transformation_size')}
@@ -333,9 +355,14 @@ export default function ReimagineFormWizard({
                     value={valueFor('pickup_date')}
                     onChange={setField('pickup_date')}
                     required
-                    min={new Date().toISOString().slice(0, 10)}
+                    min={(() => {
+                      const d = new Date();
+                      d.setDate(d.getDate() + 1);
+                      return d.toISOString().slice(0, 10);
+                    })()}
                     className={`${FIELD} max-w-[12rem]`}
                   />
+                  <p className="text-[10px] text-black/45 mt-1">Same-day pickup is not available.</p>
                 </div>
                 <div>
                   <label className={LABEL}>Preferred time of day *</label>

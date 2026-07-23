@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { DELIVERY_FEES } from '../utils/delivery';
 
 const DEFAULTS = {
-  price: 299,
-  feature: '15 min consultation call',
-  description:
-    'Book a one-on-one call with our upcycle team. Show us your garment, share references, and get a clear plan — fit, fabric, timeline, and quote — before we cut a single thread.',
+  shop: { ...DELIVERY_FEES.shop },
+  reimagine: { ...DELIVERY_FEES.reimagine },
 };
 
-export function useReimagineCustomizeSettings() {
+export function useDeliverySettings() {
   const [settings, setSettings] = useState(DEFAULTS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/settings/reimagine-customize')
+    api
+      .get('/settings/delivery')
       .then((r) => {
         if (r.data.settings) setSettings(r.data.settings);
       })
@@ -24,7 +24,7 @@ export function useReimagineCustomizeSettings() {
   return { settings, loading };
 }
 
-export function useAdminReimagineCustomizeSettings() {
+export function useAdminDeliverySettings() {
   const [settings, setSettings] = useState(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -32,7 +32,8 @@ export function useAdminReimagineCustomizeSettings() {
 
   const load = () => {
     setLoading(true);
-    api.get('/admin/settings/reimagine-customize', { headers: authHeader })
+    api
+      .get('/admin/settings/delivery', { headers: authHeader })
       .then((r) => setSettings(r.data.settings || DEFAULTS))
       .catch(() => setSettings(DEFAULTS))
       .finally(() => setLoading(false));
@@ -45,7 +46,7 @@ export function useAdminReimagineCustomizeSettings() {
   const save = async (payload) => {
     setSubmitting(true);
     try {
-      const { data } = await api.put('/admin/settings/reimagine-customize', payload, { headers: authHeader });
+      const { data } = await api.put('/admin/settings/delivery', payload, { headers: authHeader });
       setSettings(data.settings);
       return { ok: true };
     } catch (err) {

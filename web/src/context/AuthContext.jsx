@@ -27,6 +27,13 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('user_token');
     delete api.defaults.headers.common['Authorization'];
     setUser(null);
+    try {
+      // Avoid leaking another user's half-filled Reimagine draft on a shared browser
+      sessionStorage.removeItem('tj_reimagine_customize_draft');
+      sessionStorage.removeItem('tj_reimagine_remake_draft');
+    } catch {
+      // ignore
+    }
   }, []);
 
   const updateUser = useCallback((updates) => setUser(prev => ({ ...prev, ...updates })), []);

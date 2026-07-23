@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall, Ruler,
+  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall, Ruler, Truck,
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -26,6 +26,7 @@ import SizeChartsTab from './SizeChartsTab';
 // import HeroImagesTab from './HeroImagesTab'; // disabled — heroes use static assets
 // import ReimaginePresetsTab from './ReimaginePresetsTab'; // disabled — reimagine images use static assets
 import ReimagineCustomizeTab from './ReimagineCustomizeTab';
+import DeliveryTab from './DeliveryTab';
 import ReimagineConversionsTab from './ReimagineConversionsTab';
 import TestimonialsTab from './TestimonialsTab';
 import OrdersTab from './OrdersTab';
@@ -79,6 +80,7 @@ const TABS = [
   // { id: 'reimagine-hero',   label: 'Reimagine hero',   icon: ImageIcon },
   // { id: 'reimagine-images', label: 'Reimagine images', icon: Sparkles },
   { id: 'reimagine-customize', label: 'Customize', icon: PhoneCall },
+  { id: 'delivery', label: 'Delivery', icon: Truck },
   { id: 'reimagine-conversions', label: 'Conversions', icon: Scissors },
   { id: 'testimonials',     label: 'Testimonials',     icon: MessageSquareQuote },
 ];
@@ -237,6 +239,7 @@ export default function Admin() {
           {/* {tab === 'reimagine-hero' && <HeroImagesTab context="reimagine" />} */}
           {/* {tab === 'reimagine-images' && <ReimaginePresetsTab />} */}
           {tab === 'reimagine-customize' && <ReimagineCustomizeTab />}
+          {tab === 'delivery' && <DeliveryTab />}
           {tab === 'reimagine-conversions' && <ReimagineConversionsTab />}
           {tab === 'testimonials' && <TestimonialsTab />}
         </div>
@@ -291,6 +294,7 @@ function ReimagineTab({ kind = 'orders' }) {
       `tarajuvva-reimagine-${isConsultations ? 'consultations' : 'orders'}-${new Date().toISOString().slice(0, 10)}.csv`,
       [
         'id', 'created_at', 'user_name', 'user_email', 'user_phone', 'address',
+        'delivery_zone', 'delivery_fee',
         'garment_type', 'transformation', 'garment_size', 'transformation_size', 'height_ft', 'height_in',
         'is_custom', 'notes', 'status',
         'pickup_date', 'pickup_period', 'payment_status', 'consultation_fee', 'callback_requested',
@@ -302,6 +306,8 @@ function ReimagineTab({ kind = 'orders' }) {
         r.user_email,
         r.user_phone,
         r.address,
+        r.delivery_zone,
+        r.delivery_fee,
         r.garment_type,
         r.transformation,
         r.garment_size,
@@ -428,6 +434,17 @@ function ReimagineTab({ kind = 'orders' }) {
                 <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Pickup / delivery address</dt>
                 <dd className="text-[#241621] font-body whitespace-pre-wrap">{r.address || '—'}</dd>
               </div>
+              {(r.delivery_zone || Number(r.delivery_fee) > 0) && (
+                <div>
+                  <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Delivery zone</dt>
+                  <dd className="text-[#241621] font-body">
+                    {r.delivery_zone || '—'}
+                    {r.delivery_fee != null
+                      ? ` · ₹${Number(r.delivery_fee).toLocaleString('en-IN')}`
+                      : ''}
+                  </dd>
+                </div>
+              )}
               {r.notes && (
                 <div className="sm:col-span-2">
                   <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Notes</dt>

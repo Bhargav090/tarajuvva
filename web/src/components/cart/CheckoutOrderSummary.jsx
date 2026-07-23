@@ -1,8 +1,20 @@
 import { Link } from 'react-router-dom';
 import CartLineItem from './CartLineItem';
+import { DELIVERY_ZONE_LABELS, isValidDeliveryZone } from '../../utils/delivery';
 
-export default function CheckoutOrderSummary({ items, total, totalItems, onRemove, onUpdateQty }) {
+export default function CheckoutOrderSummary({
+  items,
+  total,
+  totalItems,
+  deliveryFee = 0,
+  grandTotal,
+  deliveryZone = '',
+  onRemove,
+  onUpdateQty,
+}) {
   const scrollable = items.length > 2;
+  const payable = grandTotal != null ? grandTotal : Number(total || 0) + Number(deliveryFee || 0);
+  const zoneSelected = isValidDeliveryZone(deliveryZone);
 
   return (
     <aside className="bg-white border border-black flex flex-col lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)]">
@@ -38,17 +50,28 @@ export default function CheckoutOrderSummary({ items, total, totalItems, onRemov
         <div className="space-y-2 text-sm font-body text-black/55">
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span className="font-semibold text-[#0a0a0a]">₹{total.toLocaleString('en-IN')}</span>
+            <span className="font-semibold text-[#0a0a0a]">₹{Number(total).toLocaleString('en-IN')}</span>
           </div>
-          <div className="flex justify-between">
-            <span>Shipping</span>
-            <span className="text-[var(--tj-shop-deep)] font-semibold">Free</span>
+          <div className="flex justify-between gap-3">
+            <span>
+              Delivery
+              {zoneSelected ? (
+                <span className="block text-[0.65rem] text-black/40 mt-0.5">
+                  {DELIVERY_ZONE_LABELS[deliveryZone]}
+                </span>
+              ) : null}
+            </span>
+            <span className="font-semibold text-[#0a0a0a] text-right shrink-0">
+              {zoneSelected
+                ? `₹${Number(deliveryFee).toLocaleString('en-IN')}`
+                : 'Select location'}
+            </span>
           </div>
         </div>
         <div className="flex justify-between items-baseline pt-2 border-t border-black/15">
           <span className="text-sm font-bold uppercase tracking-wider text-black/45 font-display">Total</span>
           <span className="text-2xl font-black text-[#0a0a0a] font-display">
-            ₹{total.toLocaleString('en-IN')}
+            ₹{payable.toLocaleString('en-IN')}
           </span>
         </div>
         <Link

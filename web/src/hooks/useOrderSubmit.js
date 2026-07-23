@@ -3,45 +3,42 @@ import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { openRazorpayCheckout } from '../utils/razorpay';
 import { formatAddressWithPincode } from '../utils/address';
+import { getDeliveryFee, isValidDeliveryZone } from '../utils/delivery';
+import { useDeliverySettings } from './useDeliverySettings';
 
 export function useOrderSubmit({ items, total, user, onSuccess }) {
+  const { settings: deliveryFees } = useDeliverySettings();
   const [form, setForm] = useState({
     user_name:  user?.name  || '',
     user_email: user?.email || '',
     user_phone: user?.phone || '',
     address_line: user?.address || '',
     pincode: '',
+    delivery_zone: '',
     notes:      '',
   });
-  const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
+  const deliveryFee = isValidDeliveryZone(form.delivery_zone)
+    ? getDeliveryFee('shop', form.delivery_zone, deliveryFees)
+    : 0;
+  const grandTotal = Number(total || 0) + deliveryFee;
+
   const onChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+
+  const setDeliveryZone = (zone) => setForm((p) => ({ ...p, delivery_zone: zone }));
 
   const orderPayload = () => ({
     user_name: form.user_name,
     user_email: form.user_email,
     user_phone: form.user_phone,
     address: formatAddressWithPincode(form.address_line, form.pincode),
+    delivery_zone: form.delivery_zone,
     notes: form.notes,
   });
-
-  const placeCodOrder = async (orderItems) => {
-    const { data } = await api.post('/shop/orders', {
-      ...orderPayload(),
-      items: orderItems,
-      payment_method: 'cod',
-    });
-    setPlacedOrderId(data.order?.id || null);
-    setSuccessMessage(
-      data.message || 'Thank you for shopping with Tarajuvva. Your order is being processed and will be dispatched soon.'
-    );
-    setDone(true);
-    onSuccess?.();
-  };
 
   const placeRazorpayOrder = async (orderItems) => {
     const { data } = await api.post('/shop/orders', {
@@ -92,15 +89,14 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
       toast.error('Delivery address is required');
       return;
     }
+    if (!isValidDeliveryZone(form.delivery_zone)) {
+      toast.error('Please select Hyderabad & around or Outside Hyderabad');
+      return;
+    }
     setLoading(true);
     try {
       const orderItems = items.map(({ id, qty, size }) => ({ id, qty, ...(size ? { size } : {}) }));
-
-      if (paymentMethod === 'cod') {
-        await placeCodOrder(orderItems);
-      } else {
-        await placeRazorpayOrder(orderItems);
-      }
+      await placeRazorpayOrder(orderItems);
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Could not place order';
       if (msg !== 'Payment cancelled') toast.error(msg);
@@ -112,12 +108,14 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
   return {
     form,
     onChange,
+    setDeliveryZone,
     onSubmit,
     loading,
     done,
     placedOrderId,
     successMessage,
-    paymentMethod,
-    setPaymentMethod,
+    deliveryFee,
+    deliveryFees,
+    grandTotal,
   };
 }

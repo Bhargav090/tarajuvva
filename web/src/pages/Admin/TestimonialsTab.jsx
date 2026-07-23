@@ -4,7 +4,7 @@ import { Trash2, Pencil, ImagePlus } from 'lucide-react';
 import { useAdminTestimonials } from '../../hooks/useTestimonials';
 import { TESTIMONIALS } from '../../utils/constants';
 import { uploadUrl } from '../../utils/uploadUrl';
-import { Input, Textarea } from '../../components/ui/FormField';
+import { Input, Textarea, Select } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
@@ -16,6 +16,7 @@ const emptyForm = () => ({
   name: '',
   city: '',
   quote: '',
+  vertical: 'reimagine',
   google_review_url: '',
   sort_order: '0',
   is_active: true,
@@ -76,6 +77,7 @@ export default function TestimonialsTab() {
       name: t.name,
       city: t.city,
       quote: t.quote,
+      vertical: t.vertical === 'shop' ? 'shop' : 'reimagine',
       google_review_url: t.google_review_url || '',
       sort_order: String(t.sort_order ?? 0),
       is_active: !!t.is_active,
@@ -142,6 +144,7 @@ export default function TestimonialsTab() {
         name: form.name.trim(),
         city: form.city.trim(),
         quote: form.quote.trim(),
+        vertical: form.vertical === 'shop' ? 'shop' : 'reimagine',
         google_review_url: form.google_review_url.trim(),
         sort_order: parseInt(form.sort_order, 10) || 0,
         is_active: form.is_active,
@@ -197,6 +200,10 @@ export default function TestimonialsTab() {
           <Input label="Name" name="name" value={form.name} onChange={onChange} required placeholder="Ananya R." />
           <Input label="City" name="city" value={form.city} onChange={onChange} required placeholder="Bengaluru" />
         </div>
+        <Select label="Vertical" name="vertical" value={form.vertical} onChange={onChange}>
+          <option value="shop">Shop</option>
+          <option value="reimagine">Reimagine</option>
+        </Select>
         <Textarea
           label="Quote"
           name="quote"

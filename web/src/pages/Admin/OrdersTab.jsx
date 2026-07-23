@@ -25,6 +25,7 @@ import { TableSkeleton } from '../../components/ui/Skeleton';
 import PaginationBar from '../../components/ui/PaginationBar';
 import OrderItemLine from '../../components/orders/OrderItemLine';
 import { ORDER_STATUSES, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../../utils/constants';
+import { DELIVERY_ZONE_LABELS } from '../../utils/delivery';
 import { downloadCsv, flattenOrderItems } from '../../utils/exportCsv';
 
 function formatDate(value) {
@@ -315,6 +316,16 @@ function OrderCard({ order, updateStatus }) {
                 <DetailRow icon={MapPin} label="Delivery address">
                   <span className="whitespace-pre-wrap">{order.address || '—'}</span>
                 </DetailRow>
+                {(order.delivery_zone || Number(order.delivery_fee) > 0) && (
+                  <DetailRow icon={Truck} label="Delivery zone">
+                    <span>
+                      {DELIVERY_ZONE_LABELS[order.delivery_zone] || order.delivery_zone || '—'}
+                      {order.delivery_fee != null
+                        ? ` · ₹${Number(order.delivery_fee).toLocaleString('en-IN')}`
+                        : ''}
+                    </span>
+                  </DetailRow>
+                )}
                 {order.tracking_url && (
                   <DetailRow icon={Truck} label="Tracking link">
                     <a
@@ -364,6 +375,7 @@ export default function OrdersTab() {
       `tarajuvva-orders-${new Date().toISOString().slice(0, 10)}.csv`,
       [
         'id', 'created_at', 'user_name', 'user_email', 'user_phone', 'address',
+        'delivery_zone', 'delivery_fee',
         'items', 'total', 'status', 'payment_method', 'payment_status', 'tracking_url', 'notes',
       ],
       orders.map((o) => [
@@ -373,6 +385,8 @@ export default function OrdersTab() {
         o.user_email,
         o.user_phone,
         o.address,
+        o.delivery_zone,
+        o.delivery_fee,
         flattenOrderItems(o.items),
         o.total,
         o.status,

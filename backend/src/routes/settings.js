@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { get, all } = require('../db/database');
-const { getReimagineCustomizeSettings } = require('../utils/siteSettings');
+const { getReimagineCustomizeSettings, getDeliverySettings } = require('../utils/siteSettings');
 const { reimagineMediaUrl, testimonialMediaUrl } = require('../lib/mediaUrls');
 
 // Disabled — homepage hero uses web/src/assets/hero-banthibhojanam-ss2026.jpeg; Reimagine uses reimagine.mov.
@@ -55,7 +55,7 @@ router.get('/reimagine-images', async (req, res) => {
 /** Public — active testimonials for homepage carousel (no inline image blobs). */
 router.get('/testimonials', async (req, res) => {
   const rows = await all(
-    `SELECT id, name, city, quote, google_review_url, sort_order,
+    `SELECT id, name, city, quote, vertical, google_review_url, sort_order,
       CASE
         WHEN image_paths IS NOT NULL AND image_paths != '' AND JSON_VALID(image_paths)
           THEN JSON_LENGTH(image_paths)
@@ -73,6 +73,7 @@ router.get('/testimonials', async (req, res) => {
       name: row.name,
       city: row.city,
       quote: row.quote,
+      vertical: row.vertical === 'shop' ? 'shop' : 'reimagine',
       image_paths: Array.from({ length: count }, (_, i) => testimonialMediaUrl(row.id, i)),
       google_review_url: row.google_review_url || null,
       sort_order: row.sort_order ?? 0,
@@ -85,6 +86,12 @@ router.get('/testimonials', async (req, res) => {
 /** Public — customize consultation pricing & features (Reimagine page). */
 router.get('/reimagine-customize', async (req, res) => {
   const settings = await getReimagineCustomizeSettings();
+  res.json({ success: true, settings });
+});
+
+/** Public — delivery fees by channel & zone (shop + reimagine). */
+router.get('/delivery', async (req, res) => {
+  const settings = await getDeliverySettings();
   res.json({ success: true, settings });
 });
 

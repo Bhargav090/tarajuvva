@@ -275,9 +275,9 @@ function buildEmailHtml({
                 <img
                   src="cid:${EMAIL_LOGO_CID}"
                   alt="Tarajuvva"
-                  width="160"
+                  width="220"
                   height="auto"
-                  style="display:block;width:160px;max-width:70%;height:auto;border:0;outline:none;"
+                  style="display:block;width:220px;max-width:85%;height:auto;border:0;outline:none;"
                 />
               </a>
               <p style="margin:10px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:${BRAND.muted};">
@@ -311,7 +311,7 @@ function buildEmailHtml({
               <p style="margin:0 0 10px;">${escapeHtml(footerNote)}</p>
               <p style="margin:0;">
                 <a href="${escapeHtml(home)}" style="color:${BRAND.ink};text-decoration:underline;">tarajuvva.com</a>
-                &nbsp;·&nbsp; Wear it. Remake it. Repair it. Donate it.
+                &nbsp;·&nbsp; Wear it. Upcycle it. Repair it. Donate it.
               </p>
               <p style="margin:14px 0 0;font-size:11px;color:#9a9a9a;">© ${year} Tarajuvva. All rights reserved.</p>
             </td>
@@ -409,7 +409,7 @@ function formatReimagineRequestEmail(r) {
     `Phone: ${r.user_phone}`,
     `Email: ${r.user_email || '—'}`,
     `Garment: ${r.garment_type}`,
-    `Transformation: ${r.transformation}`,
+    `Upcycle: ${r.transformation}`,
     fit ? `Fit: ${fit}` : null,
     r.consultation_paid ? `Consultation booked: Yes` : null,
     r.payment_status === 'paid' ? `Payment: Paid` : r.payment_status ? `Payment: ${r.payment_status}` : null,
@@ -417,6 +417,9 @@ function formatReimagineRequestEmail(r) {
     r.callback_requested ? 'Callback requested: Yes — team to contact customer' : null,
     slotLabel ? `Consultation slot: ${slotLabel}` : null,
     pickup ? `Preferred pickup: ${pickup}` : null,
+    r.delivery_zone
+      ? `Delivery zone: ${r.delivery_zone}${r.delivery_fee != null ? ` (₹${Number(r.delivery_fee)})` : ''}`
+      : null,
     `Custom: ${isCustom ? 'Yes' : 'No'}`,
     '',
     `Address:\n${r.address || '—'}`,
@@ -444,9 +447,9 @@ function formatReimagineRequestEmail(r) {
       { label: 'Customer', value: r.user_name },
       { label: 'Phone', value: r.user_phone },
       { label: 'Email', value: r.user_email || '—' },
-      { label: 'Type', value: isCustom ? 'Custom consultation' : 'Preset transformation' },
+      { label: 'Type', value: isCustom ? 'Custom consultation' : 'Preset upcycle' },
       { label: 'Garment', value: r.garment_type },
-      { label: 'Transformation', value: r.transformation },
+      { label: 'Upcycle', value: r.transformation },
       fit ? { label: 'Fit', value: fit } : null,
       r.consultation_paid ? { label: 'Consultation', value: 'Booked' } : null,
       r.payment_status ? { label: 'Payment', value: r.payment_status === 'paid' ? 'Paid' : r.payment_status } : null,
@@ -454,6 +457,14 @@ function formatReimagineRequestEmail(r) {
       r.callback_requested ? { label: 'Callback', value: 'Yes — contact customer' } : null,
       slotLabel ? { label: 'Slot', value: slotLabel } : null,
       pickup ? { label: 'Pickup', value: pickup } : null,
+      r.delivery_zone
+        ? {
+            label: 'Delivery zone',
+            value: `${r.delivery_zone}${
+              r.delivery_fee != null ? ` · ${money(r.delivery_fee)}` : ''
+            }`,
+          }
+        : null,
       { label: 'Address', value: r.address || '—' },
       r.notes ? { label: 'Notes', value: r.notes } : null,
       r.images?.length ? { label: 'Photos', value: `${r.images.length} uploaded` } : null,
@@ -550,7 +561,7 @@ function formatReimagineCustomerEmail(r) {
     '',
     `Order #${id}`,
     `Garment: ${r.garment_type}`,
-    `Transformation: ${r.transformation}`,
+    `Upcycle: ${r.transformation}`,
     fit ? `Fit: ${fit}` : null,
     slotLabel ? `Consultation: ${slotLabel}` : null,
     pickup ? `Preferred pickup: ${pickup}` : null,
@@ -581,7 +592,7 @@ function formatReimagineCustomerEmail(r) {
     detailRows: [
       { label: 'Order', value: `#${id}` },
       { label: 'Garment', value: r.garment_type },
-      { label: 'Transformation', value: r.transformation },
+      { label: 'Upcycle', value: r.transformation },
       fit ? { label: 'Fit', value: fit } : null,
       slotLabel ? { label: 'Consultation', value: slotLabel } : null,
       pickup ? { label: 'Preferred pickup', value: pickup } : null,
@@ -616,7 +627,12 @@ function formatOrderEmail(order) {
     `Phone: ${order.user_phone}`,
     `Email: ${order.user_email || '—'}`,
     `Total: ${money(order.total)}`,
-    `Payment: ${order.payment_method || 'cod'}${order.payment_status ? ` (${order.payment_status})` : ''}`,
+    order.delivery_zone
+      ? `Delivery: ${order.delivery_zone}${
+          order.delivery_fee != null ? ` (${money(order.delivery_fee)})` : ''
+        }`
+      : null,
+    `Payment: ${order.payment_method || 'razorpay'}${order.payment_status ? ` (${order.payment_status})` : ''}`,
     order.razorpay_payment_id ? `Razorpay ID: ${order.razorpay_payment_id}` : null,
     '',
     `Address:\n${order.address}`,
@@ -639,9 +655,17 @@ function formatOrderEmail(order) {
       { label: 'Phone', value: order.user_phone },
       { label: 'Email', value: order.user_email || '—' },
       { label: 'Total', value: money(order.total) },
+      order.delivery_zone
+        ? {
+            label: 'Delivery',
+            value: `${order.delivery_zone}${
+              order.delivery_fee != null ? ` · ${money(order.delivery_fee)}` : ''
+            }`,
+          }
+        : null,
       {
         label: 'Payment',
-        value: `${order.payment_method || 'cod'}${order.payment_status ? ` (${order.payment_status})` : ''}`,
+        value: `${order.payment_method || 'razorpay'}${order.payment_status ? ` (${order.payment_status})` : ''}`,
       },
       order.razorpay_payment_id ? { label: 'Razorpay', value: order.razorpay_payment_id } : null,
       { label: 'Address', value: order.address },
@@ -663,7 +687,7 @@ function formatOrderCustomerEmail(order) {
   const items = parseOrderItems(order);
   const orderUrl = siteUrl(`/profile/orders/${order.id}`);
   const paymentLabel =
-    order.payment_status === 'paid' ? 'Payment confirmed' : 'Cash on delivery';
+    order.payment_status === 'paid' ? 'Payment confirmed' : 'Payment pending';
 
   const text = [
     `Hi ${order.user_name},`,
@@ -700,6 +724,9 @@ function formatOrderCustomerEmail(order) {
     detailRows: [
       { label: 'Order', value: `#${id}` },
       { label: 'Total', value: money(order.total) },
+      order.delivery_fee != null && Number(order.delivery_fee) > 0
+        ? { label: 'Delivery fee', value: money(order.delivery_fee) }
+        : null,
       { label: 'Payment', value: paymentLabel },
       { label: 'Deliver to', value: order.address },
       order.notes ? { label: 'Notes', value: order.notes } : null,

@@ -5,6 +5,16 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { formatAddressWithPincode } from '../utils/address';
 import { openRazorpayCheckout } from '../utils/razorpay';
+import { getDeliveryFee, isValidDeliveryZone } from '../utils/delivery';
+import { useDeliverySettings } from './useDeliverySettings';
+import {
+  loadCustomizeDraft,
+  saveCustomizeDraft,
+  clearCustomizeDraft,
+  loadRemakeDraft,
+  saveRemakeDraft,
+  clearRemakeDraft,
+} from '../utils/reimagineDraft';
 
 const VALID_STEPS = [0, 1, 3, 4];
 
@@ -20,6 +30,7 @@ function emptyDetails() {
     user_email: '',
     address: '',
     pincode: '',
+    delivery_zone: '',
     notes: '',
     garment_size: '',
     transformation_size: '',
@@ -35,9 +46,24 @@ function emptyDetails() {
   };
 }
 
-export function needsReimaginePayment(isCustomize, details, price) {
+function mergeDraftDetails(draftDetails) {
+  if (!draftDetails || typeof draftDetails !== 'object') return emptyDetails();
+  return { ...emptyDetails(), ...draftDetails };
+}
+
+function clampCardStep(raw, maxInclusive) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.min(Math.floor(n), maxInclusive);
+}
+
+export function needsReimaginePayment(isCustomize, details, price, deliveryFees) {
   if (details.request_callback) return false;
-  return Number(price) > 0;
+  const delivery =
+    !isCustomize && isValidDeliveryZone(details.delivery_zone)
+      ? getDeliveryFee('reimagine', details.delivery_zone, deliveryFees)
+      : 0;
+  return Number(price) + delivery > 0;
 }
 
 export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
@@ -45,15 +71,9 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { settings: deliveryFees } = useDeliverySettings();
 
   const authReturnTo = location.pathname + location.search;
-
-  const redirectToLogin = useCallback(
-    (from = authReturnTo) => {
-      navigate('/login', { replace: true, state: { from } });
-    },
-    [navigate, authReturnTo],
-  );
 
   const isCustomize = searchParams.get('mode') === 'customize';
   const phase = searchParams.get('phase') || '';
@@ -63,13 +83,86 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
   const conversionId = searchParams.get('conversion') || '';
 
   const [files, setFiles] = useState([]);
-  const [details, setDetails] = useState(emptyDetails);
+  const [details, setDetails] = useState(() => {
+    if (typeof window === 'undefined') return emptyDetails();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') === 'customize') {
+      return mergeDraftDetails(loadCustomizeDraft()?.details);
+    }
+    if (params.get('step') === '3') {
+      const draft = loadRemakeDraft();
+      if (draft?.conversionId && draft.conversionId === params.get('conversion')) {
+        return mergeDraftDetails(draft.details);
+      }
+    }
+    return emptyDetails();
+  });
+  const [customizeCardStep, setCustomizeCardStep] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('mode') !== 'customize') return 0;
+    return clampCardStep(loadCustomizeDraft()?.cardStep, 6);
+  });
+  const [remakeCardStep, setRemakeCardStep] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('step') !== '3') return 0;
+    const draft = loadRemakeDraft();
+    if (draft?.conversionId && draft.conversionId === params.get('conversion')) {
+      return clampCardStep(draft.cardStep, 4);
+    }
+    return 0;
+  });
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [doneCallback, setDoneCallback] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
 
-  const payPrice = isCustomize ? sessionPrice : remakePrice;
+  const redirectToLogin = useCallback(
+    (from = authReturnTo) => {
+      if (isCustomize) {
+        saveCustomizeDraft({ details, cardStep: customizeCardStep });
+      } else if (step === 3) {
+        saveRemakeDraft({ details, cardStep: remakeCardStep, conversionId });
+      }
+      navigate('/login', { replace: true, state: { from } });
+    },
+    [
+      navigate,
+      authReturnTo,
+      isCustomize,
+      details,
+      customizeCardStep,
+      step,
+      remakeCardStep,
+      conversionId,
+    ],
+  );
+
+  const basePrice = isCustomize ? sessionPrice : remakePrice;
+  const deliveryFee =
+    !isCustomize && isValidDeliveryZone(details.delivery_zone)
+      ? getDeliveryFee('reimagine', details.delivery_zone, deliveryFees)
+      : 0;
+  const payPrice = Number(basePrice || 0) + deliveryFee;
+
+  // Keep draft fresh while filling the customize wizard (survives login remount)
+  useEffect(() => {
+    if (!isCustomize || done) return;
+    saveCustomizeDraft({ details, cardStep: customizeCardStep });
+  }, [isCustomize, details, customizeCardStep, done]);
+
+  useEffect(() => {
+    if (isCustomize || done || step !== 3 || !conversionId) return;
+    saveRemakeDraft({ details, cardStep: remakeCardStep, conversionId });
+  }, [isCustomize, done, step, details, remakeCardStep, conversionId]);
+
+  // Always wipe drafts once the flow completes (covers success + any missed clear paths)
+  useEffect(() => {
+    if (!done) return;
+    clearCustomizeDraft();
+    clearRemakeDraft();
+  }, [done]);
 
   const goToStep = useCallback(
     (newStep, extra = {}, { replace = false } = {}) => {
@@ -146,14 +239,15 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
   }, [isCustomize, setSearchParams, goToStep]);
 
   const startCustomize = useCallback(() => {
-    if (!user) {
-      redirectToLogin('/reimagine?mode=customize');
-      return;
-    }
     setSearchParams({ mode: 'customize' }, { replace: false });
-  }, [setSearchParams, user, redirectToLogin]);
+  }, [setSearchParams]);
 
   const exitCustomize = useCallback(() => {
+    clearCustomizeDraft();
+    setCustomizeCardStep(0);
+    setDetails(emptyDetails());
+    setFiles([]);
+    setPrefilled(false);
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
 
@@ -162,12 +256,13 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       exitCustomize();
       return;
     }
-    // Explicit steps — never navigate(-1); history after payment ↔ details is unreliable
-    if (step === 4 || step === 3) {
-      goToStep(1, { transformation: '', conversion: '' }, { replace: true });
-      return;
-    }
-    if (step === 1) {
+    // From form or transform options → presets page (never homepage)
+    if (step === 4 || step === 3 || step === 1) {
+      clearRemakeDraft();
+      setRemakeCardStep(0);
+      setDetails(emptyDetails());
+      setFiles([]);
+      setPrefilled(false);
       goToStep(0, { garment: '', transformation: '', conversion: '' }, { replace: true });
       return;
     }
@@ -266,6 +361,8 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       }
     );
 
+    clearCustomizeDraft();
+    clearRemakeDraft();
     setDone(true);
     setDoneCallback(false);
     toast.success(verified.message || 'Payment confirmed');
@@ -287,7 +384,11 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     setDoneCallback(false);
     setFiles([]);
     setDetails(emptyDetails());
+    setCustomizeCardStep(0);
+    setRemakeCardStep(0);
     setPrefilled(false);
+    clearCustomizeDraft();
+    clearRemakeDraft();
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
 
@@ -352,6 +453,8 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
         await completeRazorpayPayment(data);
         return;
       }
+      clearCustomizeDraft();
+      clearRemakeDraft();
       setDone(true);
       setDoneCallback(Boolean(extraFields.request_callback === '1' || details.request_callback));
     } catch (err) {
@@ -370,8 +473,13 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       return;
     }
 
+    if (!isCustomize && !isValidDeliveryZone(details.delivery_zone)) {
+      toast.error('Please select Hyderabad & around or Outside Hyderabad');
+      return;
+    }
+
     // Open Razorpay immediately — no intermediate payment screen
-    if (needsReimaginePayment(isCustomize, details, payPrice)) {
+    if (needsReimaginePayment(isCustomize, details, basePrice, deliveryFees)) {
       void onPayment();
       return;
     }
@@ -385,6 +493,11 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
   };
 
   const onPayment = async () => {
+    if (!user) {
+      redirectToLogin();
+      toast.error('Please sign in to complete payment.');
+      return;
+    }
     if (!validateContactDetails()) return;
     setLoading(true);
     try {
@@ -393,6 +506,8 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       if (data.requires_payment && data.razorpay) {
         await completeRazorpayPayment(data);
       } else {
+        clearCustomizeDraft();
+        clearRemakeDraft();
         setDone(true);
       }
     } catch (err) {
@@ -405,8 +520,12 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
   const onPresetContinue = (e) => {
     e?.preventDefault();
     if (!validateContactDetails()) return;
+    if (!isValidDeliveryZone(details.delivery_zone)) {
+      toast.error('Please select Hyderabad & around or Outside Hyderabad');
+      return;
+    }
     // Open Razorpay immediately — no intermediate payment screen
-    if (needsReimaginePayment(false, details, payPrice)) {
+    if (needsReimaginePayment(false, details, basePrice, deliveryFees)) {
       void onPayment();
       return;
     }
@@ -432,6 +551,10 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     removeFile,
     details,
     setDetails,
+    customizeCardStep,
+    setCustomizeCardStep,
+    remakeCardStep,
+    setRemakeCardStep,
     onSubmit,
     onWizardComplete,
     onPayment,
@@ -440,7 +563,10 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     done,
     doneCallback,
     resetDone,
-    needsPayment: needsReimaginePayment(isCustomize, details, payPrice),
+    needsPayment: needsReimaginePayment(isCustomize, details, basePrice, deliveryFees),
     payPrice,
+    basePrice,
+    deliveryFee,
+    deliveryFees,
   };
 }

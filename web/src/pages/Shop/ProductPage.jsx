@@ -103,6 +103,10 @@ export default function ProductPage() {
       ? product.images.map(resolveProductImageSrc)
       : [PRODUCT_IMAGE_PLACEHOLDER];
 
+  const waysToWear = Array.isArray(product.ways_to_wear)
+    ? product.ways_to_wear.map((w) => String(w).trim()).filter(Boolean)
+    : [];
+
   const goPrevImg = () => {
     if (gallery.length <= 1) return;
     setActiveImg((i) => (i - 1 + gallery.length) % gallery.length);
@@ -292,8 +296,27 @@ export default function ProductPage() {
               </div>
             )}
 
+            {/* Ways to wear — only when admin has added entries */}
+            {waysToWear.length > 0 && (
+              <div className="mb-8">
+                <p className="text-sm font-bold font-display text-[#241621] mb-3">Ways to wear</p>
+                <ul className="space-y-2">
+                  {waysToWear.map((way) => (
+                    <li
+                      key={way}
+                      className="flex gap-2.5 text-sm text-[#241621]/70 font-body leading-relaxed"
+                    >
+                      <span className="mt-2 shrink-0 w-1.5 h-1.5 rounded-full bg-[#a8e000]" aria-hidden />
+                      <span>{way}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Tags */}
-            {product.tags?.length > 0 && (              <div className="flex flex-wrap gap-2 mb-8">
+            {product.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8">
                 {product.tags.map(t => (
                   <span key={t} className="flex items-center gap-1 bg-[#c8ff2e]/8 text-[#a8e000] text-xs font-semibold rounded-full px-3 py-1 font-display">
                     <Tag size={10} /> {t}
@@ -335,18 +358,30 @@ export default function ProductPage() {
             {/* Assurance */}
             <div className="mt-6 grid grid-cols-3 gap-3">
               {[
-                { label: 'Repair guaranteed', Icon: ShieldCheck },
+                {
+                  label: 'Repair guaranteed',
+                  Icon: ShieldCheck,
+                  tip: 'Includes 2 complimentary repairs with every item purchased',
+                },
                 { label: 'Circular fashion', Icon: RefreshCw },
                 { label: 'Handmade', Icon: Hand },
-              ].map(({ label, Icon }) => (
+              ].map(({ label, Icon, tip }) => (
                 <div
                   key={label}
-                  className="text-center p-3 bg-white rounded-xl border border-[#241621]/8 flex flex-col items-center gap-1.5"
+                  className="relative group text-center p-3 bg-white rounded-xl border border-[#241621]/8 flex flex-col items-center gap-1.5"
                 >
                   <Icon size={18} strokeWidth={1.75} className="text-[#241621]/55" aria-hidden />
                   <span className="text-[10px] sm:text-[11px] font-semibold text-[#241621]/70 font-display leading-snug block">
                     {label}
                   </span>
+                  {tip && (
+                    <div
+                      role="tooltip"
+                      className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+0.5rem)] z-20 w-44 sm:w-52 rounded-lg border border-black bg-white px-3 py-2 text-[11px] leading-snug text-[#241621]/80 font-body opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity shadow-[3px_3px_0_0_#000]"
+                    >
+                      {tip}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

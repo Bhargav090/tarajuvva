@@ -80,6 +80,7 @@ function parseRow(row) {
     name: row.name,
     city: row.city,
     quote: row.quote,
+    vertical: row.vertical === 'shop' ? 'shop' : 'reimagine',
     image_paths: Array.from({ length: count }, (_, i) => testimonialMediaUrl(row.id, i)),
     google_review_url: row.google_review_url || null,
     sort_order: row.sort_order ?? 0,
@@ -93,7 +94,7 @@ router.use(authenticateAdmin);
 
 router.get('/', async (req, res) => {
   const rows = await all(
-    `SELECT id, name, city, quote, google_review_url, sort_order, is_active, created_at, updated_at,
+    `SELECT id, name, city, quote, vertical, google_review_url, sort_order, is_active, created_at, updated_at,
       CASE
         WHEN image_paths IS NOT NULL AND image_paths != '' AND JSON_VALID(image_paths)
           THEN JSON_LENGTH(image_paths)
@@ -114,6 +115,7 @@ router.post('/', (req, res, next) => {
   const name = String(req.body.name || '').trim();
   const city = String(req.body.city || '').trim();
   const quote = String(req.body.quote || '').trim();
+  const vertical = String(req.body.vertical || '').trim() === 'shop' ? 'shop' : 'reimagine';
   const google_review_url = String(req.body.google_review_url || '').trim() || null;
   const sort_order = parseInt(String(req.body.sort_order ?? 0), 10) || 0;
   const is_active = req.body.is_active === '0' || req.body.is_active === false ? 0 : 1;
@@ -131,13 +133,13 @@ router.post('/', (req, res, next) => {
 
   const id = uuidv4();
   await run(
-    `INSERT INTO testimonials (id, name, city, quote, image_paths, google_review_url, sort_order, is_active)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, name, city, quote, serializeImagePaths(image_paths), google_review_url, sort_order, is_active]
+    `INSERT INTO testimonials (id, name, city, quote, vertical, image_paths, google_review_url, sort_order, is_active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, name, city, quote, vertical, serializeImagePaths(image_paths), google_review_url, sort_order, is_active]
   );
 
   const row = await get(
-    `SELECT id, name, city, quote, google_review_url, sort_order, is_active, created_at, updated_at,
+    `SELECT id, name, city, quote, vertical, google_review_url, sort_order, is_active, created_at, updated_at,
       CASE
         WHEN image_paths IS NOT NULL AND image_paths != '' AND JSON_VALID(image_paths)
           THEN JSON_LENGTH(image_paths)
@@ -163,6 +165,7 @@ router.put('/:id', (req, res, next) => {
   const name = String(req.body.name || '').trim();
   const city = String(req.body.city || '').trim();
   const quote = String(req.body.quote || '').trim();
+  const vertical = String(req.body.vertical || '').trim() === 'shop' ? 'shop' : 'reimagine';
   const google_review_url = String(req.body.google_review_url || '').trim() || null;
   const sort_order = parseInt(String(req.body.sort_order ?? existing.sort_order), 10) || 0;
   const is_active = req.body.is_active === '0' || req.body.is_active === false ? 0 : 1;
@@ -181,12 +184,12 @@ router.put('/:id', (req, res, next) => {
   }
 
   await run(
-    `UPDATE testimonials SET name=?, city=?, quote=?, image_paths=?, image_path=NULL, google_review_url=?, sort_order=?, is_active=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
-    [name, city, quote, serializeImagePaths(image_paths), google_review_url, sort_order, is_active, req.params.id]
+    `UPDATE testimonials SET name=?, city=?, quote=?, vertical=?, image_paths=?, image_path=NULL, google_review_url=?, sort_order=?, is_active=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+    [name, city, quote, vertical, serializeImagePaths(image_paths), google_review_url, sort_order, is_active, req.params.id]
   );
 
   const row = await get(
-    `SELECT id, name, city, quote, google_review_url, sort_order, is_active, created_at, updated_at,
+    `SELECT id, name, city, quote, vertical, google_review_url, sort_order, is_active, created_at, updated_at,
       CASE
         WHEN image_paths IS NOT NULL AND image_paths != '' AND JSON_VALID(image_paths)
           THEN JSON_LENGTH(image_paths)

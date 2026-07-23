@@ -1,5 +1,5 @@
 import { useLayoutEffect, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ArrowLeft, CheckCircle, PhoneCall } from 'lucide-react';
 import VerticalPageHero from '../../components/ui/VerticalPageHero';
@@ -19,14 +19,12 @@ import { useReimagineCustomizeSettings } from '../../hooks/useReimagineCustomize
 import { useReimagineConversions } from '../../hooks/useReimagineConversions';
 import { uploadUrl } from '../../utils/uploadUrl';
 import reimagineVideo from '../../assets/reimagine.mov';
-import { Spinner } from '../../components/ui/Skeleton';
 
 export default function Reimagine() {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { settings: customizeSettings } = useReimagineCustomizeSettings();
-  const { fromOptions, optionsForFrom, conversions, loading: conversionsLoading } = useReimagineConversions();
+  const { fromOptions, optionsForFrom, conversions } = useReimagineConversions();
   const flowRef = useRef(null);
 
   // Peek conversion id from URL for remake price before hook (search string)
@@ -49,6 +47,10 @@ export default function Reimagine() {
     files,
     addFiles,
     removeFile,
+    customizeCardStep,
+    setCustomizeCardStep,
+    remakeCardStep,
+    setRemakeCardStep,
     onSubmit,
     onWizardComplete,
     onPresetContinue,
@@ -58,6 +60,7 @@ export default function Reimagine() {
     resetDone,
     needsPayment,
     payPrice,
+    deliveryFees,
   } = useReimagineSubmit({
     sessionPrice: customizeSettings.price,
     remakePrice,
@@ -86,26 +89,6 @@ export default function Reimagine() {
       flowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [step, isCustomize]);
-
-  const needsAuth = isCustomize || step === 3 || step === 4;
-
-  useEffect(() => {
-    if (authLoading || done) return;
-    if (needsAuth && !user) {
-      navigate('/login', {
-        replace: true,
-        state: { from: location.pathname + location.search },
-      });
-    }
-  }, [authLoading, user, needsAuth, done, navigate, location.pathname, location.search]);
-
-  if (needsAuth && !done && (authLoading || !user)) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Spinner size={32} />
-      </div>
-    );
-  }
 
   if (done) {
     return (
@@ -141,7 +124,7 @@ export default function Reimagine() {
 
   const stepHeading =
     step === 1
-      ? `How to transform your ${garmentLabel}?`
+      ? `How to upcycle your ${garmentLabel}?`
       : step !== 3
         ? REIMAGINE_STEP_HEADINGS[step]
         : null;
@@ -153,7 +136,7 @@ export default function Reimagine() {
           bgVar="--tj-reimagine"
           eyebrow="02 · Reimagine"
           headline={['Send the old.', 'Get the new.']}
-          subtext="Pick a base. Pick a transformation. We do the cutting, sewing, and slight emotional labour."
+          subtext="Pick a base. Pick an upcycle. We do the cutting, sewing, and slight emotional labour."
           testId="reimagine-hero"
           tall
           alignTop
@@ -198,6 +181,8 @@ export default function Reimagine() {
                     onSubmit={onSubmit}
                     onWizardComplete={onWizardComplete}
                     loading={loading}
+                    cardStep={customizeCardStep}
+                    onCardStepChange={setCustomizeCardStep}
                     submitLabel="Submit customize request"
                     completeLabel={
                       needsPayment
@@ -357,7 +342,7 @@ export default function Reimagine() {
                       onClick={goBack}
                       className="inline-flex items-center gap-1.5 text-sm text-black/55 hover:text-black transition-colors"
                     >
-                      <ArrowLeft size={14} /> Change preset
+                      <ArrowLeft size={14} /> Back to presets
                     </button>
                     <h2 className="tj-h2 text-[#0a0a0a] mt-5 text-2xl md:text-3xl sm:max-w-[calc(50%-0.5rem)]">
                       Tell us about your piece
@@ -366,7 +351,7 @@ export default function Reimagine() {
                       <ReimagineRemakeCard
                         garmentLabel={garmentLabel}
                         transformLabel={transformLabel}
-                        blurb={`₹${Number(selectedConversion?.price || payPrice || 0).toLocaleString('en-IN')} remake`}
+                        blurb={`₹${Number(selectedConversion?.price || payPrice || 0).toLocaleString('en-IN')} upcycle`}
                         fromImage={fromImage}
                         toImage={toImage}
                       />
@@ -381,9 +366,12 @@ export default function Reimagine() {
                           steps={REIMAGINE_FORM_STEPS}
                           onWizardComplete={onPresetContinue}
                           loading={loading}
+                          cardStep={remakeCardStep}
+                          onCardStepChange={setRemakeCardStep}
+                          deliveryFees={deliveryFees}
                           completeLabel={
                             needsPayment
-                              ? `Pay ₹${Number(selectedConversion?.price || payPrice || 0).toLocaleString('en-IN')}`
+                              ? `Pay ₹${Number(payPrice || 0).toLocaleString('en-IN')}`
                               : 'Submit request'
                           }
                           preferGarmentStep={Boolean(String(details.notes || '').trim())}

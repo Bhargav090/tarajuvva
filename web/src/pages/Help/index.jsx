@@ -1,55 +1,64 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { WHATSAPP_DISPLAY, WHATSAPP_LINK } from '../../utils/constants';
+import { WHATSAPP_DISPLAY, WHATSAPP_LINK, SOCIAL_LINKS } from '../../utils/constants';
+import { useDeliverySettings } from '../../hooks/useDeliverySettings';
+import { DELIVERY_FEES } from '../../utils/delivery';
 
-const SECTIONS = [
-  {
-    id: 'shipping',
-    title: 'Shipping Policy',
-    body: (
-      <>
-        <p>
-          Every Tarajuvva garment is thoughtfully handmade, and many of our pieces are made only after you
-          place an order. This allows us to reduce unnecessary waste while ensuring every garment receives
-          the attention it deserves.
-        </p>
-        <h4>Processing Time</h4>
-        <p className="font-semibold text-black/80">Shop Orders</p>
-        <ul>
-          <li>Ready-to-Ship products: 2–4 business days</li>
-          <li>Made-to-Order garments: 7–14 business days</li>
-        </ul>
-        <p className="font-semibold text-black/80">Reimagine Orders</p>
-        <p>
-          Timelines vary depending on the complexity of the transformation. An estimated completion timeline
-          will be shared once we receive and assess your garment.
-        </p>
-        <p>
-          If your order contains both ready-to-ship and made-to-order items, we may ship them together once
-          everything is ready.
-        </p>
-        <h4>Delivery Time</h4>
-        <p>Within India:</p>
-        <ul>
-          <li>Metro Cities: 2–5 business days</li>
-          <li>Other Locations: 4–8 business days</li>
-        </ul>
-        <p>Delivery timelines may vary during festivals, weather disruptions or courier delays.</p>
-        <h4>Shipping Charges</h4>
-        <p className="font-semibold text-black/80">Shop Orders</p>
-        <p>Shipping charges (or free shipping thresholds) will be calculated during checkout.</p>
-        <p className="font-semibold text-black/80">Reimagine Orders</p>
-        <p>Pickup and return shipping are charged as follows:</p>
-        <ul>
-          <li>Hyderabad: ₹149</li>
-          <li>Rest of Telangana: ₹199</li>
-          <li>Rest of India: ₹399</li>
-        </ul>
-        <h4>Order Tracking</h4>
-        <p>Once your order has been dispatched, you’ll receive a tracking link via email or WhatsApp.</p>
-      </>
-    ),
-  },
+function money(n) {
+  return `₹${Number(n || 0).toLocaleString('en-IN')}`;
+}
+
+function ShippingPolicyBody({ fees }) {
+  const shop = fees?.shop || DELIVERY_FEES.shop;
+  const reimagine = fees?.reimagine || DELIVERY_FEES.reimagine;
+  return (
+    <>
+      <p>
+        Every Tarajuvva garment is thoughtfully handmade, and many of our pieces are made only after you
+        place an order. This allows us to reduce unnecessary waste while ensuring every garment receives
+        the attention it deserves.
+      </p>
+      <h4>Processing Time</h4>
+      <p className="font-semibold text-black/80">Shop Orders</p>
+      <ul>
+        <li>Ready-to-Ship products: 2–4 business days</li>
+        <li>Made-to-Order garments: 7–14 business days</li>
+      </ul>
+      <p className="font-semibold text-black/80">Reimagine Orders</p>
+      <p>
+        Timelines vary depending on the complexity of the upcycle. An estimated completion timeline
+        will be shared once we receive and assess your garment.
+      </p>
+      <p>
+        If your order contains both ready-to-ship and made-to-order items, we may ship them together once
+        everything is ready.
+      </p>
+      <h4>Delivery Time</h4>
+      <p>Within India:</p>
+      <ul>
+        <li>Metro Cities: 2–5 business days</li>
+        <li>Other Locations: 4–8 business days</li>
+      </ul>
+      <p>Delivery timelines may vary during festivals, weather disruptions or courier delays.</p>
+      <h4>Shipping Charges</h4>
+      <p className="font-semibold text-black/80">Shop Orders</p>
+      <ul>
+        <li>Hyderabad &amp; around: {money(shop.hyderabad)}</li>
+        <li>Outside Hyderabad: {money(shop.outside)}</li>
+      </ul>
+      <p className="font-semibold text-black/80">Reimagine Orders</p>
+      <p>Pickup and return shipping are charged as follows:</p>
+      <ul>
+        <li>Hyderabad &amp; around: {money(reimagine.hyderabad)} (pickup and delivery)</li>
+        <li>Outside Hyderabad: {money(reimagine.outside)}</li>
+      </ul>
+      <h4>Order Tracking</h4>
+      <p>Once your order has been dispatched, you’ll receive a tracking link via email or WhatsApp.</p>
+    </>
+  );
+}
+
+const STATIC_SECTIONS = [
   {
     id: 'returns',
     title: 'Returns & Exchanges',
@@ -93,32 +102,31 @@ const SECTIONS = [
   },
   {
     id: 'reimagine',
-    title: 'Reimagine',
+    title: 'How does Reimagine work?',
     body: (
       <>
         <p>
-          Reimagine is Tarajuvva’s design-led upcycling service that transforms garments you already own into
+          Reimagine is Tarajuvva’s design-led upcycling service that turns garments you already own into
           something you’ll love wearing again. Whether it’s a shirt, saree, kurti or pair of pants, we help
           extend the life of your clothing through thoughtful redesign.
         </p>
-        <h4>Option 1 – Preset Transformations</h4>
+        <h4>Option 1 – Preset Upcycles</h4>
         <ol>
           <li>Select your garment type (shirts, pants, kurtis, sarees).</li>
-          <li>Choose a curated preset transformation.</li>
+          <li>Choose a curated preset upcycle.</li>
           <li>Tell us current size, desired size, height, and fit notes.</li>
           <li>Upload clear photographs of your garment.</li>
           <li>Schedule pickup (morning / afternoon / evening).</li>
           <li>Place your order and complete payment.</li>
-          <li>We assess, transform by hand, and ship it back to you.</li>
+          <li>We assess, upcycle by hand, and ship it back to you.</li>
         </ol>
-        <p>Pickup &amp; return charges (preset flow): Hyderabad – ₹110 · Rest of India – ₹500.</p>
         <h4>Option 2 – Custom Reimagine</h4>
         <ol>
           <li>Book a 20-minute design consultation (₹299).</li>
           <li>Share your vision, garment, and style preferences.</li>
           <li>Receive a personalised quote (design, pricing, timeline).</li>
           <li>Approve the project — or stop after consultation if you prefer.</li>
-          <li>We arrange pickup, transform, and deliver.</li>
+          <li>We arrange pickup, upcycle, and deliver.</li>
         </ol>
       </>
     ),
@@ -217,11 +225,11 @@ const SECTIONS = [
       },
       {
         q: 'What is Reimagine?',
-        a: 'Reimagine is our design-led upcycling service that transforms garments you already own into something entirely new.',
+        a: 'Reimagine is our design-led upcycling service that upcycles garments you already own into something entirely new.',
       },
       {
         q: 'Can I send any garment for Reimagine?',
-        a: 'In most cases, yes. We’ll first assess whether your garment is suitable for transformation.',
+        a: 'In most cases, yes. We’ll first assess whether your garment is suitable for an upcycle.',
       },
       {
         q: 'How long does Reimagine take?',
@@ -248,37 +256,43 @@ const SECTIONS = [
   {
     id: 'terms',
     title: 'Terms & Conditions',
-    intro: 'By using the Tarajuvva website or placing an order with us, you agree to the following terms.',
-    items: [
-      {
-        q: 'Handmade Nature',
-        a: 'Every Tarajuvva garment is handmade. Slight variations in colour, weave, texture and finishing are natural and should not be considered defects.',
-      },
-      {
-        q: 'Product Images',
-        a: 'We make every effort to accurately represent our products. However, colours may vary slightly due to differences in screen settings and photography.',
-      },
-      {
-        q: 'Pricing',
-        a: 'All prices are listed in Indian Rupees (INR) and are subject to change without prior notice.',
-      },
-      {
-        q: 'Order Acceptance',
-        a: 'We reserve the right to refuse or cancel orders in exceptional circumstances, including pricing errors or suspected fraudulent activity.',
-      },
-      {
-        q: 'Intellectual Property',
-        a: 'All designs, photographs, illustrations, logos, website content and written material belong to Tarajuvva and may not be reproduced without prior written permission.',
-      },
-      {
-        q: 'Limitation of Liability',
-        a: 'Tarajuvva shall not be liable for indirect or consequential damages arising from the use of our products or services.',
-      },
-      {
-        q: 'Policy Updates',
-        a: 'These policies may be updated from time to time. Continued use of our website constitutes acceptance of the latest version.',
-      },
-    ],
+    body: (
+      <>
+        <p>By using the Tarajuvva website or placing an order with us, you agree to the following terms.</p>
+        <h4>Handmade Nature</h4>
+        <p>
+          Every Tarajuvva garment is handmade. Slight variations in colour, weave, texture and finishing are
+          natural and should not be considered defects.
+        </p>
+        <h4>Product Images</h4>
+        <p>
+          We make every effort to accurately represent our products. However, colours may vary slightly due to
+          differences in screen settings and photography.
+        </p>
+        <h4>Pricing</h4>
+        <p>All prices are listed in Indian Rupees (INR) and are subject to change without prior notice.</p>
+        <h4>Order Acceptance</h4>
+        <p>
+          We reserve the right to refuse or cancel orders in exceptional circumstances, including pricing errors
+          or suspected fraudulent activity.
+        </p>
+        <h4>Intellectual Property</h4>
+        <p>
+          All designs, photographs, illustrations, logos, website content and written material belong to
+          Tarajuvva and may not be reproduced without prior written permission.
+        </p>
+        <h4>Limitation of Liability</h4>
+        <p>
+          Tarajuvva shall not be liable for indirect or consequential damages arising from the use of our
+          products or services.
+        </p>
+        <h4>Policy Updates</h4>
+        <p>
+          These policies may be updated from time to time. Continued use of our website constitutes acceptance
+          of the latest version.
+        </p>
+      </>
+    ),
   },
   {
     id: 'contact',
@@ -300,7 +314,12 @@ const SECTIONS = [
               {WHATSAPP_DISPLAY}
             </a>
           </li>
-          <li>Instagram: @tarajuvvaaa</li>
+          <li>
+            Instagram:{' '}
+            <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="underline">
+              @tarajuvvaaa
+            </a>
+          </li>
         </ul>
         <p>We’ll do our best to respond within 1–2 business days.</p>
       </>
@@ -374,6 +393,17 @@ function AccordionItem({ section, open, onToggle }) {
 
 export default function Help() {
   const [openId, setOpenId] = useState(null);
+  const { settings: deliveryFees } = useDeliverySettings();
+  const sections = [
+    {
+      id: 'shipping',
+      title: 'Shipping Policy',
+      body: <ShippingPolicyBody fees={deliveryFees} />,
+    },
+    ...STATIC_SECTIONS,
+  ];
+  const accordionSections = sections.filter((s) => s.id !== 'terms');
+  const termsSection = sections.find((s) => s.id === 'terms');
 
   return (
     <div className="bg-white min-h-screen">
@@ -382,7 +412,7 @@ export default function Help() {
           <p className="tj-eyebrow">Help Centre</p>
           <h1 className="tj-h1 mt-3 max-w-4xl text-[#0a0a0a]">Welcome to Tarajuvva.</h1>
           <p className="mt-6 max-w-2xl text-lg text-black/70 font-body leading-relaxed">
-            Whether you’re shopping with us for the first time, transforming a beloved garment through
+            Whether you’re shopping with us for the first time, upcycling a beloved garment through
             Reimagine, or looking after a piece you’ve owned for years, we’re here to make the experience as
             seamless as possible.
           </p>
@@ -400,7 +430,7 @@ export default function Help() {
             .help-prose ol { list-style: decimal; }
             .help-prose li { margin: 0.25rem 0; }
           `}</style>
-          {SECTIONS.map((section) => (
+          {accordionSections.map((section) => (
             <AccordionItem
               key={section.id}
               section={section}
@@ -408,6 +438,19 @@ export default function Help() {
               onToggle={() => setOpenId((id) => (id === section.id ? null : section.id))}
             />
           ))}
+
+          {termsSection && (
+            <div className="border border-black bg-white mt-6 md:mt-8">
+              <div className="px-5 py-4 border-b border-black/10">
+                <h2 className="font-display font-bold text-lg md:text-xl text-[#0a0a0a]">
+                  {termsSection.title}
+                </h2>
+              </div>
+              <div className="px-5 py-5 text-sm sm:text-base text-black/70 font-body leading-relaxed space-y-3 help-prose">
+                {termsSection.body}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>

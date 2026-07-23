@@ -279,6 +279,16 @@ async function initializeDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
+  try {
+    await pool.execute(
+      "ALTER TABLE testimonials ADD COLUMN vertical VARCHAR(32) NULL DEFAULT 'reimagine' AFTER quote"
+    );
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+      console.warn('[db] testimonials.vertical column add skipped:', e.message);
+    }
+  }
+
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS consultation_slots (
       id VARCHAR(36) PRIMARY KEY,
@@ -396,8 +406,12 @@ async function initializeDatabase() {
 
   await ensureDefaultTestimonials();
 
-  const { ensureDefaultReimagineCustomizeSettings } = require('../utils/siteSettings');
+  const {
+    ensureDefaultReimagineCustomizeSettings,
+    ensureDefaultDeliverySettings,
+  } = require('../utils/siteSettings');
   await ensureDefaultReimagineCustomizeSettings();
+  await ensureDefaultDeliverySettings();
 
   const { ensureDefaultSizeCharts } = require('../utils/sizeCharts');
   await ensureDefaultSizeCharts();
@@ -458,6 +472,34 @@ async function initializeDatabase() {
   } catch (e) {
     if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
       console.warn('[db] orders.tracking_url add skipped:', e.message);
+    }
+  }
+
+  const orderDeliveryAlters = [
+    "ALTER TABLE orders ADD COLUMN delivery_zone VARCHAR(32) NULL AFTER address",
+    'ALTER TABLE orders ADD COLUMN delivery_fee DOUBLE NULL DEFAULT 0 AFTER delivery_zone',
+  ];
+  for (const sql of orderDeliveryAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+        console.warn('[db] orders delivery column add skipped:', e.message);
+      }
+    }
+  }
+
+  const reimagineDeliveryAlters = [
+    "ALTER TABLE reimagine_requests ADD COLUMN delivery_zone VARCHAR(32) NULL AFTER address",
+    'ALTER TABLE reimagine_requests ADD COLUMN delivery_fee DOUBLE NULL DEFAULT 0 AFTER delivery_zone',
+  ];
+  for (const sql of reimagineDeliveryAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+        console.warn('[db] reimagine_requests delivery column add skipped:', e.message);
+      }
     }
   }
 
@@ -531,29 +573,32 @@ async function initializeDatabase() {
 
 const DEFAULT_TESTIMONIALS = [
   {
+    id: 'testimonial-default-shop',
+    name: 'Meera S.',
+    city: 'Hyderabad',
+    quote: 'Bought the reversible set — wears three different ways and still looks new after months.',
+    vertical: 'shop',
+    sort_order: 0,
+  },
+  {
     id: 'testimonial-default-bengaluru',
     name: 'Ananya R.',
     city: 'Bengaluru',
     quote: 'I sent in three sarees. Got back two dresses and a co-ord. My mum cried. Good cry.',
-    sort_order: 0,
+    vertical: 'reimagine',
+    sort_order: 1,
   },
   {
     id: 'testimonial-default-hyderabad',
     name: 'Arjun M.',
     city: 'Hyderabad',
     quote: 'Reimagine turnaround was quick. Old kurti is now my favourite co-ord set — wears everywhere in Hyderabad heat.',
-    sort_order: 1,
-  },
-  {
-    id: 'testimonial-default-vijayawada',
-    name: 'Lakshmi P.',
-    city: 'Vijayawada',
-    quote: 'First brand here that actually took my old pieces seriously. Already planning what to send next.',
+    vertical: 'reimagine',
     sort_order: 2,
   },
 ];
 
-/** Keep exactly 3 curated defaults; remove ad-hoc rows; preserve admin-uploaded review images on defaults. */
+/** Keep curated defaults; remove ad-hoc rows; preserve admin-uploaded review images on defaults. */
 async function ensureDefaultTestimonials() {
   const ids = DEFAULT_TESTIMONIALS.map((t) => t.id);
   const placeholders = ids.map(() => '?').join(', ');
@@ -561,15 +606,16 @@ async function ensureDefaultTestimonials() {
 
   for (const t of DEFAULT_TESTIMONIALS) {
     await run(
-      `INSERT INTO testimonials (id, name, city, quote, image_paths, google_review_url, sort_order, is_active)
-       VALUES (?, ?, ?, ?, NULL, NULL, ?, 1)
+      `INSERT INTO testimonials (id, name, city, quote, vertical, image_paths, google_review_url, sort_order, is_active)
+       VALUES (?, ?, ?, ?, ?, NULL, NULL, ?, 1)
        ON DUPLICATE KEY UPDATE
          name = VALUES(name),
          city = VALUES(city),
          quote = VALUES(quote),
+         vertical = VALUES(vertical),
          sort_order = VALUES(sort_order),
          is_active = 1`,
-      [t.id, t.name, t.city, t.quote, t.sort_order]
+      [t.id, t.name, t.city, t.quote, t.vertical, t.sort_order]
     );
   }
 }

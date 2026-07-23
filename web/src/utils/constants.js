@@ -45,19 +45,22 @@ export const TICKER_MESSAGES = [
 
 export const TESTIMONIALS = [
   {
+    quote: 'Bought the reversible set — wears three different ways and still looks new after months.',
+    name: 'Meera S.',
+    city: 'Hyderabad',
+    vertical: 'shop',
+  },
+  {
     quote: 'I sent in three sarees. Got back two dresses and a co-ord. My mum cried. Good cry.',
     name: 'Ananya R.',
     city: 'Bengaluru',
+    vertical: 'reimagine',
   },
   {
     quote: 'Reimagine turnaround was quick. Old kurti is now my favourite co-ord set — wears everywhere in Hyderabad heat.',
     name: 'Arjun M.',
     city: 'Hyderabad',
-  },
-  {
-    quote: 'First brand here that actually took my old pieces seriously. Already planning what to send next.',
-    name: 'Lakshmi P.',
-    city: 'Vijayawada',
+    vertical: 'reimagine',
   },
 ];
 
@@ -68,8 +71,6 @@ export const SHOP_CATEGORIES = [
   { label: 'Everything', value: null },
   { label: 'Tops',       value: 'Tops' },
   { label: 'Bottoms',    value: 'Bottoms' },
-  { label: 'Sets',       value: 'Co-ords' },
-  { label: 'Dresses',    value: 'Dresses' },
   { label: 'Accessories', value: 'Accessories' },
   { label: 'Sale',       value: '__sale__' },
 ];
@@ -125,10 +126,10 @@ export const TRANSFORMATIONS = {
 };
 
 export const REIMAGINE_PRESETS = [
-  { from: 'Saree', to: 'Dress · Co-ord',    emoji: '🥻', color: BRAND.burgundy },
-  { from: 'Shirt', to: 'Corset · Japanese', emoji: '👔', color: BRAND.green    },
-  { from: 'Kurti', to: 'Skirt · Halter',    emoji: '👗', color: BRAND.red      },
-  { from: 'Pant',  to: 'Jorts · Flare',     emoji: '👖', color: BRAND.blue     },
+  { from: 'Saree', to: 'Co-ord set · Dress', emoji: '🥻', color: BRAND.burgundy },
+  { from: 'Shirt', to: 'Corset Top and Asian-inspired Top', emoji: '👔', color: BRAND.green },
+  { from: 'Kurti', to: 'Skirt · Halter', emoji: '👗', color: BRAND.red },
+  { from: 'Pant',  to: 'Jorts · Flare', emoji: '👖', color: BRAND.blue },
 ];
 
 export const TRANSFORMATION_META = {
@@ -159,7 +160,7 @@ export function getTransformationMeta(name) {
   return { display: name, blurb: 'Made to your measurements.', image: TRANSFORMATION_IMAGE_FALLBACK };
 }
 
-export const REIMAGINE_STEPS = ['Garment', 'Transform', 'Details'];
+export const REIMAGINE_STEPS = ['Garment', 'Upcycle', 'Details'];
 
 export const REIMAGINE_FLOW = ['Pick base', 'Pick preset', 'Your details', 'Done'];
 
@@ -174,7 +175,7 @@ export const REIMAGINE_STEP_HEADINGS = [
 // ─────────────────────────────────────────────────────────────────────────────
 export const QUICK_CARDS = [
   { icon: 'ShoppingBag', label: 'Buy something new',    action: 'Shop',      to: '/shop',      color: BRAND.green,    desc: 'Curated pieces that tell a story.' },
-  { icon: 'Sparkles',    label: 'Rework what I own',    action: 'Reimagine', to: '/reimagine', color: BRAND.burgundy, desc: 'Transform old garments into something new.' },
+  { icon: 'Sparkles',    label: 'Rework what I own',    action: 'Reimagine', to: '/reimagine', color: BRAND.burgundy, desc: 'Upcycle old garments into something new.' },
   { icon: 'Wrench',      label: 'Fix something broken', action: 'Repair',    to: '/repair',    color: BRAND.red,      desc: 'Because throwing away is lazy.' },
   { icon: 'Heart',       label: 'Give something away',  action: 'Donate',    to: '/donate',    color: BRAND.blue,     desc: "Clothes shouldn't end with you." },
 ];
@@ -208,6 +209,7 @@ export const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}`;
 export const SOCIAL_LINKS = {
   facebook: 'https://www.facebook.com/share/1LjTZS6m5K/?mibextid=wwXIfr',
   instagram: 'https://www.instagram.com/tarajuvvaaa/',
+  linkedin: 'https://www.linkedin.com/company/tarajuvva/',
 };
 export const PAYMENT_METHOD_LABELS = {
   cod: 'Cash on delivery',
@@ -219,6 +221,7 @@ export const PAYMENT_STATUS_LABELS = {
   pending: 'Payment pending',
   failed: 'Payment failed',
   cod: 'Pay on delivery',
+  not_required: 'Not required',
 };
 export const REIMAGINE_STATUSES = ['pending_review','accepted','in_progress','completed','rejected'];
 
@@ -285,13 +288,13 @@ export const MANIFESTO_LINES = [
 export const BRAND_VALUES = [
   { title: 'Circular',      desc: 'Every garment has multiple lives. We help you find them all.',                      emoji: '🔄' },
   { title: 'Honest',        desc: "We're not here to sell you more stuff. We're here to help you use what you own.",   emoji: '💬' },
-  { title: 'Artisan-first', desc: 'We work with local tailors and craftspeople. Every transformation is human-made.',  emoji: '🧵' },
+  { title: 'Artisan-first', desc: 'We work with local tailors and craftspeople. Every upcycle is human-made.',  emoji: '🧵' },
   { title: 'Anti-waste',    desc: '7 million tonnes. That number keeps us up at night. It should keep you up too.',    emoji: '🌍' },
 ];
 
 export const HERO_STATS = [
-  { value: '100+', label: 'looks from 10 pieces', to: '/shop' },
+  { value: '100+', label: 'looks from 10 pieces', to: '/shop', tone: 'shop' },
   { value: '1×',   label: 'garment. many lives.' },
-  { value: '₹299', label: 'book a reimagine session', to: '/reimagine?mode=customize' },
+  { value: '₹299', label: 'book a reimagine session', to: '/reimagine?mode=customize', tone: 'reimagine' },
   { value: '0',    label: 'waste built into the design.' },
 ];

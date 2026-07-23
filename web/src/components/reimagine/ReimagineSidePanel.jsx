@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import ImageLightbox from '../ui/ImageLightbox';
-import { REIMAGINE_SIDE_CARD } from './formCardStyles';
 
 function PanelImage({ src, alt, fallback, onOpen }) {
   const [failed, setFailed] = useState(false);
@@ -17,14 +16,14 @@ function PanelImage({ src, alt, fallback, onOpen }) {
     <button
       type="button"
       onClick={() => onOpen?.(src)}
-      className="absolute inset-0 cursor-zoom-in"
+      className="absolute inset-0 flex items-center justify-center p-3 cursor-zoom-in"
       aria-label={`View ${alt} full size`}
     >
       <img
         src={src}
         alt={alt}
         onError={() => setFailed(true)}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="max-w-full max-h-full w-full h-full object-contain"
       />
     </button>
   );
@@ -38,10 +37,10 @@ export function ReimagineRemakeCard({ garmentLabel, transformLabel, blurb, fromI
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.08 }}
-      className={REIMAGINE_SIDE_CARD}
+      className="relative overflow-hidden border border-black bg-white flex flex-col shadow-[4px_4px_0_0_rgba(122,6,60,0.75)] sm:sticky sm:top-[calc(var(--ticker-h,0px)+var(--nav-h,4rem)+1rem)]"
     >
-      <div className="relative grid grid-cols-[1fr_auto_1fr] flex-1 min-h-[12rem] overflow-hidden">
-        <div className="relative min-w-0 bg-[#ebe6e6] flex items-center justify-center overflow-hidden">
+      <div className="relative grid grid-cols-[1fr_minmax(0,1.75rem)_1fr] bg-[#f3eeee]">
+        <div className="relative min-w-0 aspect-[3/4] flex items-center justify-center">
           <PanelImage
             src={fromImage}
             alt={garmentLabel}
@@ -49,10 +48,12 @@ export function ReimagineRemakeCard({ garmentLabel, transformLabel, blurb, fromI
             onOpen={setLightboxSrc}
           />
         </div>
-        <div className="relative z-10 flex items-center justify-center px-2.5 bg-[var(--tj-reimagine)] text-white shrink-0">
-          <ArrowRight size={16} strokeWidth={2.5} />
+        <div className="relative z-10 flex items-center justify-center bg-transparent shrink-0">
+          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--tj-reimagine)] text-white shadow-sm">
+            <ArrowRight size={14} strokeWidth={2.5} />
+          </span>
         </div>
-        <div className="relative min-w-0 bg-[#ebe6e6] flex items-center justify-center overflow-hidden">
+        <div className="relative min-w-0 aspect-[3/4] flex items-center justify-center">
           <PanelImage
             src={toImage}
             alt={transformLabel}
@@ -64,7 +65,7 @@ export function ReimagineRemakeCard({ garmentLabel, transformLabel, blurb, fromI
 
       <div className="relative z-10 p-4 md:p-5 bg-[#e8e2e2] border-t border-black/15 shrink-0">
         <p className="text-[0.65rem] font-mono-tj uppercase tracking-[0.2em] text-[var(--tj-reimagine)] font-bold">
-          Your remake
+          Your upcycle
         </p>
         <p className="font-display text-lg md:text-xl font-extrabold text-[#0a0a0a] mt-1.5 leading-snug">
           {garmentLabel} <span className="text-[var(--tj-reimagine)]">→</span> {transformLabel}
@@ -85,7 +86,7 @@ export function ReimagineCustomizeCard({ price, feature, description }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.08 }}
-      className={REIMAGINE_SIDE_CARD}
+      className="relative overflow-hidden border border-black bg-white flex flex-col shadow-[4px_4px_0_0_rgba(122,6,60,0.75)] sm:min-h-[30rem] md:min-h-[32rem] sm:sticky sm:top-[calc(var(--ticker-h,0px)+var(--nav-h,4rem)+1rem)]"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-[#fdf4f5] via-white to-white pointer-events-none" />
 

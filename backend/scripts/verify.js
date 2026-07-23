@@ -84,6 +84,7 @@ async function checkBackendHealth() {
     ['GET /api/reimagine/conversions', '/api/reimagine/conversions', (j) => j?.success !== false],
     ['GET /api/settings/testimonials', '/api/settings/testimonials', (j) => j != null],
     ['GET /api/settings/reimagine-customize', '/api/settings/reimagine-customize', (j) => j != null],
+    ['GET /api/settings/delivery', '/api/settings/delivery', (j) => j?.settings?.shop != null],
     ['GET /api/settings/reimagine-images', '/api/settings/reimagine-images', (j) => j != null],
   ];
 

@@ -7,6 +7,7 @@ import { Badge } from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
 import { PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS } from '../../utils/constants';
+import { DELIVERY_ZONE_LABELS } from '../../utils/delivery';
 import api from '../../utils/api';
 import OrderItemLine from '../../components/orders/OrderItemLine';
 
@@ -149,6 +150,16 @@ export default function OrderDetail() {
               <InfoRow icon={MapPin} label="Address">
                 <span className="whitespace-pre-wrap">{order.address}</span>
               </InfoRow>
+              {(order.delivery_zone || Number(order.delivery_fee) > 0) && (
+                <InfoRow icon={Truck} label="Delivery">
+                  <span>
+                    {DELIVERY_ZONE_LABELS[order.delivery_zone] || order.delivery_zone || '—'}
+                    {order.delivery_fee != null
+                      ? ` · ₹${Number(order.delivery_fee).toLocaleString('en-IN')}`
+                      : ''}
+                  </span>
+                </InfoRow>
+              )}
               {order.tracking_url && (
                 <InfoRow icon={Truck} label="Tracking">
                   <a

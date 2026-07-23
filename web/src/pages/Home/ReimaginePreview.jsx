@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { REIMAGINE_PRESETS } from '../../utils/constants';
 
 const LOOP_HIGHLIGHT =
@@ -33,7 +33,7 @@ export default function ReimaginePreview() {
               Old clothes. New stories.
             </h2>
             <p className="text-white/60 text-base leading-relaxed mb-8 mt-5">
-              That saree your mum doesn&apos;t wear anymore. The shirt your ex left behind. The jeans you can&apos;t seem to let go of. We transform old clothes into custom pieces you&apos;ll actually wear again.
+              That saree your mum doesn&apos;t wear anymore. The shirt your ex left behind. The jeans you can&apos;t seem to let go of. We upcycle old clothes into custom pieces you&apos;ll actually wear again.
             </p>
             <ul className="space-y-3 mb-10">
               {BULLETS.map(item => (
@@ -44,32 +44,30 @@ export default function ReimaginePreview() {
               ))}
             </ul>
             <Link to="/reimagine" className="tj-btn-shop inline-flex">
-              <Sparkles size={16} /> Start your remake
+              <Sparkles size={16} /> Start your upcycle
             </Link>
           </motion.div>
 
           <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 lg:gap-4 auto-rows-fr w-full max-w-md lg:max-w-none mx-auto lg:mx-0 lg:w-full">
             {REIMAGINE_PRESETS.map((p, i) => (
-              <Link key={p.from} to="/reimagine" className="block h-full min-w-0">
+              <Link
+                key={p.from}
+                to={`/reimagine?step=1&garment=${encodeURIComponent(p.from)}`}
+                className="block h-full min-w-0"
+              >
                 <motion.div
                   initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
                   viewport={{ once: true }}
-                  className={`group h-full w-full flex flex-col gap-1.5 lg:gap-0 rounded-none p-3 sm:p-3.5 lg:p-5 cursor-pointer bg-white/10 ${LOOP_HIGHLIGHT}`}
+                  className={`group h-full w-full flex flex-col gap-2 lg:gap-3 rounded-none p-3 sm:p-3.5 lg:p-5 cursor-pointer bg-white/10 ${LOOP_HIGHLIGHT}`}
                 >
-                  <span className="text-xl sm:text-2xl lg:text-3xl leading-none lg:mb-3">{p.emoji}</span>
-                  <p className="text-white/50 text-[10px] sm:text-xs lg:text-xs font-display lg:mb-1">{p.from}</p>
-                  <div className="flex items-start lg:items-center gap-1 min-w-0">
-                    <ArrowRight
-                      size={11}
-                      className="text-[var(--tj-shop)] shrink-0 mt-0.5 lg:mt-0 lg:w-3 lg:h-3"
-                      aria-hidden
-                    />
-                    <p className="font-bold text-[10px] sm:text-xs lg:text-sm font-display text-white leading-snug min-w-0">
-                      {p.to}
-                    </p>
-                  </div>
+                  <span className="text-3xl sm:text-4xl lg:text-5xl leading-none">{p.emoji}</span>
+                  <p className="font-bold text-[11px] sm:text-xs lg:text-sm font-display text-white leading-snug min-w-0">
+                    {p.from}{' '}
+                    <span className="text-[var(--tj-shop)]">→</span>{' '}
+                    {p.to}
+                  </p>
                 </motion.div>
               </Link>
             ))}

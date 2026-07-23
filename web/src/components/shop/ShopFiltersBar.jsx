@@ -114,7 +114,9 @@ export default function ShopFiltersBar({
 
   const countLabel = loading
     ? 'Loading…'
-    : `${itemCount} ${itemCount === 1 ? 'piece' : 'pieces'}`;
+    : category.label === 'Everything'
+      ? 'All garments'
+      : category.label;
 
   return (
     <div className="sticky top-[calc(var(--ticker-h)+var(--nav-h))] z-30 bg-white/95 backdrop-blur-xl border-b border-black/10 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
@@ -144,9 +146,6 @@ export default function ShopFiltersBar({
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs font-mono-tj uppercase tracking-[0.14em] text-black/45 truncate">
             {countLabel}
-            {!loading && category.label !== 'Everything' && (
-              <span className="text-black/70"> · {category.label}</span>
-            )}
           </p>
 
           {/* Mobile sort — opens bottom sheet */}

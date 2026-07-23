@@ -6,6 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useOrderSubmit } from '../../hooks/useOrderSubmit';
 import CheckoutOrderSummary from '../../components/cart/CheckoutOrderSummary';
+import DeliveryZonePicker from '../../components/ui/DeliveryZonePicker';
 import { Input, Textarea } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
 import SuccessNav from '../../components/ui/SuccessNav';
@@ -22,7 +23,19 @@ export default function Checkout() {
       navigate('/login', { replace: true, state: { from: '/checkout' } });
     }
   }, [user, authLoading, navigate]);
-  const { form, onChange, onSubmit, loading, done, placedOrderId, successMessage, paymentMethod, setPaymentMethod } = useOrderSubmit({
+  const {
+    form,
+    onChange,
+    setDeliveryZone,
+    onSubmit,
+    loading,
+    done,
+    placedOrderId,
+    successMessage,
+    deliveryFee,
+    deliveryFees,
+    grandTotal,
+  } = useOrderSubmit({
     items, total,
     user,
     // Clear cart only — do not navigate away: a delayed navigate('/') was firing
@@ -130,47 +143,28 @@ export default function Checkout() {
                 maxLength={6}
                 placeholder="6-digit PIN"
               />
+              <DeliveryZonePicker
+                channel="shop"
+                value={form.delivery_zone}
+                onChange={setDeliveryZone}
+                fees={deliveryFees}
+              />
               <Textarea label="Order notes (optional)" name="notes" value={form.notes} onChange={onChange} rows={2} />
             </div>
             <div className="border border-black/10 p-4 space-y-3">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/45 font-display">
                 Payment method
               </p>
-              <label className={`flex items-start gap-3 cursor-pointer p-3 border transition-colors ${
-                paymentMethod === 'razorpay' ? 'border-black bg-[var(--tj-shop)]/15' : 'border-black/10 hover:border-black/25'
-              }`}>
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="razorpay"
-                  checked={paymentMethod === 'razorpay'}
-                  onChange={() => setPaymentMethod('razorpay')}
-                  className="mt-1 accent-[#c8ff2e]"
-                />
+              <div className="flex items-start gap-3 p-3 border border-black bg-[var(--tj-shop)]/15">
+                <span className="mt-0.5 inline-block w-3.5 h-3.5 rounded-full border-2 border-black bg-[var(--tj-shop)] shrink-0" aria-hidden />
                 <span>
                   <span className="text-sm font-semibold text-[#0a0a0a] font-display block">Pay online (Razorpay)</span>
                   <span className="text-xs text-black/55 font-body">UPI, cards, netbanking — secure checkout</span>
                 </span>
-              </label>
-              <label className={`flex items-start gap-3 cursor-pointer p-3 border transition-colors ${
-                paymentMethod === 'cod' ? 'border-black bg-[var(--tj-shop)]/15' : 'border-black/10 hover:border-black/25'
-              }`}>
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="cod"
-                  checked={paymentMethod === 'cod'}
-                  onChange={() => setPaymentMethod('cod')}
-                  className="mt-1 accent-[#c8ff2e]"
-                />
-                <span>
-                  <span className="text-sm font-semibold text-[#0a0a0a] font-display block">Cash on delivery</span>
-                  <span className="text-xs text-black/55 font-body">Pay when your order arrives</span>
-                </span>
-              </label>
+              </div>
             </div>
             <Button type="submit" variant="primary" size="xl" fullWidth loading={loading} icon={ShoppingBag}>
-              {paymentMethod === 'razorpay' ? `Pay ₹${total.toLocaleString('en-IN')}` : `Place Order — ₹${total.toLocaleString('en-IN')}`}
+              {`Pay ₹${grandTotal.toLocaleString('en-IN')}`}
             </Button>
           </form>
 
@@ -178,6 +172,9 @@ export default function Checkout() {
             items={items}
             total={total}
             totalItems={totalItems}
+            deliveryFee={deliveryFee}
+            grandTotal={grandTotal}
+            deliveryZone={form.delivery_zone}
             onRemove={removeItem}
             onUpdateQty={updateQty}
           />

@@ -10,6 +10,7 @@ const { resolveImagesFromRequest, saveDataUrlProductImage } = require('../lib/pr
 const { notifyOrder } = require('../utils/notifyEmail');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
 const { getAllSizeCharts, getSizeChart, chartKeyForProduct } = require('../utils/sizeCharts');
+const { normalizeDeliveryZone, getDeliveryFee, DELIVERY_ZONE_LABELS } = require('../utils/delivery');
 
 const productImageUpload = multer({
   storage: multer.memoryStorage(),
@@ -368,7 +369,7 @@ router.get('/products', async (req, res) => {
   if (featured) {
     q += ' AND featured = 1';
   }
-  q += ' ORDER BY created_at DESC';
+  q += ' ORDER BY featured DESC, created_at DESC';
   if (limit != null && limit !== '') {
     const lim = Math.min(Math.max(0, parseInt(String(limit), 10) || 0), 500);
     if (lim > 0) q += ` LIMIT ${lim}`;
@@ -545,7 +546,7 @@ router.get('/razorpay/key', (req, res) => {
 });
 
 router.post('/orders', authenticateUser, async (req, res) => {
-  const { user_name, user_email, user_phone, address, items, payment_method, notes } = req.body;
+  const { user_name, user_email, user_phone, address, items, notes } = req.body;
   if (!user_name || !user_phone || !address || !items)
     return res.status(400).json({ success: false, message: 'Missing required fields' });
 
@@ -558,87 +559,85 @@ router.post('/orders', authenticateUser, async (req, res) => {
     return res.status(401).json({ success: false, message: 'Account not found. Please sign in again.' });
   }
 
+  const deliveryZone = normalizeDeliveryZone(req.body.delivery_zone);
+  if (!deliveryZone) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please select whether delivery is in Hyderabad & around or outside Hyderabad.',
+    });
+  }
+  const deliveryFee = await getDeliveryFee('shop', deliveryZone);
+
   let orderItems;
-  let total;
+  let subtotal;
   try {
-    ({ items: orderItems, total } = await resolveOrderItems(items));
+    ({ items: orderItems, total: subtotal } = await resolveOrderItems(items));
   } catch (err) {
     return res.status(err.status || 400).json({ success: false, message: err.message });
   }
 
-  const method = payment_method === 'razorpay' ? 'razorpay' : 'cod';
+  const total = subtotal + deliveryFee;
   const id = uuidv4();
   const user_id = dbUser.id;
 
-  if (method === 'razorpay') {
-    const rzp = getRazorpayClient();
-    if (!rzp) {
-      return res.status(503).json({ success: false, message: 'Online payments are not configured' });
-    }
-
-    await run(
-      `INSERT INTO orders (id,user_id,user_name,user_email,user_phone,address,items,total,status,payment_method,payment_status,notes)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [
-        id, user_id, user_name, user_email || null, user_phone, address,
-        JSON.stringify(orderItems), total, 'pending_payment', 'razorpay', 'pending', notes || null,
-      ]
-    );
-
-    let rzpOrder;
-    try {
-      rzpOrder = await rzp.orders.create({
-        amount: toPaise(total),
-        currency: 'INR',
-        receipt: id.slice(0, 32),
-        notes: { order_id: id, user_id },
-      });
-    } catch (err) {
-      await run('DELETE FROM orders WHERE id = ?', [id]);
-      console.error('[razorpay] order create failed:', err);
-      return res.status(502).json({ success: false, message: 'Could not start payment. Please try again.' });
-    }
-
-    await run('UPDATE orders SET razorpay_order_id = ? WHERE id = ?', [rzpOrder.id, id]);
-
-    const row = await get('SELECT * FROM orders WHERE id=?', [id]);
-    const itemsWithImages = await enrichOrderItems(orderItems, get);
-    const cfg = getRazorpayConfig();
-
-    return res.status(201).json({
-      success: true,
-      order: { ...row, items: itemsWithImages },
-      razorpay: {
-        key_id: cfg.key_id,
-        order_id: rzpOrder.id,
-        amount: rzpOrder.amount,
-        currency: rzpOrder.currency,
-      },
-    });
+  const rzp = getRazorpayClient();
+  if (!rzp) {
+    return res.status(503).json({ success: false, message: 'Online payments are not configured' });
   }
 
   await run(
-    `INSERT INTO orders (id,user_id,user_name,user_email,user_phone,address,items,total,status,payment_method,payment_status,notes)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    `INSERT INTO orders (
+      id,user_id,user_name,user_email,user_phone,address,delivery_zone,delivery_fee,items,total,
+      status,payment_method,payment_status,notes
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id, user_id, user_name, user_email || null, user_phone, address,
-      JSON.stringify(orderItems), total, 'received', 'cod', 'cod', notes || null,
+      deliveryZone, deliveryFee, JSON.stringify(orderItems), total,
+      'pending_payment', 'razorpay', 'pending', notes || null,
     ]
   );
 
+  let rzpOrder;
   try {
-    await decrementStockForOrder(orderItems);
+    rzpOrder = await rzp.orders.create({
+      amount: toPaise(total),
+      currency: 'INR',
+      receipt: id.slice(0, 32),
+      notes: {
+        order_id: id,
+        user_id,
+        delivery_zone: deliveryZone,
+        delivery_fee: String(deliveryFee),
+      },
+    });
   } catch (err) {
-    console.error('[shop] stock decrement failed:', err);
+    await run('DELETE FROM orders WHERE id = ?', [id]);
+    console.error('[razorpay] order create failed:', err);
+    return res.status(502).json({ success: false, message: 'Could not start payment. Please try again.' });
   }
+
+  await run('UPDATE orders SET razorpay_order_id = ? WHERE id = ?', [rzpOrder.id, id]);
 
   const row = await get('SELECT * FROM orders WHERE id=?', [id]);
   const itemsWithImages = await enrichOrderItems(orderItems, get);
-  notifyOrder(row).catch(() => {});
-  res.status(201).json({
+  const cfg = getRazorpayConfig();
+
+  return res.status(201).json({
     success: true,
-    message: 'Thank you for shopping with Tarajuvva. Your order is being processed and will be dispatched soon.',
     order: { ...row, items: itemsWithImages },
+    delivery: {
+      zone: deliveryZone,
+      zone_label: DELIVERY_ZONE_LABELS[deliveryZone],
+      fee: deliveryFee,
+      subtotal,
+      total,
+    },
+    razorpay: {
+      key_id: cfg.key_id,
+      order_id: rzpOrder.id,
+      amount: rzpOrder.amount,
+      currency: rzpOrder.currency,
+    },
   });
 });
 

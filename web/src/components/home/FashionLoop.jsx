@@ -24,13 +24,13 @@ export const LOOP_VERTICALS = [
   {
     num: '03',
     action: 'Reimagine',
-    cardLabel: 'Remake',
+    cardLabel: 'Upcycle',
     to: '/reimagine',
     color: '#7A063C',
     textOnColor: '#ffffff',
     headline: 'Your old favourites, made new again.',
-    subline: 'Transform existing garments into updated pieces through upcycling and customization',
-    cta: 'Start a remake',
+    subline: 'Upcycle existing garments into updated pieces through customization',
+    cta: 'Start an upcycle',
   },
   {
     num: '04',

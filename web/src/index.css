@@ -50,8 +50,8 @@
   @media (pointer: fine) {
     html {
       cursor:
-        url('/cursors/tj-cursor.png') 16 16,
-        url('/cursors/tj-cursor@2x.png') 32 32,
+        url('/cursors/tj-cursor.png?v=3') 16 16,
+        url('/cursors/tj-cursor@2x.png?v=3') 32 32,
         auto;
     }
 
@@ -63,8 +63,8 @@
     summary,
     .cursor-pointer {
       cursor:
-        url('/cursors/tj-cursor.png') 16 16,
-        url('/cursors/tj-cursor@2x.png') 32 32,
+        url('/cursors/tj-cursor.png?v=3') 16 16,
+        url('/cursors/tj-cursor@2x.png?v=3') 32 32,
         pointer;
     }
 

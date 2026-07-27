@@ -7,7 +7,33 @@ NGINX_SITE="${NGINX_SITE:-/etc/nginx/sites-available/default}"
 
 echo "==> Pull latest from git"
 cd "$REPO_ROOT"
+
+# Server .env files often diverge from git; keep them across pull.
+BACKEND_ENV_BAK=""
+WEB_ENV_BAK=""
+if [[ -f backend/.env ]]; then
+  BACKEND_ENV_BAK="$(mktemp)"
+  cp backend/.env "$BACKEND_ENV_BAK"
+  git checkout -- backend/.env 2>/dev/null || true
+fi
+if [[ -f web/.env ]]; then
+  WEB_ENV_BAK="$(mktemp)"
+  cp web/.env "$WEB_ENV_BAK"
+  git checkout -- web/.env 2>/dev/null || true
+fi
+
 git pull
+
+if [[ -n "$BACKEND_ENV_BAK" && -f "$BACKEND_ENV_BAK" ]]; then
+  cp "$BACKEND_ENV_BAK" backend/.env
+  rm -f "$BACKEND_ENV_BAK"
+  echo "  restored server backend/.env"
+fi
+if [[ -n "$WEB_ENV_BAK" && -f "$WEB_ENV_BAK" ]]; then
+  cp "$WEB_ENV_BAK" web/.env
+  rm -f "$WEB_ENV_BAK"
+  echo "  restored server web/.env"
+fi
 
 echo "==> Backend: check Razorpay secrets in backend/.env"
 cd "$REPO_ROOT/backend"

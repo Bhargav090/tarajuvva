@@ -215,53 +215,52 @@ export default function ProductCard({ product, disableEntrance = false, variant 
   }
 
   const card = (
-      <div className="tj-card p-3 sm:p-4 hover:-translate-y-1 transition-transform h-full flex flex-col">
+      <div className="tj-card p-2 sm:p-3 md:p-4 hover:-translate-y-1 transition-transform h-full flex flex-col min-w-0">
         {imageBlock('aspect-[3/4]')}
 
-        <div className="pt-4 flex-1 flex flex-col min-h-0">
-          <div className="flex items-start justify-between gap-2">
+        <div className="pt-2.5 sm:pt-3 md:pt-4 flex-1 flex flex-col min-h-0">
+          <div className="flex items-start justify-between gap-1.5 sm:gap-2">
             <div className="min-w-0">
               <Link to={`/shop/${product.id}`}>
-                <p className="font-display font-bold text-lg leading-tight text-[#0a0a0a] hover:opacity-70 transition-opacity line-clamp-2">
+                <p className="font-display font-bold text-[13px] sm:text-base md:text-lg leading-tight text-[#0a0a0a] hover:opacity-70 transition-opacity line-clamp-2">
                   {product.name}
                 </p>
               </Link>
               {tagline && (
-                <p className="text-xs text-black/55 mt-1 line-clamp-2 leading-snug">{tagline}</p>
+                <p className="hidden sm:block text-xs text-black/55 mt-1 line-clamp-2 leading-snug">{tagline}</p>
               )}
             </div>
-            <span className="font-mono-tj text-sm shrink-0 pt-0.5">
+            <span className="font-mono-tj text-[11px] sm:text-sm shrink-0 pt-0.5 tabular-nums">
               ₹{product.price.toLocaleString('en-IN')}
             </span>
           </div>
 
           {material && (
-            <p className="mt-2.5 text-[11px] font-mono-tj text-black/50 uppercase tracking-wider">
+            <p className="mt-1.5 sm:mt-2.5 text-[9px] sm:text-[11px] font-mono-tj text-black/50 uppercase tracking-wider truncate">
               {material}
             </p>
           )}
 
-          <div className="mt-auto pt-4 border-t border-black/10 space-y-3">
+          <div className="mt-auto pt-2.5 sm:pt-4 border-t border-black/10 space-y-2 sm:space-y-3">
             {hasSizes && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
+              <div className="space-y-1.5 sm:space-y-2">
+                <div className="flex items-center justify-between gap-1">
                   <p
-                    className={`text-[10px] font-mono-tj uppercase tracking-[0.14em] ${
+                    className={`text-[9px] sm:text-[10px] font-mono-tj uppercase tracking-[0.12em] sm:tracking-[0.14em] truncate ${
                       sizeError ? 'text-[#e34334]' : 'text-black/50'
                     }`}
                   >
-                    {sizeError ? 'Select a size' : selectedSize ? `Size · ${selectedSize}` : 'Select size'}
+                    {sizeError ? 'Select size' : selectedSize ? `Size · ${selectedSize}` : 'Select size'}
                   </p>
                   <SizeChartLink
                     product={product}
-                    className="text-[10px] font-mono-tj uppercase tracking-[0.12em] text-black/45 hover:text-black flex items-center gap-1 shrink-0"
+                    className="text-[9px] sm:text-[10px] font-mono-tj uppercase tracking-[0.1em] text-black/45 hover:text-black flex items-center gap-0.5 sm:gap-1 shrink-0"
+                    compact
                   />
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1 sm:gap-2">
                   {sizes.map((s) => {
                     const isSelected = selectedSize === s.label;
-                    const stockQty = typeof s.stock === 'number' ? s.stock : null;
-                    const showLow = stockQty != null && stockQty > 0 && stockQty < 10;
                     return (
                       <button
                         key={s.label}
@@ -270,16 +269,13 @@ export default function ProductCard({ product, disableEntrance = false, variant 
                           setSelectedSize(s.label);
                           setSizeError(false);
                         }}
-                        className={`min-w-[2.25rem] px-2 py-1.5 text-[11px] font-mono-tj border transition-colors ${
+                        className={`min-w-[1.75rem] sm:min-w-[2.25rem] px-1.5 sm:px-2 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-mono-tj border transition-colors ${
                           isSelected
                             ? 'bg-black text-white border-black'
                             : 'border-black/20 hover:border-black'
                         }`}
                       >
                         {s.label}
-                        {showLow ? (
-                          <span className="block text-[8px] opacity-70">{stockQty} left</span>
-                        ) : null}
                       </button>
                     );
                   })}
@@ -289,9 +285,11 @@ export default function ProductCard({ product, disableEntrance = false, variant 
             <button
               type="button"
               onClick={handleAdd}
-              className="w-full flex items-center justify-center gap-2 border border-black py-2.5 text-xs font-bold uppercase tracking-[0.18em] hover:bg-black hover:text-white transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 sm:gap-2 border border-black py-2 sm:py-2.5 text-[10px] sm:text-xs font-bold uppercase tracking-[0.12em] sm:tracking-[0.18em] hover:bg-black hover:text-white transition-colors"
             >
-              <ShoppingCart size={14} /> Add to cart
+              <ShoppingCart size={13} className="shrink-0" />
+              <span className="sm:hidden">Add</span>
+              <span className="hidden sm:inline">Add to cart</span>
             </button>
           </div>
         </div>

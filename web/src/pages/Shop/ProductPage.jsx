@@ -237,10 +237,8 @@ export default function ProductPage() {
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map(s => {
                     const isSelected = selectedSize === s.label;
-                    const stockQty = typeof s.stock === 'number' ? s.stock : null;
                     const isOOS =
                       typeof s.stock === 'number' ? s.stock <= 0 : s.available === false;
-                    const showLow = stockQty != null && stockQty > 0 && stockQty < 10;
                     return (
                       <button
                         key={s.label}
@@ -252,13 +250,7 @@ export default function ProductPage() {
                             setSizeError(false);
                           }
                         }}
-                        title={
-                          isOOS
-                            ? 'Out of stock'
-                            : showLow
-                              ? `${s.label} — only ${stockQty} left`
-                              : s.label
-                        }
+                        title={isOOS ? 'Out of stock' : s.label}
                         className={[
                           'relative min-w-[3.5rem] h-10 px-2 text-sm font-bold font-display border transition-all',
                           isOOS
@@ -269,15 +261,6 @@ export default function ProductPage() {
                         ].join(' ')}
                       >
                         <span className="block leading-none">{s.label}</span>
-                        {showLow && (
-                          <span
-                            className={`block text-[9px] font-mono-tj mt-0.5 ${
-                              isSelected ? 'text-white/80' : 'text-[#e34334]'
-                            }`}
-                          >
-                            {stockQty} left
-                          </span>
-                        )}
                         {isOOS && (
                           <span
                             className="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -323,13 +306,6 @@ export default function ProductPage() {
                   </span>
                 ))}
               </div>
-            )}
-
-            {/* Low stock */}
-            {remainingStock != null && remainingStock > 0 && remainingStock < 10 && (
-              <p className="text-[#e34334] text-xs font-bold font-display mb-4">
-                Only {remainingStock} left{selectedSize ? ` in size ${selectedSize}` : ''}!
-              </p>
             )}
 
             {/* CTA */}

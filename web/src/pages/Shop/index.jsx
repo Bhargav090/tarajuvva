@@ -87,32 +87,9 @@ export default function Shop() {
           />
         ) : (
           <>
-            {/* Mobile: 2-col bordered grid */}
-            <div className="sm:hidden grid grid-cols-2 border border-black">
-              {sorted.map((p, i) => {
-                const isRight = i % 2 === 1;
-                const row = Math.floor(i / 2);
-                const lastRow = Math.floor((sorted.length - 1) / 2);
-                return (
-                  <div
-                    key={p.id}
-                    className={[
-                      'min-w-0',
-                      !isRight ? 'border-r border-black' : '',
-                      row < lastRow ? 'border-b border-black' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    <ProductCard product={p} variant="home" disableEntrance={i > 3} />
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {sorted.map((p) => (
-                <ProductCard key={p.id} product={p} />
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
+              {sorted.map((p, i) => (
+                <ProductCard key={p.id} product={p} disableEntrance={i > 3} />
               ))}
             </div>
           </>

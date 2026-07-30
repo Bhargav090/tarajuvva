@@ -2,7 +2,19 @@ const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
 
-const NOTIFY_TO = process.env.NOTIFY_EMAIL || process.env.SMTP_REPLY_TO || 'support@tarajuvva.com';
+/** Comma/semicolon-separated list — prefer an external inbox; GoDaddy often hides self-mail. */
+function parseAddressList(raw) {
+  return String(raw || '')
+    .split(/[,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+const NOTIFY_TO_LIST = parseAddressList(
+  process.env.NOTIFY_EMAIL || process.env.SMTP_REPLY_TO || 'support@tarajuvva.com'
+);
+const NOTIFY_TO = NOTIFY_TO_LIST[0] || 'support@tarajuvva.com';
+const SMTP_BCC_LIST = parseAddressList(process.env.SMTP_BCC);
 
 const EMAIL_LOGO_CID = 'tarajuvva-logo@tarajuvva';
 const EMAIL_LOGO_PATH = path.join(__dirname, '../../assets/email-logo.png');
@@ -88,7 +100,16 @@ function getTransporter() {
   return transporter;
 }
 
-async function sendMail({ to, subject, text, html }) {
+/** GoDaddy (and strict MTAs) reject bare CR — normalize to CRLF before send. */
+function normalizeEmailContent(value) {
+  if (value == null) return value;
+  return String(value)
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\n/g, '\r\n');
+}
+
+async function sendMail({ to, subject, text, html, skipBcc = false }) {
   const tx = getTransporter();
   if (!tx) {
     console.warn('[notifyEmail] SMTP not configured — skipped:', subject);
@@ -112,14 +133,26 @@ async function sendMail({ to, subject, text, html }) {
     });
   }
 
+  const safeSubject = normalizeEmailContent(subject);
+  const safeText = normalizeEmailContent(text);
+  const safeHtml = normalizeEmailContent(html || String(text || '').replace(/\n/g, '<br>'));
+
   try {
+    // GoDaddy SMTP does not save to Sent. Optional SMTP_BCC (external inbox) keeps a visible copy.
+    const toList = parseAddressList(to);
+    const toSet = new Set(toList.map((a) => a.toLowerCase()));
+    const bcc = skipBcc
+      ? []
+      : SMTP_BCC_LIST.filter((a) => !toSet.has(a.toLowerCase()));
+
     await tx.sendMail({
       from,
-      to,
+      to: toList.length > 1 ? toList : toList[0] || to,
+      bcc: bcc.length ? bcc : undefined,
       replyTo: replyTo || undefined,
-      subject,
-      text,
-      html: html || text.replace(/\n/g, '<br>'),
+      subject: safeSubject,
+      text: safeText,
+      html: safeHtml,
       attachments: attachments.length ? attachments : undefined,
     });
     return { ok: true };
@@ -130,7 +163,14 @@ async function sendMail({ to, subject, text, html }) {
 }
 
 async function sendNotifyEmail({ subject, text, html }) {
-  return sendMail({ to: NOTIFY_TO, subject, text, html });
+  // Fan-out admin alerts. Sending only to support@ (same mailbox as SMTP_USER / contact@ alias)
+  // often never appears in the GoDaddy Inbox — include an external address in NOTIFY_EMAIL.
+  const results = await Promise.all(
+    NOTIFY_TO_LIST.map((addr) => sendMail({ to: addr, subject, text, html, skipBcc: true }))
+  );
+  if (results.some((r) => r?.ok)) return { ok: true };
+  if (results.every((r) => r?.skipped)) return { ok: false, skipped: true };
+  return results.find((r) => !r?.ok && !r?.skipped) || { ok: false };
 }
 
 async function sendCustomerEmail(to, { subject, text, html }) {

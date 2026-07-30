@@ -109,16 +109,18 @@ async function bookConsultationSlot(requestId, slotId) {
 }
 
 async function buildNotifyPayload(row, extras = {}) {
-  const images = (() => {
-    try {
-      return JSON.parse(row.images || '[]');
-    } catch {
-      return [];
-    }
-  })();
+  // Emails only need a photo count — never load multi‑MB base64 into the notify payload.
+  let imageCount = 0;
+  try {
+    const parsed = JSON.parse(row.images || '[]');
+    imageCount = Array.isArray(parsed) ? parsed.length : 0;
+  } catch {
+    imageCount = 0;
+  }
+  const { images: _images, ...rest } = row;
   return {
-    ...row,
-    images,
+    ...rest,
+    images: Array.from({ length: imageCount }, () => true),
     ...extras,
   };
 }
@@ -569,16 +571,21 @@ router.post('/requests/:id/razorpay/verify', authenticateUser, async (req, res) 
     }
   }
 
+  // Only mark consultation_paid for real consultations (slot booking / customize).
+  // Remake Razorpay payments must stay consultation_paid=0 or they land under Consultations.
+  const wasConsultation =
+    Boolean(row.consultation_slot_id) || Boolean(Number(row.callback_requested));
+
   await run(
     `UPDATE reimagine_requests SET
       status = 'pending_review',
       payment_status = 'paid',
-      consultation_paid = 1,
+      consultation_paid = ?,
       razorpay_payment_id = ?,
       paid_at = CURRENT_TIMESTAMP,
       updated_at = CURRENT_TIMESTAMP
      WHERE id = ?`,
-    [razorpay_payment_id, row.id]
+    [wasConsultation ? 1 : 0, razorpay_payment_id, row.id]
   );
 
   const updated = await get('SELECT * FROM reimagine_requests WHERE id = ?', [row.id]);
@@ -586,13 +593,14 @@ router.post('/requests/:id/razorpay/verify', authenticateUser, async (req, res) 
     updated.consultation_date && updated.consultation_time
       ? formatSlotLabel(updated.consultation_date, updated.consultation_time)
       : null;
+  const consultationPaid = Boolean(Number(updated.consultation_paid));
 
   notifyReimagineRequest(
     await buildNotifyPayload(updated, {
-      is_custom: Boolean(updated.is_custom),
-      consultation_paid: true,
-      callback_requested: Boolean(updated.callback_requested),
-      consultation_price: updated.consultation_fee,
+      is_custom: Boolean(Number(updated.is_custom)),
+      consultation_paid: consultationPaid,
+      callback_requested: Boolean(Number(updated.callback_requested)),
+      consultation_price: consultationPaid ? updated.consultation_fee : null,
       consultation_slot_label: slotLabel,
       pickup_date: updated.pickup_date,
       pickup_period: updated.pickup_period,

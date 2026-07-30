@@ -3,18 +3,6 @@ import { ArrowRight } from 'lucide-react';
 import ProductCard from '../../components/ui/ProductCard';
 import { useProducts } from '../../hooks/useProducts';
 
-function HomeProductSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="aspect-[3/4] bg-black/5" />
-      <div className="pt-3 px-1 space-y-2">
-        <div className="h-3 bg-black/5 rounded w-3/4" />
-        <div className="h-3 bg-black/5 rounded w-1/2" />
-      </div>
-    </div>
-  );
-}
-
 function DesktopProductSkeleton() {
   return (
     <div className="tj-card p-3 animate-pulse">
@@ -53,57 +41,17 @@ export default function ShopPreview() {
         </div>
 
         {loading ? (
-          <>
-            <div className="md:hidden grid grid-cols-2 border border-black">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className={[
-                    'min-w-0',
-                    i % 2 === 0 ? 'border-r border-black' : '',
-                    i < 2 ? 'border-b border-black' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  <HomeProductSkeleton />
-                </div>
-              ))}
-            </div>
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <DesktopProductSkeleton key={i} />
-              ))}
-            </div>
-          </>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <DesktopProductSkeleton key={i} />
+            ))}
+          </div>
         ) : (
-          <>
-            {/* Mobile only: 2×2 hairline grid */}
-            <div className="md:hidden grid grid-cols-2 border border-black">
-              {products.map((p, i) => (
-                <div
-                  key={p.id}
-                  className={[
-                    'min-w-0',
-                    i % 2 === 0 ? 'border-r border-black' : '',
-                    i < 2 ? 'border-b border-black' : '',
-                    products.length === 3 && i === 2 ? 'border-r border-black' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  <ProductCard product={p} variant="home" disableEntrance={i > 1} />
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop / tablet: original product cards */}
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {products.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
+            {products.map((p, i) => (
+              <ProductCard key={p.id} product={p} disableEntrance={i > 1} />
+            ))}
+          </div>
         )}
 
         <div className="mt-10 sm:hidden text-center">

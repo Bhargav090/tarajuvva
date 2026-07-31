@@ -43,14 +43,12 @@ export default function Footer() {
               foreground="#0a0a0a"
               className="tj-footer-brand__logo block w-auto object-contain object-left object-top"
             />
-            <div className="mt-1 md:-mt-4 lg:-mt-5 max-w-md space-y-1">
-              <p className="text-base leading-relaxed text-black/60 font-display">
-                A circular fashion operating system, built in India.
-              </p>
-              <p className="text-base leading-relaxed text-black/60 font-display">
-                Wear it. Repair it. Reimagine it. Donate it.
-              </p>
-            </div>
+            <p className="mt-1 md:-mt-4 lg:-mt-5 text-base leading-relaxed text-black/60 max-w-md font-display">
+              A circular fashion operating system, built in India.
+            </p>
+            <p className="mt-1 text-base leading-relaxed text-black/60 max-w-md font-display">
+              Wear it. Repair it. Reimagine it. Donate it.
+            </p>
             <div className="mt-5 flex items-center gap-3">
               <a
                 href={SOCIAL_LINKS.instagram}

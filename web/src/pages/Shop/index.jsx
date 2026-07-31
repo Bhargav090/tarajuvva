@@ -44,18 +44,20 @@ export default function Shop() {
           }}
           aria-hidden
         />
-        <div className="tj-container relative py-6 md:py-8">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-10">
-            <div className="min-w-0">
-              <p className="tj-eyebrow !text-black/50 m-0">01 - Shop</p>
-              <h1 className="mt-1.5 font-display text-[1.85rem] sm:text-[2.15rem] md:text-[2.5rem] font-extrabold tracking-[-0.03em] leading-[1.08] text-[#0a0a0a] m-0">
+        <div className="tj-container relative py-10 md:py-[3.2rem] lg:py-16">
+          <div className="flex flex-col gap-4 md:gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-10 lg:gap-12">
+            <div className="min-w-0 max-w-3xl">
+              <p className="tj-eyebrow !text-black/50 m-0 !text-[11px] sm:!text-xs !tracking-[0.28em]">
+                01 - Shop
+              </p>
+              <h1 className="mt-2 md:mt-3 font-display text-[2.2rem] sm:text-[2.8rem] md:text-[3.4rem] lg:text-[4rem] font-extrabold tracking-[-0.03em] leading-[1.02] text-[#0a0a0a] m-0">
                 Designed to{' '}
-                <span className="tj-vertical-hero-highlight whitespace-nowrap">
+                <span className="tj-vertical-hero-highlight max-sm:whitespace-normal sm:whitespace-nowrap">
                   do more.
                 </span>
               </h1>
             </div>
-            <p className="text-sm text-black/60 leading-snug max-w-[22rem] m-0 sm:text-right sm:pb-1">
+            <p className="text-sm md:text-base lg:text-lg text-black/60 leading-relaxed max-w-[21rem] m-0 sm:text-right font-body shrink-0">
               Reversible, adjustable, or packed with utility loops and playful
               pockets - garments that adapt with you.
             </p>

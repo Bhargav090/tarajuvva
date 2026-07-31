@@ -33,8 +33,7 @@ export default function ProductCard({ product, disableEntrance = false, variant 
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isWishlisted, toggleWishlist, loading: wishlistLoading } = useWishlist();
-  const [slidePos, setSlidePos] = useState(0);
-  const [animateSlide, setAnimateSlide] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
@@ -44,10 +43,7 @@ export default function ProductCard({ product, disableEntrance = false, variant 
   const gallery = galleryList(product);
   const primary = gallery[0] || '';
   const slides = gallery.length > 0 ? gallery : primary ? [primary] : [];
-  const loop = slides.length > 1;
-  /** Extra clone of first slide at the end so last→first also slides left. */
-  const track = loop ? [...slides, slides[0]] : slides;
-  const displayIndex = loop ? slidePos % slides.length : 0;
+  const hasAltImages = slides.length > 1;
   const tagline = product.description?.split('.')[0]
     ? `${product.description.split('.')[0]}.`
     : '';
@@ -58,30 +54,16 @@ export default function ProductCard({ product, disableEntrance = false, variant 
   const wishlisted = isWishlisted(product.id);
 
   useEffect(() => {
-    setSlidePos(0);
-    setAnimateSlide(true);
+    setActiveIndex(0);
   }, [product.id]);
 
   useEffect(() => {
-    if (!loop || paused) return undefined;
+    if (!hasAltImages || paused) return undefined;
     const id = setInterval(() => {
-      setAnimateSlide(true);
-      setSlidePos((i) => i + 1);
-    }, 2500);
+      setActiveIndex((i) => (i + 1) % slides.length);
+    }, 4000);
     return () => clearInterval(id);
-  }, [loop, paused, product.id]);
-
-  const handleSlideEnd = (e) => {
-    if (!loop || e.target !== e.currentTarget) return;
-    // Landed on cloned first slide - jump back to real first without animation.
-    if (slidePos >= slides.length) {
-      setAnimateSlide(false);
-      setSlidePos(0);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setAnimateSlide(true));
-      });
-    }
-  };
+  }, [hasAltImages, paused, product.id, slides.length]);
 
   const handleAdd = () => {
     if (hasSizes && !selectedSize) {
@@ -118,33 +100,35 @@ export default function ProductCard({ product, disableEntrance = false, variant 
         onTouchStart={() => setPaused(true)}
         onTouchEnd={() => setPaused(false)}
       >
-        <div
-          className="absolute inset-0 flex will-change-transform"
-          style={{
-            transform: `translate3d(-${slidePos * 100}%, 0, 0)`,
-            transition: animateSlide
-              ? 'transform 650ms cubic-bezier(0.22, 1, 0.36, 1)'
-              : 'none',
-          }}
-          onTransitionEnd={handleSlideEnd}
-        >
-          {track.map((src, i) => (
-            <div
-              key={`${product.id}-${src}-${i}`}
-              className="relative h-full w-full shrink-0 grow-0 basis-full"
-            >
-              <AsyncImage
-                src={src}
-                alt={`${product.name}${i === 0 || (loop && i === track.length - 1) ? '' : ` - view ${i + 1}`}`}
-                fill
+        {slides.map((src, i) => (
+          <div
+            key={`${product.id}-${src}-${i}`}
+            className={`absolute inset-0 motion-safe:transition-opacity motion-safe:duration-700 motion-safe:ease-in-out ${
+              i === activeIndex ? 'opacity-100 z-[0]' : 'opacity-0 z-0 pointer-events-none'
+            }`}
+            aria-hidden={i !== activeIndex}
+          >
+            <AsyncImage
+              src={src}
+              alt={`${product.name}${i === 0 ? '' : ` - view ${i + 1}`}`}
+              fill
+            />
+          </div>
+        ))}
+        {hasAltImages && (
+          <div
+            className="absolute bottom-2 right-2 z-[1] flex gap-1 pointer-events-none"
+            aria-hidden
+          >
+            {slides.map((_, i) => (
+              <span
+                key={i}
+                className={`block h-1 w-1 rounded-full motion-safe:transition-colors motion-safe:duration-300 ${
+                  i === activeIndex ? 'bg-white' : 'bg-white/45'
+                }`}
               />
-            </div>
-          ))}
-        </div>
-        {loop && (
-          <span className="absolute bottom-2 right-2 z-[1] bg-black/60 text-white text-[9px] font-mono-tj px-1.5 py-0.5 tabular-nums">
-            {displayIndex + 1}/{slides.length}
-          </span>
+            ))}
+          </div>
         )}
         {imageTag && (
           <span className="absolute top-2 left-2 z-[1] bg-[var(--tj-shop)] text-black text-[10px] font-mono-tj uppercase tracking-wider px-2 py-1">

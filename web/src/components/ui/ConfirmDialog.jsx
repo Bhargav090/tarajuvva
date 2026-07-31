@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Button from './Button';
 
 /**
- * Modal confirm — used for logout and other confirmations.
+ * Modal confirm - used for logout and other confirmations.
  */
 export default function ConfirmDialog({
   open,

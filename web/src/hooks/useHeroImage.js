@@ -1,4 +1,4 @@
-// Hero image API hooks disabled — heroes use static frontend assets.
+// Hero image API hooks disabled - heroes use static frontend assets.
 // Home: web/src/assets/hero-banthibhojanam-ss2026.jpeg
 // Reimagine: web/src/assets/reimagine.mov
 

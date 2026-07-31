@@ -1,4 +1,4 @@
-/** Admin hero image UI disabled — heroes use static frontend assets. */
+/** Admin hero image UI disabled - heroes use static frontend assets. */
 export default function HeroImagesTab() {
   return null;
 }
@@ -31,7 +31,7 @@ const COPY = {
 };
 
 function formatDate(value) {
-  if (!value) return '—';
+  if (!value) return '-';
   return new Date(value).toLocaleString('en-IN', {
     day: 'numeric',
     month: 'short',

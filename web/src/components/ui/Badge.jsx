@@ -1,8 +1,8 @@
 import { STATUS_COLORS } from '../../utils/constants';
 
 /**
- * AccentPill — small label above a section title.
- * Badge      — status badge with auto-color from STATUS_COLORS map.
+ * AccentPill - small label above a section title.
+ * Badge      - status badge with auto-color from STATUS_COLORS map.
  */
 
 export function AccentPill({ children, color, className = '' }) {

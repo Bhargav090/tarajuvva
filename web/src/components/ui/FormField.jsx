@@ -1,5 +1,5 @@
 /**
- * FormField — reusable labelled form elements for light theme.
+ * FormField - reusable labelled form elements for light theme.
  * Exports: Input, Textarea, Select
  */
 

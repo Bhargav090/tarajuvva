@@ -38,7 +38,7 @@ export default function Checkout() {
   } = useOrderSubmit({
     items, total,
     user,
-    // Clear cart only — do not navigate away: a delayed navigate('/') was firing
+    // Clear cart only - do not navigate away: a delayed navigate('/') was firing
     // after users opened "My Orders" and pulled them back to the home page.
     onSuccess: () => clearCart(),
   });
@@ -159,7 +159,7 @@ export default function Checkout() {
                 <span className="mt-0.5 inline-block w-3.5 h-3.5 rounded-full border-2 border-black bg-[var(--tj-shop)] shrink-0" aria-hidden />
                 <span>
                   <span className="text-sm font-semibold text-[#0a0a0a] font-display block">Pay online (Razorpay)</span>
-                  <span className="text-xs text-black/55 font-body">UPI, cards, netbanking — secure checkout</span>
+                  <span className="text-xs text-black/55 font-body">UPI, cards, netbanking - secure checkout</span>
                 </span>
               </div>
             </div>

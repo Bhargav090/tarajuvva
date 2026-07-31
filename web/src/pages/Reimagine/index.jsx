@@ -134,7 +134,7 @@ export default function Reimagine() {
       {step === 0 && !isCustomize && (
         <VerticalPageHero
           bgVar="--tj-reimagine"
-          eyebrow="02 · Reimagine"
+          eyebrow="02 - Reimagine"
           headline={['Send the old.', 'Get the new.']}
           subtext="Pick a base. Pick an upcycle. We do the cutting, sewing, and slight emotional labour."
           testId="reimagine-hero"
@@ -260,7 +260,7 @@ export default function Reimagine() {
                             Custom
                           </p>
                           <p className="text-sm text-black/60 mt-1 leading-snug">
-                            {customizeSettings.feature || '15 min consultation call'} — your vision, our craft.
+                            {customizeSettings.feature || '15 min consultation call'} - your vision, our craft.
                           </p>
                           <span className="mt-3 md:mt-4 inline-flex items-center gap-1 text-xs font-mono-tj uppercase tracking-[0.18em] text-[#de78a4] group-hover:text-[#c45d8a]">
                             Book a slot <ArrowRight size={12} />

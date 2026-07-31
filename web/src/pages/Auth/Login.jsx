@@ -12,7 +12,7 @@ function getSafeLoginRedirect(from) {
   const target = typeof from === 'string' && from.startsWith('/') ? from : '/';
   if (target === '/login' || target === '/register') return '/';
   const isAdminPath = target === '/admin' || target.startsWith('/admin/');
-  // Never send a customer session to /admin — that bounces back to login in a loop.
+  // Never send a customer session to /admin - that bounces back to login in a loop.
   if (isAdminPath && !localStorage.getItem('admin_token')) return '/';
   return target;
 }
@@ -167,10 +167,10 @@ export default function Login() {
 
           {/* Google SSO */}
           <div id="google-signin-btn" className="mb-6 flex justify-center" />
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-[#241621]/12" />
-            <span className="text-[#241621]/40 text-xs font-body">or continue with email</span>
-            <div className="flex-1 h-px bg-[#241621]/12" />
+          <div className="flex items-center justify-center gap-3 mb-6 text-[#241621]/35 font-mono-tj text-xs">
+            <span aria-hidden>-</span>
+            <span className="text-[#241621]/40 font-body">or continue with email</span>
+            <span aria-hidden>-</span>
           </div>
 
           {/* Form */}

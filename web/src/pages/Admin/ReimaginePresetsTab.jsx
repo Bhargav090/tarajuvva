@@ -41,7 +41,7 @@ function SlotCard({ slot, uploading, onUpload, onRemove }) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[#241621]/25 text-xs font-body px-3 text-center">
-            No image — upload square photo
+            No image - upload square photo
           </div>
         )}
         {isUploading && (
@@ -124,7 +124,7 @@ export default function ReimaginePresetsTab() {
     <div className="max-w-5xl">
       <h1 className="text-2xl font-black text-[#241621] font-display mb-1">Reimagine images</h1>
       <p className="text-sm text-[#241621]/55 font-body mb-8">
-        Upload images shown on the Reimagine flow — base garments (step 1) and transformation presets (step 2).
+        Upload images shown on the Reimagine flow - base garments (step 1) and transformation presets (step 2).
         Square photos work best. JPEG, PNG, or WebP · max 8MB.
       </p>
 

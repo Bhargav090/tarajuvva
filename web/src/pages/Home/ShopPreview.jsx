@@ -23,7 +23,7 @@ export default function ShopPreview() {
       <div className="tj-container">
         <div className="flex items-start justify-between gap-6 mb-10">
           <div className="flex flex-col gap-1 max-w-xl">
-            <p className="tj-eyebrow m-0 leading-snug">01 · Shop</p>
+            <p className="tj-eyebrow m-0 leading-snug">01 - Shop</p>
             <h2 className="tj-h2 m-0 leading-tight text-[#0a0a0a]">
               Designed to do more.
             </h2>

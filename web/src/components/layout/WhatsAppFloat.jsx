@@ -2,7 +2,7 @@ import { useLocation } from 'react-router-dom';
 import { MessageCircle } from 'lucide-react';
 import { WHATSAPP_LINK, WHATSAPP_DISPLAY } from '../../utils/constants';
 
-/** Fixed WhatsApp chat button — hidden on admin routes. */
+/** Fixed WhatsApp chat button - hidden on admin routes. */
 export default function WhatsAppFloat() {
   const { pathname } = useLocation();
   if (pathname.startsWith('/admin')) return null;

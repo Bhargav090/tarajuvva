@@ -207,7 +207,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
 
   useEffect(() => {
     if (done || isCustomize) return;
-    // Remake no longer uses an intermediate payment step — open Razorpay from details
+    // Remake no longer uses an intermediate payment step - open Razorpay from details
     if (step === 4) {
       goToStep(3, {}, { replace: true });
       return;
@@ -224,7 +224,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     }
   }, [step, garment, transformation, conversionId, done, isCustomize, setSearchParams, goToStep]);
 
-  // Customize: drop legacy ?phase=payment — payment opens from the form directly
+  // Customize: drop legacy ?phase=payment - payment opens from the form directly
   useEffect(() => {
     if (!isCustomize || phase !== 'payment' || done) return;
     setSearchParams({ mode: 'customize' }, { replace: true });
@@ -311,7 +311,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       return {
         garment_type: 'customize',
         transformation: callback
-          ? 'Customize Consultation — Callback requested'
+          ? 'Customize Consultation - Callback requested'
           : 'Customize Consultation',
         is_consultation: callback ? '0' : '1',
         is_custom: '1',
@@ -478,7 +478,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       return;
     }
 
-    // Open Razorpay immediately — no intermediate payment screen
+    // Open Razorpay immediately - no intermediate payment screen
     if (needsReimaginePayment(isCustomize, details, basePrice, deliveryFees)) {
       void onPayment();
       return;
@@ -524,7 +524,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       toast.error('Please select Hyderabad & around or Outside Hyderabad');
       return;
     }
-    // Open Razorpay immediately — no intermediate payment screen
+    // Open Razorpay immediately - no intermediate payment screen
     if (needsReimaginePayment(false, details, basePrice, deliveryFees)) {
       void onPayment();
       return;

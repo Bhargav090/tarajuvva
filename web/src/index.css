@@ -6,7 +6,7 @@
   --font-body:    'Satoshi', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Cabinet Grotesk', 'Satoshi', ui-sans-serif, system-ui, sans-serif;
 
-  /* Brand color tokens — usable as bg-brand-green, text-brand-dark, etc. */
+  /* Brand color tokens - usable as bg-brand-green, text-brand-dark, etc. */
   --color-brand-bg:       #ffffff;
   --color-brand-bg-alt:   #f5f5f5;
   --color-brand-green:    #c8ff2e;
@@ -46,7 +46,7 @@
     overflow-x: hidden;
   }
 
-  /* Brand flower cursor — desktop / fine pointer only */
+  /* Brand flower cursor - desktop / fine pointer only */
   @media (pointer: fine) {
     html {
       cursor:
@@ -102,7 +102,7 @@
 
 /* ─── Utilities ──────────────────────────────────────────────────────────────  */
 @layer utilities {
-  /* Glyphs outside Roc demo range (₹, emoji, etc.) — Outfit/Poppins only */
+  /* Glyphs outside Roc demo range (₹, emoji, etc.) - Outfit/Poppins only */
   .font-fallback {
     font-family: Outfit, Poppins, system-ui, sans-serif;
   }
@@ -192,7 +192,7 @@
   .tj-mobile-nav-arrow--left { left: 0.35rem; }
   .tj-scroll-arrow--right,
   .tj-mobile-nav-arrow--right { right: 0.35rem; }
-  /* Inline variant — sits in flex gutters outside content (no absolute positioning). */
+  /* Inline variant - sits in flex gutters outside content (no absolute positioning). */
   .tj-scroll-arrow--inline {
     position: relative;
     top: auto;
@@ -206,7 +206,7 @@
   .section { padding: 5rem 1rem; }
   @media (min-width: 640px) { .section { padding: 6rem 1.5rem; } }
 
-  /* Fashion loop — outer dashed orbit */
+  /* Fashion loop - outer dashed orbit */
   @keyframes fashion-loop-orbit {
     to { transform: rotate(360deg); }
   }
@@ -233,7 +233,7 @@
     .tj-container { padding-left: 4rem; padding-right: 4rem; }
   }
 
-  /* Header brand mark — height-driven with max-width so mobile header stays usable */
+  /* Header brand mark - height-driven with max-width so mobile header stays usable */
   .tj-header-logo {
     display: block;
     height: 2.125rem;
@@ -255,7 +255,7 @@
     }
   }
 
-  /* Footer brand — align visible logo mark with tagline (PNG has side padding) */
+  /* Footer brand - align visible logo mark with tagline (PNG has side padding) */
   .tj-footer-brand {
     --footer-logo-h: clamp(5rem, 11vw + 2rem, 7.5rem);
   }
@@ -678,14 +678,6 @@
       gap: 0.75rem;
     }
   }
-  .tj-hero-meta--copy .tj-hero-meta-dash {
-    width: 2rem;
-  }
-  @media (min-width: 768px) {
-    .tj-hero-meta--copy .tj-hero-meta-dash {
-      width: 2.5rem;
-    }
-  }
 
   @media (min-width: 768px) {
     .tj-hero-body {
@@ -708,16 +700,6 @@
   .tj-hero-meta-label--natural {
     text-transform: none;
     letter-spacing: 0.14em;
-  }
-
-  .tj-hero-meta-dash {
-    flex-shrink: 0;
-    width: 5.5rem;
-    height: 1px;
-    background: rgba(0, 0, 0, 0.2);
-  }
-  @media (min-width: 768px) {
-    .tj-hero-meta-dash { width: 7rem; }
   }
 
   .tj-hero-copy {
@@ -935,7 +917,7 @@
     pointer-events: none;
   }
 
-  /* Homepage hero — editorial image frame (height capped in Hero.jsx) */
+  /* Homepage hero - editorial image frame (height capped in Hero.jsx) */
   .tj-hero-visual {
     position: relative;
     margin-left: auto;
@@ -957,7 +939,7 @@
     }
   }
 
-  /* Mobile home hero — full content width to align with CTA buttons (3:4) */
+  /* Mobile home hero - full content width to align with CTA buttons (3:4) */
   .tj-hero-visual--fluid {
     width: 100%;
     max-width: 100%;
@@ -1178,7 +1160,7 @@
     .tj-hero-visual-shimmer { animation: none; }
   }
 
-  /* Loop section — soft radial gradient blobs (reference layout) */
+  /* Loop section - soft radial gradient blobs (reference layout) */
   .tj-loop-blob {
     position: absolute;
     border-radius: 9999px;

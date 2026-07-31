@@ -1,7 +1,7 @@
 import { AccentPill } from './Badge';
 
 /**
- * PageBanner — full-width hero for sub-pages.
+ * PageBanner - full-width hero for sub-pages.
  */
 export default function PageBanner({ badge, badgeColor, title, subtitle, children, darkBg = false }) {
   return (

@@ -9,7 +9,7 @@ const api = axios.create({
 
 api.interceptors.request.use(cfg => {
   if (cfg.data instanceof FormData) {
-    // Axios 1.x uses AxiosHeaders — delete() is required so the browser sets multipart boundary.
+    // Axios 1.x uses AxiosHeaders - delete() is required so the browser sets multipart boundary.
     if (cfg.headers && typeof cfg.headers.delete === 'function') {
       cfg.headers.delete('Content-Type');
     } else if (cfg.headers) {
@@ -23,7 +23,7 @@ api.interceptors.request.use(cfg => {
     h?.Authorization ||
     h?.authorization;
   if (hasExplicitAuth) return cfg;
-  // Only attach customer token here — admin routes set Authorization explicitly.
+  // Only attach customer token here - admin routes set Authorization explicitly.
   // Falling back to admin_token caused shop orders to use an admin id and hit FK errors.
   const userToken = localStorage.getItem('user_token');
   if (userToken) cfg.headers['Authorization'] = `Bearer ${userToken}`;

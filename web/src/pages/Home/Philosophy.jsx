@@ -8,10 +8,10 @@ export default function Philosophy() {
     <section ref={ref} className="py-24 sm:py-32 px-4 bg-white overflow-hidden">
       <div className="max-w-4xl mx-auto text-center">
         {/* Decorative lines */}
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <div className="h-px flex-1 max-w-[80px] bg-[#241621]/15" />
+        <div className="flex items-center justify-center gap-3 mb-10 text-[#241621]/25 font-mono-tj">
+          <span aria-hidden>-</span>
           <span className="text-lg">🧵</span>
-          <div className="h-px flex-1 max-w-[80px] bg-[#241621]/15" />
+          <span aria-hidden>-</span>
         </div>
 
         <motion.blockquote
@@ -35,7 +35,7 @@ export default function Philosophy() {
           className="mt-8 text-[#241621]/50 font-display text-base sm:text-lg leading-relaxed max-w-2xl mx-auto"
         >
           The average wardrobe has 77 items. Most people regularly wear only 20% of them.
-          We exist to close that gap — through better buying, creative reimagining, and honest repurposing.
+          We exist to close that gap - through better buying, creative reimagining, and honest repurposing.
         </motion.p>
 
         {/* Stats row */}

@@ -29,7 +29,7 @@ import { DELIVERY_ZONE_LABELS } from '../../utils/delivery';
 import { downloadCsv, flattenOrderItems } from '../../utils/exportCsv';
 
 function formatDate(value) {
-  if (!value) return '—';
+  if (!value) return '-';
   return new Date(value).toLocaleString('en-IN', {
     day: 'numeric',
     month: 'short',
@@ -172,7 +172,7 @@ function OrderCard({ order, updateStatus }) {
   const shortId = String(order.id || '').slice(0, 8).toUpperCase();
   const items = Array.isArray(order.items) ? order.items : [];
   const itemCount = items.reduce((n, i) => n + (i.qty || 1), 0);
-  const paymentMethod = PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method || '—';
+  const paymentMethod = PAYMENT_METHOD_LABELS[order.payment_method] || order.payment_method || '-';
   const paymentStatus = order.payment_status
     ? PAYMENT_STATUS_LABELS[order.payment_status] || order.payment_status
     : null;
@@ -199,7 +199,7 @@ function OrderCard({ order, updateStatus }) {
         onClose={() => setShipOpen(false)}
         onConfirm={async (tracking_url) => {
           await updateStatus(order.id, 'shipped', { tracking_url });
-          toast.success('Marked shipped — tracking email sent');
+          toast.success('Marked shipped - tracking email sent');
         }}
       />
 
@@ -238,7 +238,7 @@ function OrderCard({ order, updateStatus }) {
           <p className="mt-3 text-xs text-[#241621]/50 font-body line-clamp-2">
             {itemCount} {itemCount === 1 ? 'item' : 'items'}
             {items.length
-              ? ` — ${items.map((it) => `${it.name}${it.size ? ` (${it.size})` : ''} ×${it.qty}`).join(', ')}`
+              ? ` - ${items.map((it) => `${it.name}${it.size ? ` (${it.size})` : ''} ×${it.qty}`).join(', ')}`
               : ''}
           </p>
         )}
@@ -297,7 +297,7 @@ function OrderCard({ order, updateStatus }) {
               </h3>
               <div className="space-y-3.5">
                 <DetailRow icon={User} label="Customer">
-                  <span className="font-display font-semibold">{order.user_name || '—'}</span>
+                  <span className="font-display font-semibold">{order.user_name || '-'}</span>
                 </DetailRow>
                 {order.user_phone && (
                   <DetailRow icon={Phone} label="Phone">
@@ -314,12 +314,12 @@ function OrderCard({ order, updateStatus }) {
                   </DetailRow>
                 )}
                 <DetailRow icon={MapPin} label="Delivery address">
-                  <span className="whitespace-pre-wrap">{order.address || '—'}</span>
+                  <span className="whitespace-pre-wrap">{order.address || '-'}</span>
                 </DetailRow>
                 {(order.delivery_zone || Number(order.delivery_fee) > 0) && (
                   <DetailRow icon={Truck} label="Delivery zone">
                     <span>
-                      {DELIVERY_ZONE_LABELS[order.delivery_zone] || order.delivery_zone || '—'}
+                      {DELIVERY_ZONE_LABELS[order.delivery_zone] || order.delivery_zone || '-'}
                       {order.delivery_fee != null
                         ? ` · ₹${Number(order.delivery_fee).toLocaleString('en-IN')}`
                         : ''}

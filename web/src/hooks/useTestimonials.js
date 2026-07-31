@@ -30,7 +30,7 @@ function pickHomeTestimonials(list) {
   return [...picked, ...rest].slice(0, 3);
 }
 
-/** Public — DB testimonials when present, else built-in defaults. */
+/** Public - DB testimonials when present, else built-in defaults. */
 export function useTestimonials() {
   const [items, setItems] = useState(
     pickHomeTestimonials(TESTIMONIALS.map((t, i) => ({ ...t, id: `default-${i}`, images: [], googleReviewUrl: null })))

@@ -106,7 +106,7 @@ function applyImageSlot(path) {
   };
 }
 
-/** URL field only for http(s) /uploads — hide huge data: URLs from the text input. */
+/** URL field only for http(s) /uploads - hide huge data: URLs from the text input. */
 function isEditableUrl(value) {
   const s = String(value || '').trim();
   return /^https?:\/\//i.test(s) || s.startsWith('/uploads/');
@@ -116,7 +116,7 @@ function urlFieldValue(stored) {
   return isEditableUrl(stored) ? stored : '';
 }
 
-/** Only send short refs the API accepts — never /api/media or data: URLs. */
+/** Only send short refs the API accepts - never /api/media or data: URLs. */
 function retainableImageRef(value) {
   const s = String(value || '').trim();
   if (/^https?:\/\//i.test(s) || s.startsWith('/uploads/')) return s;
@@ -536,7 +536,7 @@ export default function ReimagineConversionsTab() {
             value={form.to_label}
             onChange={onChange}
             required
-            placeholder="e.g. Dress — every section needs at least one to-style"
+            placeholder="e.g. Dress - every section needs at least one to-style"
           />
         )}
 
@@ -547,8 +547,8 @@ export default function ReimagineConversionsTab() {
                 label="From image"
                 hint={
                   isCreatingFrom
-                    ? '4:5 ratio recommended — 1200×1500 px, under 2MB.'
-                    : 'Shared look for this section — change only if you want to update it.'
+                    ? '4:5 ratio recommended - 1200×1500 px, under 2MB.'
+                    : 'Shared look for this section - change only if you want to update it.'
                 }
                 slot={fromSlot}
                 fileRef={fromFileRef}
@@ -559,7 +559,7 @@ export default function ReimagineConversionsTab() {
               />
               <ConversionImageField
                 label="To image"
-                hint="1:1 ratio recommended — 1200×1200 px, under 2MB."
+                hint="1:1 ratio recommended - 1200×1200 px, under 2MB."
                 slot={toSlot}
                 fileRef={toFileRef}
                 urlValue={form.to_image}

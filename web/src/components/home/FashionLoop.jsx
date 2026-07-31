@@ -121,7 +121,7 @@ export default function FashionLoop({
     <div className="relative w-full max-w-[min(100%,480px)] aspect-square mx-auto">
       {/* Safe gutter keeps edge nodes fully visible on mobile. */}
       <div className="absolute inset-12 sm:inset-12 md:inset-14">
-        {/* Outer dashed orbit — rotates */}
+        {/* Outer dashed orbit - rotates */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none fashion-loop-orbit"
           viewBox="0 0 200 200"
@@ -138,7 +138,7 @@ export default function FashionLoop({
           />
         </svg>
 
-        {/* Inner solid rings — static light grey */}
+        {/* Inner solid rings - static light grey */}
         <div className="absolute inset-6 rounded-full border border-black/20 pointer-events-none" />
         <div className="absolute inset-16 rounded-full border border-black/10 pointer-events-none" />
 
@@ -150,7 +150,7 @@ export default function FashionLoop({
             OS
           </p>
           <p className="text-[9px] sm:text-[10px] font-mono-tj uppercase tracking-[0.18em] text-black/45 mt-1.5">
-            v1.0 — IN
+            v1.0 - IN
           </p>
         </div>
 

@@ -280,7 +280,7 @@ export default function CustomizeFormWizard({
                         <p className="text-sm text-black/50">Loading time slots…</p>
                       ) : slots.length === 0 ? (
                         <p className="text-sm text-black/55">
-                          No times left on this date — try another date or request a callback below.
+                          No times left on this date - try another date or request a callback below.
                         </p>
                       ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-44 overflow-y-auto pr-1">

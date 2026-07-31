@@ -113,7 +113,7 @@ export default function OrderDetail() {
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold font-display bg-white border border-black/15 px-3 py-1.5">
                 <CreditCard size={12} />
                 {paymentLabel}
-                {paymentStatus ? ` · ${paymentStatus}` : ''}
+                {paymentStatus ? ` - ${paymentStatus}` : ''}
               </span>
             </div>
           </div>
@@ -153,9 +153,9 @@ export default function OrderDetail() {
               {(order.delivery_zone || Number(order.delivery_fee) > 0) && (
                 <InfoRow icon={Truck} label="Delivery">
                   <span>
-                    {DELIVERY_ZONE_LABELS[order.delivery_zone] || order.delivery_zone || '—'}
+                    {DELIVERY_ZONE_LABELS[order.delivery_zone] || order.delivery_zone || '-'}
                     {order.delivery_fee != null
-                      ? ` · ₹${Number(order.delivery_fee).toLocaleString('en-IN')}`
+                      ? ` - ₹${Number(order.delivery_fee).toLocaleString('en-IN')}`
                       : ''}
                   </span>
                 </InfoRow>

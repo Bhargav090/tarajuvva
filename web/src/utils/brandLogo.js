@@ -1,7 +1,7 @@
 import logoOnDarkBg from '../assets/icons/Artboard 2 copy 2@2x-8.png';
 import logoOnLightBg from '../assets/icons/Artboard 3@2x-8.png';
 
-/** True when foreground is light — use the white wordmark. */
+/** True when foreground is light - use the white wordmark. */
 export function isLightForeground(color) {
   if (!color) return false;
   const c = String(color).trim().toLowerCase();

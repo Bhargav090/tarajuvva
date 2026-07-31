@@ -1,4 +1,4 @@
-// Admin hero image validation disabled — heroes use static frontend assets.
+// Admin hero image validation disabled - heroes use static frontend assets.
 
 // Original implementation preserved below for reference.
 //

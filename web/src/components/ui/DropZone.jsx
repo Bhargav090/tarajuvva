@@ -119,7 +119,7 @@ export default function DropZone({ files, onAdd, onRemove, maxFiles = 5, variant
               {isDragActive ? 'Drop your images here' : 'Upload garment photos'}
             </p>
             <p className="text-black/45 text-xs mt-1 font-mono-tj uppercase tracking-wider">
-              Drag & drop or click — up to {maxFiles} images (max 4MB each)
+              Drag & drop or click - up to {maxFiles} images (max 4MB each)
             </p>
           </div>
         </div>

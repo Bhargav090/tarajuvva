@@ -1,4 +1,4 @@
-/** Resolve image src for <img> — base64 and https pass through; /api/media and /uploads stay same-origin when VITE_API_BASE_URL is /api. */
+/** Resolve image src for <img> - base64 and https pass through; /api/media and /uploads stay same-origin when VITE_API_BASE_URL is /api. */
 export function uploadUrl(path) {
   if (!path) return '';
   if (/^data:image\//i.test(path)) return path;

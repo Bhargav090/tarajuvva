@@ -46,7 +46,7 @@ export default function ReimagineStepBar({ currentStep, trailingAction = null })
                   </span>
                 </div>
                 {i < REIMAGINE_FLOW.length - 1 && (
-                  <span className="w-6 h-px bg-black/15 shrink-0" aria-hidden />
+                  <span className="text-black/30 shrink-0" aria-hidden>-</span>
                 )}
               </div>
             );

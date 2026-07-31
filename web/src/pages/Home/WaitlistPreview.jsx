@@ -33,7 +33,7 @@ export default function WaitlistPreview() {
         {BLOCKS.map(block => (
           <div key={block.action} className="p-10 md:p-14" style={{ background: block.bg, color: block.text }}>
             <p className="tj-eyebrow" style={{ color: block.text === '#ffffff' ? 'rgba(255,255,255,0.75)' : '#241621' }}>
-              {block.num} · {block.action}
+              {block.num} - {block.action}
             </p>
             <h3 className="tj-h2 mt-3 text-3xl md:text-4xl" style={{ color: block.text }}>
               {block.headline}

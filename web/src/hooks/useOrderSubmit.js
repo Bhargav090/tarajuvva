@@ -52,7 +52,7 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
     if (!orderId || !rzp?.order_id || !rzp?.key_id) {
       const hint = data.order && !rzp
         ? 'Online payment is not available on the server yet. Redeploy the latest backend and set RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET in backend/.env.'
-        : 'Could not start payment — missing payment details from server.';
+        : 'Could not start payment - missing payment details from server.';
       throw new Error(hint);
     }
 
@@ -95,7 +95,13 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
     }
     setLoading(true);
     try {
-      const orderItems = items.map(({ id, qty, size }) => ({ id, qty, ...(size ? { size } : {}) }));
+      const orderItems = items.map(({ id, qty, size, custom_measurements }) => {
+        const line = { id, qty, ...(size ? { size } : {}) };
+        if (String(size || '').toLowerCase() === 'custom' && custom_measurements) {
+          line.custom_measurements = custom_measurements;
+        }
+        return line;
+      });
       await placeRazorpayOrder(orderItems);
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Could not place order';

@@ -7,7 +7,7 @@ import { ExternalLink } from 'lucide-react';
 
 /**
  * Single order line with thumbnail (click → full view) and link to product.
- * @param {boolean} openInNewTab — open product page in a new tab (admin review)
+ * @param {boolean} openInNewTab - open product page in a new tab (admin review)
  */
 export default function OrderItemLine({ item, className = '', compact = false, openInNewTab = false }) {
   const [lightbox, setLightbox] = useState(null);
@@ -26,9 +26,14 @@ export default function OrderItemLine({ item, className = '', compact = false, o
       </p>
       <p className="text-xs text-black/45 font-body mt-0.5">
         Qty {item.qty}
-        {item.size ? ` · Size ${item.size}` : ''}
-        {item.price != null ? ` · ₹${Number(item.price).toLocaleString('en-IN')} each` : ''}
+        {item.size ? ` - Size ${item.size}` : ''}
+        {item.price != null ? ` - ₹${Number(item.price).toLocaleString('en-IN')} each` : ''}
       </p>
+      {Array.isArray(item.custom_measurements) && item.custom_measurements.length > 0 && (
+        <p className="text-[11px] text-black/50 font-body mt-1 leading-snug">
+          {item.custom_measurements.map((m) => `${m.label || m.key}: ${m.value}`).join(' · ')}
+        </p>
+      )}
     </>
   );
 

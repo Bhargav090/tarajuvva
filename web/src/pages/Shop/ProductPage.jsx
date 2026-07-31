@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ShoppingBag, ArrowLeft, Tag, ChevronLeft, ChevronRight, Heart, ShieldCheck, RefreshCw, Hand } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Tag, ChevronLeft, ChevronRight, ChevronDown, Heart, ShieldCheck, RefreshCw, Hand } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../context/CartContext';
@@ -16,7 +16,7 @@ import AsyncImage from '../../components/ui/AsyncImage';
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { product, loading } = useProduct(id);
+  const { product, sizeChart, loading } = useProduct(id);
   const { addItem } = useCart();
   const { user } = useAuth();
   const { isWishlisted, toggleWishlist, loading: wishlistLoading } = useWishlist();
@@ -24,11 +24,17 @@ export default function ProductPage() {
   const [adding, setAdding] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [customValues, setCustomValues] = useState({});
+  const [measureError, setMeasureError] = useState(false);
 
   useEffect(() => {
     setActiveImg(0);
     setSelectedSize(null);
     setSizeError(false);
+    setDetailsOpen(false);
+    setCustomValues({});
+    setMeasureError(false);
   }, [product?.id]);
 
   if (loading) return (
@@ -45,10 +51,17 @@ export default function ProductPage() {
   );
 
   const hasSizes = Array.isArray(product?.sizes) && product.sizes.length > 0;
-  const selectedSizeRow = hasSizes
-    ? product.sizes.find((s) => s.label === selectedSize)
-    : null;
+  const measureColumns = Array.isArray(sizeChart?.columns) ? sizeChart.columns : [];
+  const showCustom = product.custom_sizing !== false && measureColumns.length > 0;
+  const isCustom = selectedSize === 'Custom';
+  const needsSizePick = hasSizes || showCustom;
+
+  const selectedSizeRow =
+    hasSizes && !isCustom ? product.sizes.find((s) => s.label === selectedSize) : null;
   const remainingStock = (() => {
+    if (isCustom) {
+      return typeof product.stock === 'number' ? product.stock : null;
+    }
     if (selectedSizeRow) {
       if (typeof selectedSizeRow.stock === 'number') return selectedSizeRow.stock;
       return selectedSizeRow.available === false ? 0 : null;
@@ -56,17 +69,46 @@ export default function ProductPage() {
     if (hasSizes) return null;
     return typeof product.stock === 'number' ? product.stock : null;
   })();
+
+  const allStandardOos =
+    hasSizes &&
+    product.sizes.every((s) =>
+      typeof s.stock === 'number' ? s.stock <= 0 : s.available === false
+    );
+  const customAvailable =
+    showCustom && (typeof product.stock !== 'number' || product.stock > 0);
   const isOutOfStock =
-    remainingStock === 0 ||
-    (!hasSizes && product.stock === 0) ||
-    (hasSizes &&
-      product.sizes.every((s) =>
-        typeof s.stock === 'number' ? s.stock <= 0 : s.available === false
-      ));
+    (allStandardOos && !customAvailable) ||
+    (!hasSizes && !showCustom && product.stock === 0) ||
+    remainingStock === 0;
+
+  const buildCustomMeasurements = () =>
+    measureColumns.map((col) => ({
+      key: col.key,
+      label: col.label || col.key,
+      value: String(customValues[col.key] || '').trim(),
+    }));
 
   const handleAdd = () => {
-    if (hasSizes && !selectedSize) {
+    if (needsSizePick && !selectedSize) {
       setSizeError(true);
+      return;
+    }
+    if (isCustom) {
+      const measurements = buildCustomMeasurements();
+      if (measurements.some((m) => !m.value)) {
+        setMeasureError(true);
+        toast.error('Enter all custom measurements');
+        return;
+      }
+      if (remainingStock === 0) {
+        toast.error('This product is out of stock');
+        return;
+      }
+      setAdding(true);
+      addItem(product, 'Custom', measurements);
+      toast.success(`${product.name} (Custom) added to cart!`);
+      setTimeout(() => setAdding(false), 600);
       return;
     }
     if (remainingStock === 0) {
@@ -75,7 +117,7 @@ export default function ProductPage() {
     }
     setAdding(true);
     addItem(product, selectedSize);
-    toast.success(`${product.name}${selectedSize ? ` (${selectedSize})` : ''} added to cart! 🛍`);
+    toast.success(`${product.name}${selectedSize ? ` (${selectedSize})` : ''} added to cart!`);
     setTimeout(() => setAdding(false), 600);
   };
 
@@ -106,6 +148,7 @@ export default function ProductPage() {
   const waysToWear = Array.isArray(product.ways_to_wear)
     ? product.ways_to_wear.map((w) => String(w).trim()).filter(Boolean)
     : [];
+  const detailsAndCare = String(product.details_and_care || '').trim();
 
   const goPrevImg = () => {
     if (gallery.length <= 1) return;
@@ -131,7 +174,7 @@ export default function ProductPage() {
             <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-white relative group">
               <AsyncImage
                 src={gallery[activeImg]}
-                alt={`${product.name}${activeImg === 0 ? '' : ` — view ${activeImg + 1}`}`}
+                alt={`${product.name}${activeImg === 0 ? '' : ` - view ${activeImg + 1}`}`}
                 fill
                 showSpinner
                 fallbackSrc={PRODUCT_IMAGE_PLACEHOLDER}
@@ -226,60 +269,121 @@ export default function ProductPage() {
             <p className="text-[#241621]/65 font-body text-base leading-relaxed mb-8">{product.description}</p>
 
             {/* Size selector */}
-            {hasSizes && (
+            {needsSizePick && (
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-3">
                   <p className={`text-sm font-bold font-display ${sizeError ? 'text-[#e34334]' : 'text-[#241621]'}`}>
-                    Select size{selectedSize ? ` — ${selectedSize}` : ''}{sizeError ? ' (required)' : ''}
+                    Select size{selectedSize ? ` - ${selectedSize}` : ''}{sizeError ? ' (required)' : ''}
                   </p>
-                  <SizeChartLink product={product} />
+                  {(hasSizes || showCustom) && <SizeChartLink product={product} />}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {product.sizes.map(s => {
-                    const isSelected = selectedSize === s.label;
-                    const isOOS =
-                      typeof s.stock === 'number' ? s.stock <= 0 : s.available === false;
-                    return (
-                      <button
-                        key={s.label}
-                        type="button"
-                        disabled={isOOS}
-                        onClick={() => {
-                          if (!isOOS) {
-                            setSelectedSize(s.label);
-                            setSizeError(false);
-                          }
-                        }}
-                        title={isOOS ? 'Out of stock' : s.label}
-                        className={[
-                          'relative min-w-[3.5rem] h-10 px-2 text-sm font-bold font-display border transition-all',
-                          isOOS
-                            ? 'border-[#241621]/12 text-[#241621]/25 bg-[#241621]/3 cursor-not-allowed'
-                            : isSelected
-                              ? 'border-black bg-black text-white'
-                              : 'border-[#241621]/20 text-[#241621] hover:border-black',
-                        ].join(' ')}
-                      >
-                        <span className="block leading-none">{s.label}</span>
-                        {isOOS && (
-                          <span
-                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                            aria-hidden
-                          >
-                            <span className="block w-[110%] h-px bg-[#241621]/20 rotate-[-30deg] absolute" />
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
+                  {hasSizes &&
+                    product.sizes.map((s) => {
+                      const isSelected = selectedSize === s.label;
+                      const isOOS =
+                        typeof s.stock === 'number' ? s.stock <= 0 : s.available === false;
+                      return (
+                        <button
+                          key={s.label}
+                          type="button"
+                          disabled={isOOS}
+                          onClick={() => {
+                            if (!isOOS) {
+                              setSelectedSize(s.label);
+                              setSizeError(false);
+                              setMeasureError(false);
+                            }
+                          }}
+                          title={isOOS ? 'Out of stock' : s.label}
+                          className={[
+                            'relative min-w-[3.5rem] h-10 px-2 text-sm font-bold font-display border transition-all',
+                            isOOS
+                              ? 'border-[#241621]/12 text-[#241621]/25 bg-[#241621]/3 cursor-not-allowed'
+                              : isSelected
+                                ? 'border-black bg-black text-white'
+                                : 'border-[#241621]/20 text-[#241621] hover:border-black',
+                          ].join(' ')}
+                        >
+                          <span className="block leading-none">{s.label}</span>
+                          {isOOS && (
+                            <span
+                              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                              aria-hidden
+                            >
+                              <span className="block w-[110%] h-px bg-[#241621]/20 rotate-[-30deg] absolute" />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  {showCustom && (
+                    <button
+                      type="button"
+                      disabled={!customAvailable}
+                      onClick={() => {
+                        if (!customAvailable) return;
+                        setSelectedSize('Custom');
+                        setSizeError(false);
+                      }}
+                      title={customAvailable ? 'Custom sizing' : 'Out of stock'}
+                      className={[
+                        'relative min-w-[3.5rem] h-10 px-3 text-sm font-bold font-display border transition-all',
+                        !customAvailable
+                          ? 'border-[#241621]/12 text-[#241621]/25 bg-[#241621]/3 cursor-not-allowed'
+                          : isCustom
+                            ? 'border-black bg-black text-white'
+                            : 'border-[#241621]/20 text-[#241621] hover:border-black',
+                      ].join(' ')}
+                    >
+                      Custom
+                    </button>
+                  )}
                 </div>
                 {sizeError && (
                   <p className="text-xs text-[#e34334] mt-2 font-display">Please select a size to continue.</p>
                 )}
+                {isCustom && (
+                  <div className="mt-4 border border-[#241621]/15 p-4 space-y-3">
+                    <p className="text-sm font-bold font-display text-[#241621]">
+                      Your measurements
+                    </p>
+                    <p className="text-xs text-[#241621]/50 font-body">
+                      Enter each measurement from the size chart for this garment.
+                    </p>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {measureColumns.map((col) => (
+                        <label key={col.key} className="block">
+                          <span className="block text-xs font-semibold font-display text-[#241621]/70 mb-1">
+                            {col.label || col.key}
+                          </span>
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={customValues[col.key] || ''}
+                            onChange={(e) => {
+                              setCustomValues((prev) => ({ ...prev, [col.key]: e.target.value }));
+                              setMeasureError(false);
+                            }}
+                            placeholder="cm"
+                            className={`w-full h-10 px-3 border bg-white text-sm font-body text-[#241621] outline-none focus:border-black ${
+                              measureError && !String(customValues[col.key] || '').trim()
+                                ? 'border-[#e34334]'
+                                : 'border-[#241621]/20'
+                            }`}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                    {measureError && (
+                      <p className="text-xs text-[#e34334] font-display">All measurements are required for custom sizing.</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Ways to wear — only when admin has added entries */}
+            {/* Ways to wear - only when admin has added entries */}
             {waysToWear.length > 0 && (
               <div className="mb-8">
                 <p className="text-sm font-bold font-display text-[#241621] mb-3">Ways to wear</p>
@@ -294,6 +398,31 @@ export default function ProductPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {/* Details and care - optional accordion from product configurator */}
+            {detailsAndCare && (
+              <div className="mb-8 border border-[#241621]/15">
+                <button
+                  type="button"
+                  onClick={() => setDetailsOpen((o) => !o)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left"
+                  aria-expanded={detailsOpen}
+                >
+                  <span className="text-sm font-bold font-display text-[#241621]">Details and care</span>
+                  <ChevronDown
+                    size={16}
+                    className={`shrink-0 text-[#241621]/45 transition-transform ${detailsOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {detailsOpen && (
+                  <div className="px-4 pb-4 border-t border-[#241621]/10 pt-3">
+                    <p className="text-sm text-[#241621]/70 font-body leading-relaxed whitespace-pre-line">
+                      {detailsAndCare}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -313,7 +442,7 @@ export default function ProductPage() {
               <Button
                 variant="primary" size="xl" fullWidth icon={ShoppingBag}
                 onClick={handleAdd} loading={adding}
-                disabled={isOutOfStock || (hasSizes && remainingStock === 0)}
+                disabled={isOutOfStock || (needsSizePick && remainingStock === 0 && selectedSize)}
               >
                 {isOutOfStock || remainingStock === 0 ? 'Out of Stock' : 'Add to Cart'}
               </Button>

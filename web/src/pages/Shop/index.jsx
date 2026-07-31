@@ -47,7 +47,7 @@ export default function Shop() {
         <div className="tj-container relative py-6 md:py-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-10">
             <div className="min-w-0">
-              <p className="tj-eyebrow !text-black/50 m-0">01 · Shop</p>
+              <p className="tj-eyebrow !text-black/50 m-0">01 - Shop</p>
               <h1 className="mt-1.5 font-display text-[1.85rem] sm:text-[2.15rem] md:text-[2.5rem] font-extrabold tracking-[-0.03em] leading-[1.08] text-[#0a0a0a] m-0">
                 Designed to{' '}
                 <span className="tj-vertical-hero-highlight whitespace-nowrap">
@@ -57,7 +57,7 @@ export default function Shop() {
             </div>
             <p className="text-sm text-black/60 leading-snug max-w-[22rem] m-0 sm:text-right sm:pb-1">
               Reversible, adjustable, or packed with utility loops and playful
-              pockets — garments that adapt with you.
+              pockets - garments that adapt with you.
             </p>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function Shop() {
             title={showSaleOnly ? 'No sale items right now.' : 'Nothing in this category yet.'}
             desc={
               showSaleOnly
-                ? 'Check back soon — we only list 50% off and deeper here.'
+                ? 'Check back soon - we only list 50% off and deeper here.'
                 : 'Try Everything or another filter.'
             }
           />

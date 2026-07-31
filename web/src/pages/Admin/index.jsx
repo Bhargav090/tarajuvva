@@ -23,8 +23,8 @@ import { Spinner, TableSkeleton } from '../../components/ui/Skeleton';
 import { REIMAGINE_STATUSES, PICKUP_PERIOD_LABELS } from '../../utils/constants';
 import ProductConfiguratorTab from './ProductConfiguratorTab';
 import SizeChartsTab from './SizeChartsTab';
-// import HeroImagesTab from './HeroImagesTab'; // disabled — heroes use static assets
-// import ReimaginePresetsTab from './ReimaginePresetsTab'; // disabled — reimagine images use static assets
+// import HeroImagesTab from './HeroImagesTab'; // disabled - heroes use static assets
+// import ReimaginePresetsTab from './ReimaginePresetsTab'; // disabled - reimagine images use static assets
 import ReimagineCustomizeTab from './ReimagineCustomizeTab';
 import DeliveryTab from './DeliveryTab';
 import ReimagineConversionsTab from './ReimagineConversionsTab';
@@ -37,7 +37,7 @@ import PaginationBar from '../../components/ui/PaginationBar';
 import LazyReimagineImages from '../../components/reimagine/LazyReimagineImages';
 
 function formatDate(value) {
-  if (!value) return '—';
+  if (!value) return '-';
   return new Date(value).toLocaleString('en-IN', {
     day: 'numeric',
     month: 'short',
@@ -62,7 +62,7 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
         </div>
         {sub && <span className="text-xs text-[#a8e000] font-semibold font-display">{sub}</span>}
       </div>
-      <p className="text-2xl font-black text-[#241621] font-display">{value ?? '—'}</p>
+      <p className="text-2xl font-black text-[#241621] font-display">{value ?? '-'}</p>
       <p className="text-xs text-[#241621]/45 font-body mt-1">{label}</p>
     </div>
   );
@@ -217,7 +217,7 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
-      {/* Main — offset fixed sidebar on desktop */}
+      {/* Main - offset fixed sidebar on desktop */}
       <div className="flex-1 min-w-0 lg:ml-56">
         {/* Mobile topbar */}
         <div className="lg:hidden flex items-center gap-4 px-4 py-4 bg-white border-b border-[#241621]/8 sticky top-0 z-20">
@@ -336,7 +336,7 @@ function ReimagineTab({ kind = 'orders' }) {
           <p className="text-sm text-[#241621]/50 font-body mt-1">
             {isConsultations
               ? 'Booked consultations and callback requests.'
-              : 'Garment remake orders only — consultations are listed under Consultations.'}
+              : 'Garment remake orders only - consultations are listed under Consultations.'}
           </p>
         </div>
         <Button type="button" variant="outline-green" size="sm" onClick={exportRequests} disabled={!requests.length}>
@@ -377,16 +377,16 @@ function ReimagineTab({ kind = 'orders' }) {
             <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-sm border-t border-[#241621]/8 pt-4">
               <div>
                 <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Phone</dt>
-                <dd className="text-[#241621] font-body">{r.user_phone || '—'}</dd>
+                <dd className="text-[#241621] font-body">{r.user_phone || '-'}</dd>
               </div>
               <div>
                 <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Email</dt>
-                <dd className="text-[#241621] font-body break-all">{r.user_email || '—'}</dd>
+                <dd className="text-[#241621] font-body break-all">{r.user_email || '-'}</dd>
               </div>
               {r.callback_requested && (
                 <div className="sm:col-span-2">
                   <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Consultation</dt>
-                  <dd className="text-[#9d4a6f] font-body font-medium">Callback requested — contact customer to schedule</dd>
+                  <dd className="text-[#9d4a6f] font-body font-medium">Callback requested - contact customer to schedule</dd>
                 </div>
               )}
               {r.consultation_date && r.consultation_time && (
@@ -409,7 +409,7 @@ function ReimagineTab({ kind = 'orders' }) {
                         : null,
                     ]
                       .filter(Boolean)
-                      .join(' · ') || '—'}
+                      .join(' · ') || '-'}
                   </dd>
                 </div>
               )}
@@ -423,7 +423,7 @@ function ReimagineTab({ kind = 'orders' }) {
                           month: 'short',
                           year: 'numeric',
                         })
-                      : '—'}
+                      : '-'}
                     {r.pickup_period
                       ? ` · ${PICKUP_PERIOD_LABELS[r.pickup_period] || r.pickup_period}`
                       : ''}
@@ -432,13 +432,13 @@ function ReimagineTab({ kind = 'orders' }) {
               )}
               <div className="sm:col-span-2">
                 <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Pickup / delivery address</dt>
-                <dd className="text-[#241621] font-body whitespace-pre-wrap">{r.address || '—'}</dd>
+                <dd className="text-[#241621] font-body whitespace-pre-wrap">{r.address || '-'}</dd>
               </div>
               {(r.delivery_zone || Number(r.delivery_fee) > 0) && (
                 <div>
                   <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Delivery zone</dt>
                   <dd className="text-[#241621] font-body">
-                    {r.delivery_zone || '—'}
+                    {r.delivery_zone || '-'}
                     {r.delivery_fee != null
                       ? ` · ₹${Number(r.delivery_fee).toLocaleString('en-IN')}`
                       : ''}

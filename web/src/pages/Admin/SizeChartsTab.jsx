@@ -156,7 +156,7 @@ export default function SizeChartsTab() {
     <div className="max-w-4xl">
       <h1 className="text-2xl font-black text-[#341631] font-display mb-2">Size charts</h1>
       <p className="text-sm text-[#341631]/55 font-body mb-8 max-w-2xl">
-        Manage measurement tables for letter (XS–XXL) and numeric (28–46) sizing, separately for tops and bottoms.
+        Manage measurement tables for letter (XS-XXL) and numeric (28-46) sizing, separately for tops and bottoms.
         Products use the chart that matches their size type and garment type.
       </p>
 

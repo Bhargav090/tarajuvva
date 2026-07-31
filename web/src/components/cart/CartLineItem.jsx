@@ -3,7 +3,7 @@ import { productHeroImage } from '../../utils/productImage';
 import AsyncImage from '../ui/AsyncImage';
 
 /**
- * Single cart row — thumbnail, qty controls, remove. Used in bag drawer & checkout.
+ * Single cart row - thumbnail, qty controls, remove. Used in bag drawer & checkout.
  */
 export default function CartLineItem({ item, onRemove, onUpdateQty }) {
   return (
@@ -27,6 +27,11 @@ export default function CartLineItem({ item, onRemove, onUpdateQty }) {
               <span className="inline-block mt-1 text-[10px] font-bold font-display uppercase tracking-wider bg-black text-white px-2 py-0.5">
                 Size {item.size}
               </span>
+            )}
+            {Array.isArray(item.custom_measurements) && item.custom_measurements.length > 0 && (
+              <p className="mt-1.5 text-[11px] text-black/55 font-body leading-snug">
+                {item.custom_measurements.map((m) => `${m.label || m.key}: ${m.value}`).join(' · ')}
+              </p>
             )}
           </div>
           <button

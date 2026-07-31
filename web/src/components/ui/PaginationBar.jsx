@@ -24,7 +24,7 @@ export default function PaginationBar({
     <div className={`flex flex-wrap items-center justify-between gap-3 pt-4 ${className}`.trim()}>
       <p className="text-xs text-[#241621]/50 font-body">
         Page {page} of {totalPages}
-        {total > 0 ? ` · ${total} total` : ''}
+        {total > 0 ? ` - ${total} total` : ''}
       </p>
       <div className="flex items-center gap-2">
         <button

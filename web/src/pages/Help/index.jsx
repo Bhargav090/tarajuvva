@@ -21,8 +21,8 @@ function ShippingPolicyBody({ fees }) {
       <h4>Processing Time</h4>
       <p className="font-semibold text-black/80">Shop Orders</p>
       <ul>
-        <li>Ready-to-Ship products: 2–4 business days</li>
-        <li>Made-to-Order garments: 7–14 business days</li>
+        <li>Ready-to-Ship products: 2-4 business days</li>
+        <li>Made-to-Order garments: 7-14 business days</li>
       </ul>
       <p className="font-semibold text-black/80">Reimagine Orders</p>
       <p>
@@ -36,8 +36,8 @@ function ShippingPolicyBody({ fees }) {
       <h4>Delivery Time</h4>
       <p>Within India:</p>
       <ul>
-        <li>Metro Cities: 2–5 business days</li>
-        <li>Other Locations: 4–8 business days</li>
+        <li>Metro Cities: 2-5 business days</li>
+        <li>Other Locations: 4-8 business days</li>
       </ul>
       <p>Delivery timelines may vary during festivals, weather disruptions or courier delays.</p>
       <h4>Shipping Charges</h4>
@@ -65,7 +65,7 @@ const STATIC_SECTIONS = [
     body: (
       <>
         <p>
-          Since every Tarajuvva garment is handmade—and many are produced specifically for you—we encourage
+          Since every Tarajuvva garment is handmade-and many are produced specifically for you-we encourage
           thoughtful purchases. However, if something isn’t right, we’re here to help.
         </p>
         <h4>Returns</h4>
@@ -110,7 +110,7 @@ const STATIC_SECTIONS = [
           something you’ll love wearing again. Whether it’s a shirt, saree, kurti or pair of pants, we help
           extend the life of your clothing through thoughtful redesign.
         </p>
-        <h4>Option 1 – Preset Upcycles</h4>
+        <h4>Option 1 - Preset Upcycles</h4>
         <ol>
           <li>Select your garment type (shirts, pants, kurtis, sarees).</li>
           <li>Choose a curated preset upcycle.</li>
@@ -120,12 +120,12 @@ const STATIC_SECTIONS = [
           <li>Place your order and complete payment.</li>
           <li>We assess, upcycle by hand, and ship it back to you.</li>
         </ol>
-        <h4>Option 2 – Custom Reimagine</h4>
+        <h4>Option 2 - Custom Reimagine</h4>
         <ol>
           <li>Book a 20-minute design consultation (₹299).</li>
           <li>Share your vision, garment, and style preferences.</li>
           <li>Receive a personalised quote (design, pricing, timeline).</li>
-          <li>Approve the project — or stop after consultation if you prefer.</li>
+          <li>Approve the project - or stop after consultation if you prefer.</li>
           <li>We arrange pickup, upcycle, and deliver.</li>
         </ol>
       </>
@@ -321,7 +321,7 @@ const STATIC_SECTIONS = [
             </a>
           </li>
         </ul>
-        <p>We’ll do our best to respond within 1–2 business days.</p>
+        <p>We’ll do our best to respond within 1-2 business days.</p>
       </>
     ),
   },
@@ -417,7 +417,7 @@ export default function Help() {
             seamless as possible.
           </p>
           <p className="mt-4 max-w-2xl text-black/60 font-body">
-            If you can’t find what you’re looking for, feel free to get in touch—we’re always happy to help.
+            If you can’t find what you’re looking for, feel free to get in touch-we’re always happy to help.
           </p>
         </div>
       </section>

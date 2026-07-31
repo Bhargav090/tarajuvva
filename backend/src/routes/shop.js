@@ -100,7 +100,10 @@ async function resolveOrderItems(rawItems) {
       throw err;
     }
 
-    const product = await get('SELECT id, name, price, images, stock, sizes FROM products WHERE id = ?', [id]);
+    const product = await get(
+      'SELECT id, name, price, images, stock, sizes, size_type, garment_type, custom_sizing FROM products WHERE id = ?',
+      [id]
+    );
     if (!product) {
       const err = new Error(`Product not found: ${id}`);
       err.status = 404;
@@ -109,7 +112,26 @@ async function resolveOrderItems(rawItems) {
 
     const sizeLabel = line.size ? String(line.size).trim() : '';
     const sizes = parseJsonArray(product.sizes);
-    if (sizes.length > 0) {
+    const customEnabled = product.custom_sizing == null ? true : Boolean(Number(product.custom_sizing));
+    const isCustom = isCustomSizeLabel(sizeLabel);
+    let customMeasurements = null;
+
+    if (isCustom) {
+      if (!customEnabled) {
+        const err = new Error(`Custom sizing is not available for ${product.name}`);
+        err.status = 400;
+        throw err;
+      }
+      customMeasurements = await resolveCustomMeasurements(product, line.custom_measurements);
+      const stockNum = Math.max(0, parseInt(String(product.stock ?? 0), 10) || 0);
+      if (stockNum < qty) {
+        const err = new Error(
+          stockNum <= 0 ? `${product.name} is out of stock` : `Only ${stockNum} left for ${product.name}`
+        );
+        err.status = 400;
+        throw err;
+      }
+    } else if (sizes.length > 0) {
       if (!sizeLabel) {
         const err = new Error(`Please select a size for ${product.name}`);
         err.status = 400;
@@ -150,7 +172,8 @@ async function resolveOrderItems(rawItems) {
     const image = pickStorableImage(parseImages(product.images));
     const orderLine = { id: product.id, name: product.name, price: product.price, qty };
     if (image) orderLine.image = image;
-    if (sizeLabel) orderLine.size = sizeLabel;
+    if (sizeLabel) orderLine.size = isCustom ? 'Custom' : sizeLabel;
+    if (customMeasurements) orderLine.custom_measurements = customMeasurements;
     items.push(orderLine);
     total += product.price * qty;
   }
@@ -165,6 +188,12 @@ async function decrementStockForOrder(orderItems) {
     if (!product) continue;
     const qty = Math.max(1, parseInt(line.qty, 10) || 1);
     const sizes = parseJsonArray(product.sizes);
+    if (isCustomSizeLabel(line.size)) {
+      // Custom / made-to-measure: decrement overall stock only.
+      const prev = Math.max(0, parseInt(String(product.stock ?? 0), 10) || 0);
+      await run('UPDATE products SET stock = ? WHERE id = ?', [Math.max(0, prev - qty), product.id]);
+      continue;
+    }
     if (sizes.length > 0 && line.size) {
       const next = sizes.map((s) => {
         if (String(s.label).toUpperCase() !== String(line.size).toUpperCase()) {
@@ -260,9 +289,55 @@ const parseProduct = (p) => ({
   size_type: p.size_type || null,
   garment_type: p.garment_type || null,
   image_tag: (p.image_tag && String(p.image_tag).trim()) || null,
+  details_and_care: (p.details_and_care && String(p.details_and_care).trim()) || null,
+  // Default on when column missing / null (legacy rows before ALTER).
+  custom_sizing: p.custom_sizing == null ? true : Boolean(Number(p.custom_sizing)),
 });
 
-/** Letter sizes: XS–XXXL, FREE, short codes, or ranges like S-M / M-L. */
+function isCustomSizeLabel(label) {
+  return String(label || '').trim().toLowerCase() === 'custom';
+}
+
+/** Normalize custom measurement payload against the product's size-chart columns. */
+async function resolveCustomMeasurements(product, rawMeasurements) {
+  const chartKey = chartKeyForProduct(product.size_type, product.garment_type);
+  if (!chartKey) {
+    const err = new Error(`Custom sizing needs a size chart for ${product.name}`);
+    err.status = 400;
+    throw err;
+  }
+  const chart = await getSizeChart(chartKey);
+  const columns = Array.isArray(chart?.columns) ? chart.columns : [];
+  if (!columns.length) {
+    const err = new Error(`No measurements configured for ${product.name}`);
+    err.status = 400;
+    throw err;
+  }
+  const raw = (() => {
+    if (Array.isArray(rawMeasurements)) {
+      return rawMeasurements.reduce((acc, m) => {
+        if (m && m.key != null) acc[String(m.key)] = m.value;
+        return acc;
+      }, {});
+    }
+    return rawMeasurements && typeof rawMeasurements === 'object' ? rawMeasurements : {};
+  })();
+  const list = [];
+  for (const col of columns) {
+    const key = String(col.key).trim();
+    const label = String(col.label || key).trim();
+    const value = raw[key] != null ? String(raw[key]).trim() : '';
+    if (!value) {
+      const err = new Error(`Please enter ${label} for ${product.name}`);
+      err.status = 400;
+      throw err;
+    }
+    list.push({ key, label, value });
+  }
+  return list;
+}
+
+/** Letter sizes: XS-XXXL, FREE, short codes, or ranges like S-M / M-L. */
 const LETTER_TOKEN = '(?:XXS|XS|S|M|L|XL|XXL|XXXL|FREE|[A-Z]{1,4})';
 const LETTER_SIZE_RE = new RegExp(`^${LETTER_TOKEN}(?:-${LETTER_TOKEN})?$`, 'i');
 const NUMERIC_SIZE_RE = /^\d{1,2}$/;
@@ -317,8 +392,8 @@ function assertSizesAccepted(raw, normalized, sizeType) {
   if (incoming > 0 && normalized.length < incoming) {
     const err = new Error(
       sizeType === 'numeric'
-        ? 'Invalid size label. Numeric sizes must be 1–2 digit numbers (e.g. 28, 32).'
-        : 'Invalid size label. Use letter sizes (XS–XXXL) or ranges like S-M, M-L.'
+        ? 'Invalid size label. Numeric sizes must be 1-2 digit numbers (e.g. 28, 32).'
+        : 'Invalid size label. Use letter sizes (XS-XXXL) or ranges like S-M, M-L.'
     );
     err.status = 400;
     throw err;
@@ -412,6 +487,8 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
   const imageTag = normalizeImageTag(parsed.image_tag);
+  const detailsAndCare = parsed.details_and_care ? String(parsed.details_and_care).trim() || null : null;
+  const customSizing = parsed.custom_sizing == null ? 1 : parsed.custom_sizing ? 1 : 0;
   const sizeType = normalizeSizeType(parsed.size_type);
   const garmentType = normalizeGarmentType(parsed.garment_type);
   let sizeList;
@@ -426,7 +503,7 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   const id = uuidv4();
   try {
     await run(
-      `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,images,tags,image_tag,stock,sizes,size_type,garment_type,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,details_and_care,images,tags,image_tag,stock,sizes,size_type,garment_type,featured,custom_sizing) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         id,
         String(name).trim(),
@@ -435,6 +512,7 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
         String(category).trim(),
         description ? String(description).trim() : null,
         JSON.stringify(ways),
+        detailsAndCare,
         JSON.stringify(imgList),
         JSON.stringify(tagList),
         imageTag,
@@ -443,6 +521,7 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
         sizeList.length ? sizeType : null,
         sizeList.length ? garmentType : null,
         featured ? 1 : 0,
+        customSizing,
       ]
     );
   } catch (err) {
@@ -474,6 +553,8 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
   const ways = Array.isArray(ways_to_wear) ? ways_to_wear.map((w) => String(w).trim()).filter(Boolean) : [];
   const tagList = Array.isArray(tags) ? tags.map((t) => String(t).trim()).filter(Boolean) : [];
   const imageTag = normalizeImageTag(parsed.image_tag);
+  const detailsAndCare = parsed.details_and_care ? String(parsed.details_and_care).trim() || null : null;
+  const customSizing = parsed.custom_sizing == null ? 1 : parsed.custom_sizing ? 1 : 0;
   const sizeType = normalizeSizeType(parsed.size_type);
   const garmentType = normalizeGarmentType(parsed.garment_type);
   let sizeList;
@@ -487,7 +568,7 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
   const stockNum = totalStockFromSizes(sizeList, stock);
   try {
     await run(
-      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=? WHERE id=?`,
+      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,details_and_care=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=?,custom_sizing=? WHERE id=?`,
       [
         String(name).trim(),
         priceNum,
@@ -495,6 +576,7 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
         String(category).trim(),
         description ? String(description).trim() : null,
         JSON.stringify(ways),
+        detailsAndCare,
         JSON.stringify(imgList),
         JSON.stringify(tagList),
         imageTag,
@@ -503,6 +585,7 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
         sizeList.length ? sizeType : null,
         sizeList.length ? garmentType : null,
         featured ? 1 : 0,
+        customSizing,
         req.params.id,
       ]
     );
@@ -518,7 +601,7 @@ router.delete('/products/:id', authenticateAdmin, async (req, res) => {
   res.json({ success: true });
 });
 
-/** Admin only — update size availability / stock without touching other fields. */
+/** Admin only - update size availability / stock without touching other fields. */
 router.patch('/products/:id/sizes', authenticateAdmin, async (req, res) => {
   const row = await get('SELECT id, size_type FROM products WHERE id = ?', [req.params.id]);
   if (!row) return res.status(404).json({ success: false, message: 'Product not found' });

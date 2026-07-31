@@ -31,7 +31,7 @@ export default function About() {
               alt="Founders"
               className="w-full aspect-[4/5] object-cover border border-black" */}
             {/* /> */}
-            <p className="tj-eyebrow">Founder: Anjali · Sainikpuri, Hyderabad</p>
+            <p className="tj-eyebrow">Founder: Anjali - Sainikpuri, Hyderabad</p>
           </div>
           <div className="md:col-span-7 space-y-6 text-lg text-black/75 leading-relaxed font-body">
             <p className="tj-eyebrow !normal-case tracking-normal text-black/45 text-base md:text-lg font-display font-bold">Our Story</p>
@@ -41,11 +41,11 @@ export default function About() {
               convinced us we needed eight new outfits every festive season.
             </p>
             <p>
-              So we built Tarajuvva — not just to make clothes, but to keep them in motion.
+              So we built Tarajuvva - not just to make clothes, but to keep them in motion.
             </p>
 
             <p className="tj-eyebrow !normal-case tracking-normal text-black/45 pt-4 text-base md:text-lg font-display font-bold">
-              Why Us? — Our Design Philosophy
+              Why Us? - Our Design Philosophy
             </p>
             <p>
               We got tired of an industry obsessed with short-lived trends and wardrobes full of beige
@@ -54,7 +54,7 @@ export default function About() {
             <p>
               So we design modular clothing in colours that refuse to blend in, with thoughtful, functional
               details that let each piece evolve over time. Reversible silhouettes, adjustable features,
-              pockets where you least expect them — clothes that adapt with you.
+              pockets where you least expect them - clothes that adapt with you.
             </p>
             <p>
               And when they no longer fit your life, they don&apos;t have to end there. Repair them,

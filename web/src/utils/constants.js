@@ -3,16 +3,16 @@
 // Change here → propagates everywhere
 // ─────────────────────────────────────────────────────────────────────────────
 export const BRAND = {
-  // Official palette — bg → 1 primary → 2 secondary → 3 tertiary → accent row
+  // Official palette - bg → 1 primary → 2 secondary → 3 tertiary → accent row
   bg:        '#ffffff',   // background
   bgCard:    '#ffffff',
   bgAlt:     '#f5f5f5',
-  primary:   '#c8ff2e',   // FUN green – SHOP / primary
-  secondary: '#7A063C',   // burgundy – REIMAGINE
-  tertiary:  '#e2a3c9',   // blush pink – accent
-  red:       '#e34334',   // warm red – REPAIR
-  blue:      '#1b4e81',   // navy – DONATE
-  dark:      '#241621',   // plum – text / dark sections
+  primary:   '#c8ff2e',   // FUN green - SHOP / primary
+  secondary: '#7A063C',   // burgundy - REIMAGINE
+  tertiary:  '#e2a3c9',   // blush pink - accent
+  red:       '#e34334',   // warm red - REPAIR
+  blue:      '#1b4e81',   // navy - DONATE
+  dark:      '#241621',   // plum - text / dark sections
   green:     '#c8ff2e',   // alias → primary
   burgundy:  '#7A063C',   // alias → secondary
   pink:      '#e2a3c9',   // alias → tertiary
@@ -45,7 +45,7 @@ export const TICKER_MESSAGES = [
 
 export const TESTIMONIALS = [
   {
-    quote: 'Bought the reversible set — wears three different ways and still looks new after months.',
+    quote: 'Bought the reversible set - wears three different ways and still looks new after months.',
     name: 'Meera S.',
     city: 'Hyderabad',
     vertical: 'shop',
@@ -57,7 +57,7 @@ export const TESTIMONIALS = [
     vertical: 'reimagine',
   },
   {
-    quote: 'Reimagine turnaround was quick. Old kurti is now my favourite co-ord set — wears everywhere in Hyderabad heat.',
+    quote: 'Reimagine turnaround was quick. Old kurti is now my favourite co-ord set - wears everywhere in Hyderabad heat.',
     name: 'Arjun M.',
     city: 'Hyderabad',
     vertical: 'reimagine',
@@ -126,10 +126,10 @@ export const TRANSFORMATIONS = {
 };
 
 export const REIMAGINE_PRESETS = [
-  { from: 'Saree', to: 'Co-ord set · Dress', emoji: '🥻', color: BRAND.burgundy },
+  { from: 'Saree', to: 'Co-ord set - Dress', emoji: '🥻', color: BRAND.burgundy },
   { from: 'Shirt', to: 'Corset Top and Asian-inspired Top', emoji: '👔', color: BRAND.green },
-  { from: 'Kurti', to: 'Skirt · Halter', emoji: '👗', color: BRAND.red },
-  { from: 'Pant',  to: 'Jorts · Flare', emoji: '👖', color: BRAND.blue },
+  { from: 'Kurti', to: 'Skirt - Halter', emoji: '👗', color: BRAND.red },
+  { from: 'Pant',  to: 'Jorts - Flare', emoji: '👖', color: BRAND.blue },
 ];
 
 export const TRANSFORMATION_META = {
@@ -166,12 +166,12 @@ export const REIMAGINE_FLOW = ['Pick base', 'Pick preset', 'Your details', 'Done
 
 export const REIMAGINE_STEP_HEADINGS = [
   'What did you bring us?',
-  null, // transform — dynamic per garment
+  null, // transform - dynamic per garment
   'Tell us where to send it.',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HOME — QUICK DECISION CARDS
+// HOME - QUICK DECISION CARDS
 // ─────────────────────────────────────────────────────────────────────────────
 export const QUICK_CARDS = [
   { icon: 'ShoppingBag', label: 'Buy something new',    action: 'Shop',      to: '/shop',      color: BRAND.green,    desc: 'Curated pieces that tell a story.' },
@@ -186,9 +186,9 @@ export const QUICK_CARDS = [
 export const ORDER_STATUSES     = ['pending_payment','received','processing','shipped','delivered','cancelled'];
 
 export const PICKUP_PERIODS = [
-  { value: 'morning', label: 'Morning', hint: '9–11 AM' },
-  { value: 'afternoon', label: 'Afternoon', hint: '12–4 PM' },
-  { value: 'evening', label: 'Evening', hint: '4–8 PM' },
+  { value: 'morning', label: 'Morning', hint: '9-11 AM' },
+  { value: 'afternoon', label: 'Afternoon', hint: '12-4 PM' },
+  { value: 'evening', label: 'Evening', hint: '4-8 PM' },
 ];
 
 export const PICKUP_PERIOD_LABELS = Object.fromEntries(
@@ -198,7 +198,7 @@ export const PICKUP_PERIOD_LABELS = Object.fromEntries(
 /** Letter sizes for remake garment / desired size. */
 export const REIMAGINE_LETTER_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
-/** Tailor-style height: feet 4–7, inches 0–11. */
+/** Tailor-style height: feet 4-7, inches 0-11. */
 export const HEIGHT_FEET_OPTIONS = [4, 5, 6, 7];
 export const HEIGHT_INCH_OPTIONS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
@@ -247,9 +247,9 @@ export const WAITLIST_CONFIGS = {
     type: 'repair',
     bgVar: '--tj-repair',
     blobPosition: 'top',
-    eyebrow: '03 · Repair · Coming soon',
+    eyebrow: '03 - Repair - Coming soon',
     headline: ['The mend', 'is the mood.'],
-    subtext: "Buttons, hems, holes, hearts. Send us anything that's broken and we'll bring it back — visible repairs encouraged. Launching soon.",
+    subtext: "Buttons, hems, holes, hearts. Send us anything that's broken and we'll bring it back - visible repairs encouraged. Launching soon.",
     formLabel: 'Be the first in line',
     stats: [
       { value: '~₹299', label: 'starting price' },
@@ -261,12 +261,12 @@ export const WAITLIST_CONFIGS = {
     type: 'donate',
     bgVar: '--tj-donate',
     blobPosition: 'bottom',
-    eyebrow: '04 · Donate · Coming soon',
+    eyebrow: '04 - Donate - Coming soon',
     headline: ["When it's done", 'with you.'],
     subtext: 'Drop garments at any Tarajuvva pickup point. We sort, route to NGOs, repurpose with maker collectives, or recycle yarns. Documented, tracked, no greenwashing.',
     formLabel: 'Get a heads-up at launch',
     stats: [
-      { value: '3 routes', label: 'reuse · repair · recycle' },
+      { value: '3 routes', label: 'reuse - repair - recycle' },
       { value: 'Free', label: 'always' },
       { value: 'Receipt', label: 'where it ended up' },
     ],

@@ -23,7 +23,7 @@ function writeDraft(key, payload) {
       }),
     );
   } catch {
-    // Quota / private mode — ignore
+    // Quota / private mode - ignore
   }
 }
 

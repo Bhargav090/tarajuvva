@@ -34,7 +34,7 @@ export function useAdminAuth() {
   return { token, login, logout, isLoaded };
 }
 
-/** Uses admin token explicitly (not user token) — see `api.js` interceptor. */
+/** Uses admin token explicitly (not user token) - see `api.js` interceptor. */
 export async function changeAdminPassword(currentPassword, newPassword) {
   const adminToken = localStorage.getItem('admin_token');
   const { data } = await api.put(

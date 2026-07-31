@@ -18,7 +18,7 @@ function TickerTrack({ msgs, ariaHidden }) {
   );
 }
 
-/** Fixed marquee band at the very top of the landing page — seamless infinite loop. */
+/** Fixed marquee band at the very top of the landing page - seamless infinite loop. */
 export default function Ticker() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[60] h-[var(--ticker-h,32px)] flex items-center border-b border-black bg-black text-white overflow-hidden select-none">

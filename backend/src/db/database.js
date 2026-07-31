@@ -2,7 +2,7 @@ const mysql = require('mysql2/promise');
 
 let pool;
 
-/** MySQL pool connections dropped by remote server/network — safe to retry once. */
+/** MySQL pool connections dropped by remote server/network - safe to retry once. */
 const TRANSIENT_DB_ERRORS = new Set([
   'ECONNRESET',
   'ECONNREFUSED',
@@ -21,7 +21,7 @@ async function executeWithRetry(sql, params = []) {
     return await pool.execute(sql, params);
   } catch (err) {
     if (!isTransientDbError(err)) throw err;
-    // Stale pooled connection — one fresh attempt usually recovers.
+    // Stale pooled connection - one fresh attempt usually recovers.
     return pool.execute(sql, params);
   }
 }
@@ -118,7 +118,7 @@ async function initializeDatabase() {
     connectTimeout: Number(process.env.MYSQL_CONNECT_TIMEOUT_MS || 10_000),
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
-    // Return DATE/DATETIME as strings — avoids IST/UTC off-by-one in slot calendars.
+    // Return DATE/DATETIME as strings - avoids IST/UTC off-by-one in slot calendars.
     dateStrings: true,
   });
 
@@ -149,10 +149,12 @@ async function initializeDatabase() {
       category VARCHAR(128) NOT NULL,
       description TEXT,
       ways_to_wear TEXT,
+      details_and_care TEXT,
       images LONGTEXT NOT NULL,
       tags TEXT,
       stock INT DEFAULT 100,
       featured TINYINT(1) DEFAULT 0,
+      custom_sizing TINYINT(1) NOT NULL DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
@@ -416,7 +418,7 @@ async function initializeDatabase() {
   const { ensureDefaultSizeCharts } = require('../utils/sizeCharts');
   await ensureDefaultSizeCharts();
 
-  // Add sizes column to products (idempotent — skipped if already present).
+  // Add sizes column to products (idempotent - skipped if already present).
   try {
     await pool.execute('ALTER TABLE products ADD COLUMN sizes TEXT AFTER stock');
   } catch (e) {
@@ -507,6 +509,8 @@ async function initializeDatabase() {
     "ALTER TABLE products ADD COLUMN size_type VARCHAR(16) NULL AFTER sizes",
     "ALTER TABLE products ADD COLUMN garment_type VARCHAR(16) NULL AFTER size_type",
     "ALTER TABLE products ADD COLUMN image_tag VARCHAR(64) NULL AFTER tags",
+    "ALTER TABLE products ADD COLUMN details_and_care TEXT NULL AFTER ways_to_wear",
+    "ALTER TABLE products ADD COLUMN custom_sizing TINYINT(1) NOT NULL DEFAULT 1 AFTER featured",
   ];
   for (const sql of productSizeAlters) {
     try {
@@ -518,7 +522,7 @@ async function initializeDatabase() {
     }
   }
 
-  // Modular tag is optional — clear accidental empty defaults; do not force 'Modular'.
+  // Modular tag is optional - clear accidental empty defaults; do not force 'Modular'.
   try {
     await pool.execute(
       "ALTER TABLE products MODIFY COLUMN image_tag VARCHAR(64) NULL DEFAULT NULL"
@@ -576,7 +580,7 @@ const DEFAULT_TESTIMONIALS = [
     id: 'testimonial-default-shop',
     name: 'Meera S.',
     city: 'Hyderabad',
-    quote: 'Bought the reversible set — wears three different ways and still looks new after months.',
+    quote: 'Bought the reversible set - wears three different ways and still looks new after months.',
     vertical: 'shop',
     sort_order: 0,
   },
@@ -592,7 +596,7 @@ const DEFAULT_TESTIMONIALS = [
     id: 'testimonial-default-hyderabad',
     name: 'Arjun M.',
     city: 'Hyderabad',
-    quote: 'Reimagine turnaround was quick. Old kurti is now my favourite co-ord set — wears everywhere in Hyderabad heat.',
+    quote: 'Reimagine turnaround was quick. Old kurti is now my favourite co-ord set - wears everywhere in Hyderabad heat.',
     vertical: 'reimagine',
     sort_order: 2,
   },

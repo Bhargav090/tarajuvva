@@ -49,6 +49,6 @@ export function formatDateMedium(iso) {
 export function formatConsultationSlot(date, time) {
   const dateLabel = formatDateMedium(date);
   const timeLabel = formatTimeLabel(time);
-  if (dateLabel === 'Invalid date') return timeLabel || '—';
-  return `${dateLabel} · ${timeLabel}`;
+  if (dateLabel === 'Invalid date') return timeLabel || '-';
+  return `${dateLabel} - ${timeLabel}`;
 }

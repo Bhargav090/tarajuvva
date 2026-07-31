@@ -4,7 +4,7 @@ const REIMAGINE_CUSTOMIZE_DEFAULTS = {
   reimagine_customize_price: '299',
   reimagine_customize_feature: '15 min consultation call',
   reimagine_customize_description:
-    'Book a one-on-one call with our remake team. Show us your garment, share references, and get a clear plan — fit, fabric, timeline, and quote — before we cut a single thread.',
+    'Book a one-on-one call with our remake team. Show us your garment, share references, and get a clear plan - fit, fabric, timeline, and quote - before we cut a single thread.',
 };
 
 const DELIVERY_FEES_KEY = 'delivery_fees';

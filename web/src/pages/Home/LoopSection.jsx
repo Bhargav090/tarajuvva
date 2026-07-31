@@ -76,7 +76,7 @@ export default function LoopSection() {
             >
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest font-display mb-3 opacity-90">
-                  {active.num} · {active.cardLabel ?? active.action}
+                  {active.num} - {active.cardLabel ?? active.action}
                 </p>
                 <p className="font-display font-black text-xl sm:text-2xl leading-snug">
                   {active.headline}

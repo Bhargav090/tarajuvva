@@ -2,7 +2,7 @@ import LeadCapture from './LeadCapture';
 import VerticalPageHero from './VerticalPageHero';
 
 /**
- * Full-bleed waitlist hero — shared by Repair & Donate (matches reference layout).
+ * Full-bleed waitlist hero - shared by Repair & Donate (matches reference layout).
  */
 export default function VerticalWaitlistPage({ config, heroVideo = null }) {
   return (

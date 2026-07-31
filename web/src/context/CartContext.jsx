@@ -2,8 +2,14 @@ import { createContext, useContext, useReducer, useEffect, useState } from 'reac
 
 const CartCtx = createContext(null);
 
-/** Stable identity key — same product but different size = separate line. */
-const ck = (id, size) => `${id}|${size || ''}`;
+/** Stable identity key - same product but different size / custom specs = separate line. */
+const ck = (id, size, customMeasurements) => {
+  if (String(size || '').toLowerCase() === 'custom' && Array.isArray(customMeasurements) && customMeasurements.length) {
+    const spec = customMeasurements.map((m) => `${m.key}:${m.value}`).join('|');
+    return `${id}|Custom|${spec}`;
+  }
+  return `${id}|${size || ''}`;
+};
 
 const initial = () => {
   try { return JSON.parse(localStorage.getItem('cart')) || []; } catch { return []; }
@@ -12,7 +18,7 @@ const initial = () => {
 function reducer(state, { type, payload }) {
   switch (type) {
     case 'ADD': {
-      const key = ck(payload.id, payload.size);
+      const key = ck(payload.id, payload.size, payload.custom_measurements);
       const exists = state.find(i => i.ck === key);
       return exists
         ? state.map(i => i.ck === key ? { ...i, qty: i.qty + 1 } : i)
@@ -31,10 +37,19 @@ export function CartProvider({ children }) {
 
   useEffect(() => { localStorage.setItem('cart', JSON.stringify(items)); }, [items]);
 
-  /** @param {object} product — full product object
-   *  @param {string} [size]  — selected size label, e.g. 'M' */
-  const addItem    = (product, size) => {
-    dispatch({ type: 'ADD', payload: { ...product, size: size || null } });
+  /** @param {object} product
+   *  @param {string} [size]
+   *  @param {Array<{key:string,label:string,value:string}>} [customMeasurements] */
+  const addItem = (product, size, customMeasurements) => {
+    const isCustom = String(size || '').toLowerCase() === 'custom';
+    dispatch({
+      type: 'ADD',
+      payload: {
+        ...product,
+        size: size || null,
+        custom_measurements: isCustom && Array.isArray(customMeasurements) ? customMeasurements : null,
+      },
+    });
     setIsOpen(true);
   };
   const removeItem = (cartKey) => dispatch({ type: 'REMOVE', payload: cartKey });

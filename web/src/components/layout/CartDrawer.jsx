@@ -25,7 +25,7 @@ export default function CartDrawer() {
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-black">
               <h2 className="text-lg font-display font-bold text-[#0a0a0a]">
-                Your bag · {totalItems}
+                Your bag - {totalItems}
               </h2>
               <button
                 onClick={closeCart}

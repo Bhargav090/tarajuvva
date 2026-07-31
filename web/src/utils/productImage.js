@@ -12,7 +12,7 @@ export function resolveProductImageSrc(src) {
 }
 
 /**
- * First gallery entry suitable for <img src> — data URL, https URL, or /uploads path.
+ * First gallery entry suitable for <img src> - data URL, https URL, or /uploads path.
  */
 export function productHeroImage(images) {
   const u = images?.[0];

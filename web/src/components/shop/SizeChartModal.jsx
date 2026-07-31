@@ -6,8 +6,8 @@ export default function SizeChartModal({ chart, onClose }) {
 
   const title =
     chart.size_type === 'letter'
-      ? `Letter size chart · ${chart.garment_type === 'bottom' ? 'Bottom' : 'Top'}`
-      : `Numeric size chart · ${chart.garment_type === 'bottom' ? 'Bottom' : 'Top'}`;
+      ? `Letter size chart - ${chart.garment_type === 'bottom' ? 'Bottom' : 'Top'}`
+      : `Numeric size chart - ${chart.garment_type === 'bottom' ? 'Bottom' : 'Top'}`;
 
   return (
     <AnimatePresence>
@@ -58,7 +58,7 @@ export default function SizeChartModal({ chart, onClose }) {
                     <td className="px-4 py-2.5 font-black text-[#241621]">{row.size}</td>
                     {chart.columns.map((col) => (
                       <td key={col.key} className="px-4 py-2.5 text-[#241621]/75 whitespace-nowrap">
-                        {row.values?.[col.key] ?? '—'}
+                        {row.values?.[col.key] ?? '-'}
                       </td>
                     ))}
                   </tr>

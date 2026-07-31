@@ -28,7 +28,7 @@ export default function ReimaginePreview() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <p className="tj-eyebrow !text-white/60">02 · Reimagine</p>
+            <p className="tj-eyebrow !text-white/60">02 - Reimagine</p>
             <h2 className="tj-h2 mt-2 text-white leading-tight">
               Old clothes. New stories.
             </h2>

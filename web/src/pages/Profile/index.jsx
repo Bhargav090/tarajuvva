@@ -223,8 +223,8 @@ export default function Profile() {
                 [
                   { l: 'Full Name', v: user.name },
                   { l: 'Email',     v: user.email },
-                  { l: 'Phone',     v: user.phone || '—' },
-                  { l: 'Address',   v: user.address || '—' },
+                  { l: 'Phone',     v: user.phone || '-' },
+                  { l: 'Address',   v: user.address || '-' },
                 ].map(f => (
                   <div key={f.l} className={f.l === 'Address' ? 'sm:col-span-2' : ''}>
                     <p className="text-xs font-bold uppercase tracking-wider text-[#241621]/40 mb-1 font-display">{f.l}</p>
@@ -276,10 +276,10 @@ export default function Profile() {
                       {new Date(o.created_at).toLocaleDateString('en-IN', {
                         day: 'numeric', month: 'short', year: 'numeric',
                       })}
-                      · {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                      - {itemCount} {itemCount === 1 ? 'item' : 'items'}
                     </p>
                     <p className="text-xs text-black/45 font-body mt-1">
-                      {paymentLabel}{paymentStatus ? ` · ${paymentStatus}` : ''}
+                      {paymentLabel}{paymentStatus ? ` - ${paymentStatus}` : ''}
                     </p>
                     {o.tracking_url && (
                       <p className="text-xs text-[#0a0a0a] font-body mt-1.5 underline underline-offset-2">
@@ -405,7 +405,7 @@ export default function Profile() {
                             : null,
                         ]
                           .filter(Boolean)
-                          .join(' · ')}
+                          .join(' - ')}
                       </dd>
                     </div>
                   )}
@@ -419,9 +419,9 @@ export default function Profile() {
                               month: 'short',
                               year: 'numeric',
                             })
-                          : '—'}
+                          : '-'}
                         {r.pickup_period
-                          ? ` · ${PICKUP_PERIOD_LABELS[r.pickup_period] || r.pickup_period}`
+                          ? ` - ${PICKUP_PERIOD_LABELS[r.pickup_period] || r.pickup_period}`
                           : ''}
                       </dd>
                     </div>

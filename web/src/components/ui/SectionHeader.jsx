@@ -1,7 +1,7 @@
 import { AccentPill } from './Badge';
 
 /**
- * SectionHeader — consistent heading block for each section.
+ * SectionHeader - consistent heading block for each section.
  */
 export default function SectionHeader({
   pill, pillColor, title, titleLight,

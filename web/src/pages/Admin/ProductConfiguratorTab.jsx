@@ -14,7 +14,7 @@ import ZoomableImage from '../../components/ui/ZoomableImage';
 
 const CATEGORIES = SHOP_CATEGORIES.filter(c => c.value).map(c => c.value);
 
-/** Size manager — letter OR numeric presets (mutually exclusive). */
+/** Size manager - letter OR numeric presets (mutually exclusive). */
 function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarmentTypeChange, onSizesChange }) {
   const [custom, setCustom] = useState('');
   const presets = sizeType === 'numeric' ? NUMERIC_SIZES : LETTER_SIZES;
@@ -51,7 +51,7 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
         return;
       }
     } else if (!/^(XXS|XS|S|M|L|XL|XXL|XXXL|FREE|[A-Z]{1,4})(-(XXS|XS|S|M|L|XL|XXL|XXXL|[A-Z]{1,4}))?$/i.test(label)) {
-      toast.error('Use letter sizes (XS–XXXL) or ranges like S-M, M-L');
+      toast.error('Use letter sizes (XS-XXXL) or ranges like S-M, M-L');
       return;
     }
     onSizesChange([...sizes, { label, available: true, stock: 1 }]);
@@ -91,7 +91,7 @@ function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarment
           ))}
         </div>
         <p className="text-xs text-[#341631]/45 font-body mt-2">
-          Choose one system only — letter sizes or numeric, not both. Edit measurement tables under Admin → Size charts.
+          Choose one system only - letter sizes or numeric, not both. Edit measurement tables under Admin → Size charts.
         </p>
       </div>
 
@@ -234,7 +234,7 @@ function ProductSizeControls({ product, authHeader, onUpdate }) {
   );
 }
 
-/** ~6MB per file — sent as multipart, not base64 JSON. */
+/** ~6MB per file - sent as multipart, not base64 JSON. */
 const MAX_FILE_BYTES = 6 * 1024 * 1024;
 const MAX_IMAGES = 12;
 
@@ -257,10 +257,12 @@ const emptyForm = () => ({
   category: CATEGORIES[0] || 'Tops',
   description: '',
   waysRaw: '',
+  details_and_care: '',
   tagsRaw: '',
   image_tag: '',
   stock: '100',
   featured: false,
+  custom_sizing: true,
   sizes: [],
 });
 
@@ -322,6 +324,7 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
     category: form.category.trim(),
     description: form.description.trim() || null,
     ways_to_wear,
+    details_and_care: form.details_and_care.trim() || null,
     tags,
     image_tag: (form.image_tag || '').trim() || null,
     stock: sizes.length
@@ -331,6 +334,7 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
     size_type: sizes.length ? sizeType : null,
     garment_type: sizes.length ? garmentType : null,
     featured: !!form.featured,
+    custom_sizing: form.custom_sizing !== false,
     imageMeta,
   };
 
@@ -445,10 +449,12 @@ export default function ProductConfiguratorTab() {
       category: p.category,
       description: p.description || '',
       waysRaw: (p.ways_to_wear || []).join('\n'),
+      details_and_care: p.details_and_care || '',
       tagsRaw: (p.tags || []).join(', '),
       image_tag: p.image_tag || '',
       stock: String(p.stock ?? 100),
       featured: !!p.featured,
+      custom_sizing: p.custom_sizing !== false,
       sizes: [],
     });
     setImageSlots((prev) => {
@@ -570,11 +576,11 @@ export default function ProductConfiguratorTab() {
           />
         </div>
         <Input
-          label="Image tag (optional — shown on product card)"
+          label="Image tag (optional - shown on product card)"
           name="image_tag"
           value={form.image_tag}
           onChange={onChange}
-          placeholder="e.g. Modular — leave empty for none"
+          placeholder="e.g. Modular - leave empty for none"
         />
         {sizes.length === 0 ? (
           <Input label="Stock count" name="stock" type="number" min="0" step="1" value={form.stock} onChange={onChange} required />
@@ -619,7 +625,7 @@ export default function ProductConfiguratorTab() {
             </Button>
             {imageSlots.length > 0 && (
               <span className="text-xs text-[#341631]/50 font-body">
-                {imageSlots.length} / {MAX_IMAGES} — first is the shop thumbnail
+                {imageSlots.length} / {MAX_IMAGES} - first is the shop thumbnail
               </span>
             )}
           </div>
@@ -656,12 +662,20 @@ export default function ProductConfiguratorTab() {
         </div>
 
         <Textarea
-          label="Ways to wear (optional — one per line)"
+          label="Ways to wear (optional - one per line)"
           name="waysRaw"
           rows={4}
           value={form.waysRaw}
           onChange={onChange}
           placeholder={'Pair with palazzo pants…\nTuck into high-waisted jeans…'}
+        />
+        <Textarea
+          label="Details and care (optional)"
+          name="details_and_care"
+          rows={4}
+          value={form.details_and_care}
+          onChange={onChange}
+          placeholder={'Fabric: 100% cotton\nWash cold, gentle cycle\nLine dry, warm iron'}
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
         <SizeManager
@@ -675,6 +689,21 @@ export default function ProductConfiguratorTab() {
         <label className="flex items-center gap-3 cursor-pointer select-none">
           <input type="checkbox" name="featured" checked={form.featured} onChange={onChange} className="rounded border-[#341631]/30 text-[#a8e000] focus:ring-[#a8e000]" />
           <span className="text-sm font-semibold text-[#341631] font-display">Featured product</span>
+        </label>
+        <label className="flex items-start gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            name="custom_sizing"
+            checked={form.custom_sizing}
+            onChange={onChange}
+            className="mt-0.5 rounded border-[#341631]/30 text-[#a8e000] focus:ring-[#a8e000]"
+          />
+          <span>
+            <span className="block text-sm font-semibold text-[#341631] font-display">Allow custom sizing</span>
+            <span className="block text-xs text-[#341631]/50 font-body mt-0.5">
+              Shoppers can choose Custom and enter all measurements from this product&apos;s size chart. On by default.
+            </span>
+          </span>
         </label>
         <div className="flex flex-wrap gap-3 pt-2">
           <Button type="submit" variant="primary" loading={submitting}>

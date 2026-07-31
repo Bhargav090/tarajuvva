@@ -73,7 +73,7 @@ export default function ProductCard({ product, disableEntrance = false, variant 
 
   const handleSlideEnd = (e) => {
     if (!loop || e.target !== e.currentTarget) return;
-    // Landed on cloned first slide — jump back to real first without animation.
+    // Landed on cloned first slide - jump back to real first without animation.
     if (slidePos >= slides.length) {
       setAnimateSlide(false);
       setSlidePos(0);
@@ -135,7 +135,7 @@ export default function ProductCard({ product, disableEntrance = false, variant 
             >
               <AsyncImage
                 src={src}
-                alt={`${product.name}${i === 0 || (loop && i === track.length - 1) ? '' : ` — view ${i + 1}`}`}
+                alt={`${product.name}${i === 0 || (loop && i === track.length - 1) ? '' : ` - view ${i + 1}`}`}
                 fill
               />
             </div>
@@ -250,7 +250,7 @@ export default function ProductCard({ product, disableEntrance = false, variant 
                       sizeError ? 'text-[#e34334]' : 'text-black/50'
                     }`}
                   >
-                    {sizeError ? 'Select size' : selectedSize ? `Size · ${selectedSize}` : 'Select size'}
+                    {sizeError ? 'Select size' : selectedSize ? `Size - ${selectedSize}` : 'Select size'}
                   </p>
                   <SizeChartLink
                     product={product}

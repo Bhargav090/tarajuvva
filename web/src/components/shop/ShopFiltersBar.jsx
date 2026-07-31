@@ -120,7 +120,7 @@ export default function ShopFiltersBar({
 
   return (
     <div className="sticky top-[calc(var(--ticker-h)+var(--nav-h))] z-30 bg-white/95 backdrop-blur-xl border-b border-black/10 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
-      {/* Categories — full-bleed scroll on mobile */}
+      {/* Categories - full-bleed scroll on mobile */}
       <div className="border-b border-black/[0.06] md:border-0">
         <div className="tj-container py-3 md:py-2.5">
           <div className="-mx-6 px-6 md:mx-0 md:px-0">
@@ -148,7 +148,7 @@ export default function ShopFiltersBar({
             {countLabel}
           </p>
 
-          {/* Mobile sort — opens bottom sheet */}
+          {/* Mobile sort - opens bottom sheet */}
           <button
             type="button"
             onClick={() => setSortOpen(true)}
@@ -160,7 +160,7 @@ export default function ShopFiltersBar({
             {sortShortLabel(sort)}
           </button>
 
-          {/* Desktop sort — dropdown */}
+          {/* Desktop sort - dropdown */}
           <div className="hidden md:block relative shrink-0" ref={desktopSortRef}>
             <button
               type="button"
@@ -174,7 +174,7 @@ export default function ShopFiltersBar({
               aria-haspopup="listbox"
             >
               <ArrowUpDown size={15} className="text-black/45" />
-              Sort · {sortShortLabel(sort)}
+              Sort - {sortShortLabel(sort)}
             </button>
 
             <AnimatePresence>

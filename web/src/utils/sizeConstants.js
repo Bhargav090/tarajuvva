@@ -2,10 +2,10 @@ export const LETTER_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 export const NUMERIC_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44', '46'];
 
 export const SIZE_CHART_OPTIONS = [
-  { key: 'letter_top', label: 'Letter sizes · Top', sizeType: 'letter', garmentType: 'top' },
-  { key: 'letter_bottom', label: 'Letter sizes · Bottom', sizeType: 'letter', garmentType: 'bottom' },
-  { key: 'numeric_top', label: 'Numeric sizes · Top', sizeType: 'numeric', garmentType: 'top' },
-  { key: 'numeric_bottom', label: 'Numeric sizes · Bottom', sizeType: 'numeric', garmentType: 'bottom' },
+  { key: 'letter_top', label: 'Letter sizes - Top', sizeType: 'letter', garmentType: 'top' },
+  { key: 'letter_bottom', label: 'Letter sizes - Bottom', sizeType: 'letter', garmentType: 'bottom' },
+  { key: 'numeric_top', label: 'Numeric sizes - Top', sizeType: 'numeric', garmentType: 'top' },
+  { key: 'numeric_bottom', label: 'Numeric sizes - Bottom', sizeType: 'numeric', garmentType: 'bottom' },
 ];
 
 export function chartKey(sizeType, garmentType) {
@@ -29,7 +29,7 @@ export function inferSizeType(product) {
   return null;
 }
 
-/** Chart key for a product — uses saved fields or infers from sizes + category. */
+/** Chart key for a product - uses saved fields or infers from sizes + category. */
 export function resolveChartKey(product) {
   const sizeType = inferSizeType(product);
   const garmentType = product?.garment_type || inferGarmentType(product?.category);

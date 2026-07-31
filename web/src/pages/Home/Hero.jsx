@@ -19,10 +19,8 @@ export default function Hero() {
             <div className="tj-hero-copy">
               <div className="tj-hero-meta tj-hero-meta--copy">
                 <span className="tj-hero-meta-label tj-hero-meta-label--natural">
-                  v1.0 — circular fashion OS
+                  v1.0 - circular fashion OS - ESTD. INDIA - 2025
                 </span>
-                <span className="tj-hero-meta-dash hidden sm:block" aria-hidden />
-                <span className="tj-hero-meta-label hidden sm:inline">ESTD. INDIA · 2025</span>
               </div>
 
               <h1 className="tj-h1 tj-h1-compact text-[#0a0a0a]" data-testid="hero-headline">

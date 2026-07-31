@@ -110,10 +110,10 @@ export default function Register() {
 
         {/* Google SSO */}
         <div id="google-register-btn" className="mb-6 flex justify-center" />
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex-1 h-px bg-[#241621]/12" />
-          <span className="text-[#241621]/40 text-xs font-body">or with email</span>
-          <div className="flex-1 h-px bg-[#241621]/12" />
+        <div className="flex items-center justify-center gap-3 mb-6 text-[#241621]/35 font-mono-tj text-xs">
+          <span aria-hidden>-</span>
+          <span className="text-[#241621]/40 font-body">or with email</span>
+          <span aria-hidden>-</span>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">

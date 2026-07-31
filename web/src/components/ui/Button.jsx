@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 /**
- * Reusable Button — light brand theme.
+ * Reusable Button - light brand theme.
  * variant: 'primary' | 'burgundy' | 'red' | 'blue' | 'outline' | 'outline-green' |
  *          'outline-burgundy' | 'ghost' | 'dark'
  * size: 'sm' | 'md' | 'lg' | 'xl'

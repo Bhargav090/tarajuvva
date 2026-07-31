@@ -253,7 +253,7 @@ export default function ReimagineCustomizeTab() {
         {previewSlots.length > 0 && (
           <div className="border border-[#241621]/10 rounded-xl p-4 space-y-4 max-h-80 overflow-y-auto">
             <p className="text-xs font-mono-tj uppercase tracking-wider text-[#241621]/50">
-              Preview — click × to remove before creating
+              Preview - click × to remove before creating
             </p>
             {Object.entries(previewGrouped).map(([date, daySlots]) => (
               <div key={date}>

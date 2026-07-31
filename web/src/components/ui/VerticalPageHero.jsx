@@ -2,7 +2,7 @@ import HeroVisual from './HeroVisual';
 import { SIDE_ASPECT_WIDTH, TALL_SIDE_ASPECT_WIDTH, aspectHeight } from '../../utils/aspectRatio';
 
 /**
- * Full-bleed vertical hero — filled brand color + soft glow blob (Repair / Shop / Reimagine).
+ * Full-bleed vertical hero - filled brand color + soft glow blob (Repair / Shop / Reimagine).
  * tone="dark" for light backgrounds (Shop lime); default "light" for deep brand colors.
  * tall=true (Repair / Donate): grid layout with side visual from tablet up.
  * tall=false (Reimagine): compact copy block + floating visual on desktop.

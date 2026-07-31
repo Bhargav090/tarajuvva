@@ -253,6 +253,13 @@ function renderItemList(items = []) {
           <td style="padding:12px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BRAND.ink};border-top:${i === 0 ? '0' : `1px solid ${BRAND.line}`};">
             ${escapeHtml(item.name)}${item.size ? ` <span style="color:${BRAND.muted};">(${escapeHtml(item.size)})</span>` : ''}
             <span style="color:${BRAND.muted};"> × ${escapeHtml(item.qty)}</span>
+            ${
+              Array.isArray(item.custom_measurements) && item.custom_measurements.length
+                ? `<div style="margin-top:4px;font-size:12px;color:${BRAND.muted};">${escapeHtml(
+                    item.custom_measurements.map((m) => `${m.label || m.key}: ${m.value}`).join(' · ')
+                  )}</div>`
+                : ''
+            }
           </td>
           <td align="right" style="padding:12px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BRAND.ink};white-space:nowrap;border-top:${i === 0 ? '0' : `1px solid ${BRAND.line}`};">
             ${item.lineTotal != null ? escapeHtml(money(item.lineTotal)) : ''}

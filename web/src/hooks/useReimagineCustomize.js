@@ -5,7 +5,7 @@ const DEFAULTS = {
   price: 299,
   feature: '15 min consultation call',
   description:
-    'Book a one-on-one call with our upcycle team. Show us your garment, share references, and get a clear plan — fit, fabric, timeline, and quote — before we cut a single thread.',
+    'Book a one-on-one call with our upcycle team. Show us your garment, share references, and get a clear plan - fit, fabric, timeline, and quote - before we cut a single thread.',
 };
 
 export function useReimagineCustomizeSettings() {

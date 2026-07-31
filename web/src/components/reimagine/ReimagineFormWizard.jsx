@@ -73,11 +73,11 @@ function contactComplete(details) {
 }
 
 function stepHint(type) {
-  if (type === 'identity') return ' · You';
-  if (type === 'delivery') return ' · Address';
-  if (type === 'photos') return ' · Photos';
-  if (type === 'garment_fit') return ' · Fit';
-  if (type === 'pickup') return ' · Pickup';
+  if (type === 'identity') return ' - You';
+  if (type === 'delivery') return ' - Address';
+  if (type === 'photos') return ' - Photos';
+  if (type === 'garment_fit') return ' - Fit';
+  if (type === 'pickup') return ' - Pickup';
   return '';
 }
 

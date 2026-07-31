@@ -180,7 +180,7 @@ export default function TestimonialsTab() {
     <div className="max-w-3xl">
       <h1 className="text-2xl font-black text-[#241621] font-display mb-1">Testimonials</h1>
       <p className="text-sm text-[#241621]/55 font-body mb-8">
-        Manage homepage testimonials. Initials show by the reviewer name — add up to{' '}
+        Manage homepage testimonials. Initials show by the reviewer name - add up to{' '}
         <strong>3 review photos</strong> (screenshots, outfit shots, product pics) that appear below the quote on the homepage.
       </p>
 
@@ -233,7 +233,7 @@ export default function TestimonialsTab() {
             Review images <span className="text-xs font-normal text-[#341631]/50">(optional, up to 3)</span>
           </span>
           <p className="text-xs text-[#341631]/45 font-body mb-3">
-            Shown below the quote on the homepage — not as profile avatars.
+            Shown below the quote on the homepage - not as profile avatars.
           </p>
           <div className="space-y-3">
             {imageSlots.map((slot, i) => (
@@ -307,7 +307,7 @@ export default function TestimonialsTab() {
       </h2>
       {testimonials.length === 0 ? (
         <div className="rounded-xl border border-[#241621]/10 bg-[#eef4d1]/30 p-5 text-sm text-[#241621]/70 font-body">
-          No admin testimonials yet — homepage uses {TESTIMONIALS.length} built-in defaults.
+          No admin testimonials yet - homepage uses {TESTIMONIALS.length} built-in defaults.
         </div>
       ) : (
         <div className="space-y-2">

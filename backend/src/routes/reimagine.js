@@ -109,7 +109,7 @@ async function bookConsultationSlot(requestId, slotId) {
 }
 
 async function buildNotifyPayload(row, extras = {}) {
-  // Emails only need a photo count — never load multi‑MB base64 into the notify payload.
+  // Emails only need a photo count - never load multi‑MB base64 into the notify payload.
   let imageCount = 0;
   try {
     const parsed = JSON.parse(row.images || '[]');
@@ -341,7 +341,7 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
   const resolvedTransform = conversion
     ? conversion.to_label
     : callbackRequested
-      ? 'Customize Consultation — Callback requested'
+      ? 'Customize Consultation - Callback requested'
       : transformation.trim();
 
   let consultationDate = null;
@@ -386,7 +386,7 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
     if (!letterSizes.has(garment_size) || !letterSizes.has(transformation_size)) {
       return res.status(400).json({
         success: false,
-        message: 'Please select current and desired garment sizes (XS–XXL).',
+        message: 'Please select current and desired garment sizes (XS-XXL).',
       });
     }
     if (
@@ -612,14 +612,14 @@ router.post('/requests/:id/razorpay/verify', authenticateUser, async (req, res) 
 
   res.json({
     success: true,
-    message: "Payment confirmed. Thank you for reimagining with Tarajuvva — we'll review your order within 24 hours.",
+    message: "Payment confirmed. Thank you for reimagining with Tarajuvva - we'll review your order within 24 hours.",
     requestId: row.id,
   });
 });
 
 const { parsePagination, paginationMeta } = require('../lib/pagination');
 
-/** Columns for list views — excludes heavy `images` LONGTEXT (base64 payloads). */
+/** Columns for list views - excludes heavy `images` LONGTEXT (base64 payloads). */
 const REIMAGINE_LIST_SELECT = `
   id, user_id, user_name, user_phone, user_email, address, delivery_zone, delivery_fee,
   garment_type, transformation,

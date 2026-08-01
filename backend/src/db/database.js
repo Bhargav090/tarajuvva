@@ -214,6 +214,21 @@ async function initializeDatabase() {
   `);
 
   await pool.execute(`
+    CREATE TABLE IF NOT EXISTS contact_inquiries (
+      id VARCHAR(36) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(64),
+      message TEXT NOT NULL,
+      status VARCHAR(32) NOT NULL DEFAULT 'new',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_contact_status (status),
+      INDEX idx_contact_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS admins (
       id VARCHAR(36) PRIMARY KEY,
       username VARCHAR(255) NOT NULL,
@@ -511,6 +526,7 @@ async function initializeDatabase() {
     "ALTER TABLE products ADD COLUMN image_tag VARCHAR(64) NULL AFTER tags",
     "ALTER TABLE products ADD COLUMN details_and_care TEXT NULL AFTER ways_to_wear",
     "ALTER TABLE products ADD COLUMN custom_sizing TINYINT(1) NOT NULL DEFAULT 1 AFTER featured",
+    "ALTER TABLE products ADD COLUMN similar_product_ids TEXT NULL AFTER custom_sizing",
   ];
   for (const sql of productSizeAlters) {
     try {

@@ -874,6 +874,66 @@ function formatWaitlistAdminEmail(entry) {
   };
 }
 
+function formatContactAdminEmail(entry) {
+  const preview = String(entry.message || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  const text = [
+    'New Get in Touch inquiry',
+    '',
+    `Name: ${entry.name}`,
+    `Email: ${entry.email}`,
+    `Phone: ${entry.phone || '—'}`,
+    '',
+    'Message:',
+    entry.message || '—',
+  ].join('\n');
+
+  const html = buildEmailHtml({
+    accent: 'dark',
+    eyebrow: 'Admin · Get in Touch',
+    title: 'New contact inquiry',
+    preheader: `${entry.name}: ${preview}`,
+    introHtml: '<p style="margin:0;">Someone submitted the Get in Touch form on the site.</p>',
+    detailRows: [
+      { label: 'Name', value: entry.name },
+      { label: 'Email', value: entry.email },
+      { label: 'Phone', value: entry.phone || '—' },
+      { label: 'Message', value: entry.message || '—' },
+    ],
+    buttons: [{ href: siteUrl('/admin?tab=contact'), label: 'Open inquiries', variant: 'dark' }],
+  });
+
+  return {
+    subject: `[Tarajuvva] Get in Touch — ${entry.name}`,
+    text,
+    html,
+  };
+}
+
+function formatContactCustomerEmail(entry) {
+  const text = [
+    `Hi ${entry.name},`,
+    '',
+    'Thanks for reaching out to Tarajuvva. We received your message and will get back to you soon.',
+    '',
+    '— Tarajuvva',
+  ].join('\n');
+
+  const html = buildEmailHtml({
+    accent: 'dark',
+    eyebrow: 'Tarajuvva',
+    title: 'We got your message',
+    preheader: 'Thanks for getting in touch',
+    introHtml: `<p style="margin:0;">Hi ${escapeHtml(entry.name)},</p><p style="margin:12px 0 0;">Thanks for reaching out. We received your message and will get back to you soon.</p>`,
+    buttons: [{ href: siteUrl('/'), label: 'Visit Tarajuvva', variant: 'dark' }],
+  });
+
+  return {
+    subject: 'We got your message — Tarajuvva',
+    text,
+    html,
+  };
+}
+
 function formatWaitlistCustomerEmail(entry) {
   const label = entry.type === 'repair' ? 'Repair' : entry.type === 'donate' ? 'Donate' : entry.type;
   const accent = entry.type === 'repair' ? 'repair' : entry.type === 'donate' ? 'donate' : 'dark';
@@ -994,6 +1054,13 @@ async function notifyWaitlistEntry(entry) {
   await sendCustomerEmail(entry.email, formatWaitlistCustomerEmail(entry));
 }
 
+async function notifyContactInquiry(entry) {
+  await sendNotifyEmail(formatContactAdminEmail(entry));
+  if (entry.email) {
+    await sendCustomerEmail(entry.email, formatContactCustomerEmail(entry));
+  }
+}
+
 module.exports = {
   NOTIFY_TO,
   sendNotifyEmail,
@@ -1002,4 +1069,5 @@ module.exports = {
   notifyOrder,
   notifyOrderShipped,
   notifyWaitlistEntry,
+  notifyContactInquiry,
 };

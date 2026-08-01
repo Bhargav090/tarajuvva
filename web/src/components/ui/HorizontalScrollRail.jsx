@@ -71,7 +71,7 @@ export default function HorizontalScrollRail({
 
       <div
         ref={scrollRef}
-        className={`flex items-center overflow-x-auto no-scrollbar scroll-smooth ${innerClassName}`}
+        className={`flex items-stretch overflow-x-auto no-scrollbar scroll-smooth ${innerClassName}`}
         aria-label={ariaLabel}
         role="region"
       >

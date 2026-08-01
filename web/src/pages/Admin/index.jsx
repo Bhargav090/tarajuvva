@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall, Ruler, Truck,
+  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall, Ruler, Truck, Mail,
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -29,6 +29,7 @@ import ReimagineCustomizeTab from './ReimagineCustomizeTab';
 import DeliveryTab from './DeliveryTab';
 import ReimagineConversionsTab from './ReimagineConversionsTab';
 import TestimonialsTab from './TestimonialsTab';
+import ContactTab from './ContactTab';
 import OrdersTab from './OrdersTab';
 import { downloadCsv, flattenOrderItems } from '../../utils/exportCsv';
 import { formatConsultationSlot } from '../../utils/dates';
@@ -74,6 +75,7 @@ const TABS = [
   { id: 'reimagine', label: 'Reimagine Orders',   icon: Scissors       },
   { id: 'consultations', label: 'Consultations',  icon: PhoneCall      },
   { id: 'waitlist',  label: 'Waitlist',           icon: Users          },
+  { id: 'contact',   label: 'Get in Touch',       icon: Mail           },
   { id: 'products',  label: 'Products',           icon: Tag            },
   { id: 'size-charts', label: 'Size charts',      icon: Ruler          },
   // { id: 'hero',             label: 'Hero image',       icon: ImageIcon },
@@ -233,6 +235,7 @@ export default function Admin() {
           {tab === 'reimagine' && <ReimagineTab kind="orders" />}
           {tab === 'consultations' && <ReimagineTab kind="consultations" />}
           {tab === 'waitlist' && <WaitlistTab />}
+          {tab === 'contact' && <ContactTab />}
           {tab === 'products' && <ProductConfiguratorTab />}
           {tab === 'size-charts' && <SizeChartsTab />}
           {/* {tab === 'hero' && <HeroImagesTab context="home" />} */}

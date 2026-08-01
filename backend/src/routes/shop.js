@@ -288,12 +288,50 @@ function productDbErrorMessage(err) {
   return err.sqlMessage || err.message || 'Could not save product';
 }
 
+const MAX_SIMILAR_PRODUCTS = 8;
+
+/** Normalize admin-curated similar product IDs (ordered, unique, no self). */
+function normalizeSimilarProductIds(raw, selfId = null) {
+  const list = Array.isArray(raw)
+    ? raw
+    : typeof raw === 'string'
+      ? parseJsonArray(raw)
+      : [];
+  const seen = new Set();
+  const out = [];
+  for (const item of list) {
+    const id = String(item || '').trim();
+    if (!id || id === selfId || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length >= MAX_SIMILAR_PRODUCTS) break;
+  }
+  return out;
+}
+
+async function filterExistingProductIds(ids) {
+  if (!ids.length) return [];
+  const placeholders = ids.map(() => '?').join(',');
+  const rows = await all(`SELECT id FROM products WHERE id IN (${placeholders})`, ids);
+  const existing = new Set((rows || []).map((r) => String(r.id)));
+  return ids.filter((id) => existing.has(id));
+}
+
+async function hydrateRecommendedProducts(ids) {
+  if (!ids.length) return [];
+  const placeholders = ids.map(() => '?').join(',');
+  const rows = await all(`SELECT * FROM products WHERE id IN (${placeholders})`, ids);
+  const byId = new Map((rows || []).map((r) => [String(r.id), parseProduct(r)]));
+  return ids.map((id) => byId.get(id)).filter(Boolean);
+}
+
 const parseProduct = (p) => ({
   ...p,
   images: mapImageList(parseJsonArray(p.images)),
   ways_to_wear: parseJsonArray(p.ways_to_wear),
   tags: parseJsonArray(p.tags),
   sizes: parseJsonArray(p.sizes),
+  similar_product_ids: normalizeSimilarProductIds(p.similar_product_ids),
   size_type: p.size_type || null,
   garment_type: p.garment_type || null,
   image_tag: (p.image_tag && String(p.image_tag).trim()) || null,
@@ -470,7 +508,8 @@ router.get('/products/:id', async (req, res) => {
   if (chartKey) {
     size_chart = await getSizeChart(chartKey);
   }
-  res.json({ success: true, product, size_chart });
+  const recommended = await hydrateRecommendedProducts(product.similar_product_ids || []);
+  res.json({ success: true, product, size_chart, recommended });
 });
 
 router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res) => {
@@ -509,9 +548,12 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   }
   const stockNum = totalStockFromSizes(sizeList, stock);
   const id = uuidv4();
+  const similarIds = await filterExistingProductIds(
+    normalizeSimilarProductIds(parsed.similar_product_ids, id)
+  );
   try {
     await run(
-      `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,details_and_care,images,tags,image_tag,stock,sizes,size_type,garment_type,featured,custom_sizing) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,details_and_care,images,tags,image_tag,stock,sizes,size_type,garment_type,featured,custom_sizing,similar_product_ids) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         id,
         String(name).trim(),
@@ -530,6 +572,7 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
         sizeList.length ? garmentType : null,
         featured ? 1 : 0,
         customSizing,
+        JSON.stringify(similarIds),
       ]
     );
   } catch (err) {
@@ -574,9 +617,12 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
     return res.status(e.status || 400).json({ success: false, message: e.message });
   }
   const stockNum = totalStockFromSizes(sizeList, stock);
+  const similarIds = await filterExistingProductIds(
+    normalizeSimilarProductIds(parsed.similar_product_ids, req.params.id)
+  );
   try {
     await run(
-      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,details_and_care=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=?,custom_sizing=? WHERE id=?`,
+      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,details_and_care=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=?,custom_sizing=?,similar_product_ids=? WHERE id=?`,
       [
         String(name).trim(),
         priceNum,
@@ -594,6 +640,7 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
         sizeList.length ? garmentType : null,
         featured ? 1 : 0,
         customSizing,
+        JSON.stringify(similarIds),
         req.params.id,
       ]
     );

@@ -262,7 +262,7 @@ export default function ProductCard({
                     compact
                   />
                 </div>
-                <div className="flex flex-wrap gap-1 sm:gap-2">
+                <div className="flex flex-nowrap gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
                   {sizes.map((s) => {
                     const isSelected = selectedSize === s.label;
                     return (
@@ -273,7 +273,7 @@ export default function ProductCard({
                           setSelectedSize(s.label);
                           setSizeError(false);
                         }}
-                        className={`min-w-[1.75rem] sm:min-w-[2.25rem] px-1.5 sm:px-2 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-mono-tj border transition-colors ${
+                        className={`shrink-0 min-w-[1.75rem] sm:min-w-[2.25rem] px-1.5 sm:px-2 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-mono-tj border transition-colors ${
                           isSelected
                             ? 'bg-black text-white border-black'
                             : 'border-black/20 hover:border-black'
@@ -300,13 +300,14 @@ export default function ProductCard({
       </div>
   );
 
-  if (disableEntrance) return card;
+  if (disableEntrance) return <div className="h-full min-h-0">{card}</div>;
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       viewport={{ once: true }}
+      className="h-full"
     >
       {card}
     </motion.div>

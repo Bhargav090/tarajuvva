@@ -169,3 +169,36 @@ export function useAdminWaitlist() {
 
   return { repair, donate, loading };
 }
+
+// ── Admin Contact inquiries ────────────────────────────────────────────────────
+export function useAdminContact() {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const authHeader = { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    api
+      .get('/contact', { headers: authHeader })
+      .then((r) => {
+        if (!cancelled) setEntries(r.data.entries || []);
+      })
+      .catch(() => {
+        if (!cancelled) setEntries([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const updateStatus = async (id, status) => {
+    await api.patch(`/contact/${id}/status`, { status }, { headers: authHeader });
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)));
+  };
+
+  return { entries, loading, updateStatus };
+}

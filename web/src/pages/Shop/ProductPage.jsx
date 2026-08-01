@@ -12,11 +12,13 @@ import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
 import SizeChartLink from '../../components/shop/SizeChartLink';
 import AsyncImage from '../../components/ui/AsyncImage';
+import ProductCard from '../../components/ui/ProductCard';
+import HorizontalScrollRail from '../../components/ui/HorizontalScrollRail';
 
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { product, sizeChart, loading } = useProduct(id);
+  const { product, sizeChart, recommended, loading } = useProduct(id);
   const { addItem } = useCart();
   const { user } = useAuth();
   const { isWishlisted, toggleWishlist, loading: wishlistLoading } = useWishlist();
@@ -492,6 +494,51 @@ export default function ProductPage() {
             </div>
           </motion.div>
         </div>
+
+        {recommended.length > 0 && (
+          <section className="mt-14 md:mt-16 pt-10 border-t border-[#241621]/10" aria-labelledby="you-may-also-like">
+            <div className="mb-6 md:mb-8">
+              <p className="tj-eyebrow m-0 leading-snug">More to explore</p>
+              <h2 id="you-may-also-like" className="font-display font-bold text-2xl md:text-3xl text-[#0a0a0a] m-0 mt-1 leading-tight">
+                You may also like
+              </h2>
+            </div>
+
+            <div className="lg:hidden -mx-4 sm:-mx-6 px-4 sm:px-6">
+              <HorizontalScrollRail
+                ariaLabel="Recommended products"
+                innerClassName="gap-3 sm:gap-4 snap-x snap-mandatory pb-1 items-stretch"
+              >
+                {recommended.map((p, i) => (
+                  <div
+                    key={p.id}
+                    className="w-[42vw] min-w-[10rem] max-w-[13rem] sm:w-52 md:w-56 shrink-0 snap-start self-stretch flex flex-col"
+                  >
+                    <div className="h-full min-h-0 flex flex-col">
+                      <ProductCard
+                        product={p}
+                        disableEntrance
+                        imageLoading={i < 2 ? 'eager' : 'lazy'}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </HorizontalScrollRail>
+            </div>
+
+            <div className="hidden lg:grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6 items-stretch">
+              {recommended.map((p, i) => (
+                <div key={p.id} className="h-full min-h-0">
+                  <ProductCard
+                    product={p}
+                    disableEntrance
+                    imageLoading={i < 4 ? 'eager' : 'lazy'}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

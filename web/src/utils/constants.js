@@ -224,6 +224,11 @@ export const PAYMENT_STATUS_LABELS = {
   not_required: 'Not required',
 };
 export const REIMAGINE_STATUSES = ['pending_review','accepted','in_progress','completed','rejected'];
+export const CONTACT_STATUSES = ['new', 'reached_out'];
+export const CONTACT_STATUS_LABELS = {
+  new: 'New',
+  reached_out: 'Reached out',
+};
 
 export const STATUS_COLORS = {
   received:       BRAND.red,
@@ -237,6 +242,8 @@ export const STATUS_COLORS = {
   in_progress:    BRAND.burgundy,
   completed:      BRAND.green,
   rejected:       '#888',
+  new:            BRAND.red,
+  reached_out:    '#1f6b3a',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

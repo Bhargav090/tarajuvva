@@ -13,6 +13,125 @@ import { LETTER_SIZES, NUMERIC_SIZES, inferGarmentType } from '../../utils/sizeC
 import ZoomableImage from '../../components/ui/ZoomableImage';
 
 const CATEGORIES = SHOP_CATEGORIES.filter(c => c.value).map(c => c.value);
+const MAX_SIMILAR = 8;
+
+/** Admin multi-select for curated similar / recommended products. */
+function SimilarProductsPicker({ products, selectedIds, excludeId, onChange }) {
+  const [query, setQuery] = useState('');
+  const selectedSet = new Set(selectedIds);
+  const selectedProducts = selectedIds
+    .map((id) => products.find((p) => p.id === id))
+    .filter(Boolean);
+
+  const q = query.trim().toLowerCase();
+  const candidates = products.filter((p) => {
+    if (p.id === excludeId) return false;
+    if (!q) return true;
+    return (
+      String(p.name || '').toLowerCase().includes(q) ||
+      String(p.category || '').toLowerCase().includes(q)
+    );
+  });
+
+  const toggle = (id) => {
+    if (selectedSet.has(id)) {
+      onChange(selectedIds.filter((x) => x !== id));
+      return;
+    }
+    if (selectedIds.length >= MAX_SIMILAR) {
+      toast.error(`You can recommend up to ${MAX_SIMILAR} products`);
+      return;
+    }
+    onChange([...selectedIds, id]);
+  };
+
+  const remove = (id) => onChange(selectedIds.filter((x) => x !== id));
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="block text-sm font-semibold text-[#241621] mb-1.5 font-display">
+          Similar products{' '}
+          <span className="font-normal text-[#241621]/45">(optional, max {MAX_SIMILAR})</span>
+        </p>
+        <p className="text-xs text-[#241621]/50 font-body mb-2">
+          Shown as “You may also like” on the product page. Selection order is display order.
+        </p>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search catalog by name or category…"
+          className="w-full px-4 py-2.5 rounded-xl text-[#241621] placeholder:text-[#241621]/40 font-body text-sm bg-white border border-[#241621]/15 outline-none focus:border-[#c8ff2e] focus:ring-2 focus:ring-[#c8ff2e]/12"
+        />
+      </div>
+
+      {selectedProducts.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {selectedProducts.map((p, i) => (
+            <li
+              key={p.id}
+              className="inline-flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-lg border border-[#241621]/12 bg-[#241621]/3"
+            >
+              <img
+                src={productHeroImage(p.images)}
+                alt=""
+                className="w-8 h-10 object-cover rounded"
+              />
+              <span className="text-[11px] font-display font-semibold text-[#241621] max-w-[8rem] truncate">
+                {i + 1}. {p.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => remove(p.id)}
+                className="p-0.5 text-[#241621]/40 hover:text-[#e34334]"
+                aria-label={`Remove ${p.name}`}
+              >
+                <X size={14} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="max-h-56 overflow-y-auto rounded-xl border border-[#241621]/10 divide-y divide-[#241621]/6 bg-white">
+        {candidates.length === 0 ? (
+          <p className="px-4 py-6 text-center text-xs text-[#241621]/40 font-body">No matching products.</p>
+        ) : (
+          candidates.map((p) => {
+            const checked = selectedSet.has(p.id);
+            const disabled = !checked && selectedIds.length >= MAX_SIMILAR;
+            return (
+              <label
+                key={p.id}
+                className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[#241621]/3 ${
+                  disabled ? 'opacity-45 cursor-not-allowed' : ''
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={disabled}
+                  onChange={() => toggle(p.id)}
+                  className="rounded border-[#341631]/30 text-[#a8e000] focus:ring-[#a8e000]"
+                />
+                <img
+                  src={productHeroImage(p.images)}
+                  alt=""
+                  className="w-9 h-11 object-cover rounded border border-[#241621]/8 shrink-0"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-[#241621] font-display truncate">{p.name}</span>
+                  <span className="block text-[11px] text-[#241621]/45 font-body">{p.category}</span>
+                </span>
+              </label>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
 
 /** Size manager - letter OR numeric presets (mutually exclusive). */
 function SizeManager({ sizes, sizeType, garmentType, onSizeTypeChange, onGarmentTypeChange, onSizesChange }) {
@@ -264,6 +383,7 @@ const emptyForm = () => ({
   featured: false,
   custom_sizing: true,
   sizes: [],
+  similar_product_ids: [],
 });
 
 function linesToList(raw) {
@@ -335,6 +455,9 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
     garment_type: sizes.length ? garmentType : null,
     featured: !!form.featured,
     custom_sizing: form.custom_sizing !== false,
+    similar_product_ids: Array.isArray(form.similar_product_ids)
+      ? form.similar_product_ids.slice(0, MAX_SIMILAR)
+      : [],
     imageMeta,
   };
 
@@ -456,6 +579,7 @@ export default function ProductConfiguratorTab() {
       featured: !!p.featured,
       custom_sizing: p.custom_sizing !== false,
       sizes: [],
+      similar_product_ids: Array.isArray(p.similar_product_ids) ? [...p.similar_product_ids] : [],
     });
     setImageSlots((prev) => {
       prev.forEach((slot) => releasePreview(slot.preview));
@@ -678,6 +802,12 @@ export default function ProductConfiguratorTab() {
           placeholder={'Fabric: 100% cotton\nWash cold, gentle cycle\nLine dry, warm iron'}
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
+        <SimilarProductsPicker
+          products={products}
+          selectedIds={form.similar_product_ids || []}
+          excludeId={editingId}
+          onChange={(ids) => setForm((f) => ({ ...f, similar_product_ids: ids }))}
+        />
         <SizeManager
           sizes={sizes}
           sizeType={sizeType}

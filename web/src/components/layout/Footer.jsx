@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { NAV_LINKS, SOCIAL_LINKS, WHATSAPP_DISPLAY, WHATSAPP_LINK } from '../../utils/constants';
 import BrandLogo from '../ui/BrandLogo';
+import ContactModal from '../ui/ContactModal';
 
 const linkClass =
   'font-display text-base text-[#0a0a0a] hover:underline underline-offset-4 transition-colors';
@@ -33,6 +35,7 @@ function LinkedInIcon({ size = 18 }) {
 
 export default function Footer() {
   const verticals = NAV_LINKS.filter((l) => l.to !== '/about');
+  const [contactOpen, setContactOpen] = useState(false);
 
   return (
     <footer className="border-t border-black bg-white">
@@ -130,6 +133,15 @@ export default function Footer() {
                     WhatsApp {WHATSAPP_DISPLAY}
                   </a>
                 </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setContactOpen(true)}
+                    className={`${linkClass} text-left`}
+                  >
+                    Get in Touch
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
@@ -143,6 +155,8 @@ export default function Footer() {
           </p>
         </div>
       </div>
+
+      <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
     </footer>
   );
 }

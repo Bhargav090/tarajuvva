@@ -70,6 +70,13 @@ async function loadBuffer(ref) {
 
   const asS3 = isS3Ref(v) ? v : s3RefFromPublicUrl(v);
   if (asS3) {
+    // Prefer public CDN/HTTPS fetch — works even if IAM GetObject is denied.
+    const url = cdnUrl(asS3);
+    if (url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`CDN fetch ${res.status} for ${url}`);
+      return Buffer.from(await res.arrayBuffer());
+    }
     const key = s3Key(asS3);
     const out = await getClient().send(
       new GetObjectCommand({ Bucket: requireBucket(), Key: key })

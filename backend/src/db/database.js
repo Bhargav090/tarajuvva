@@ -557,6 +557,24 @@ async function initializeDatabase() {
     )
   `);
 
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS media_migrations (
+      id VARCHAR(36) PRIMARY KEY,
+      table_name VARCHAR(64) NOT NULL,
+      row_id VARCHAR(64) NOT NULL,
+      column_name VARCHAR(64) NOT NULL,
+      array_index INT NULL,
+      old_ref LONGTEXT NOT NULL,
+      new_ref VARCHAR(255) NOT NULL,
+      sha256 CHAR(64) NOT NULL,
+      reverted_at DATETIME NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_media_mig_lookup (table_name, row_id),
+      INDEX idx_media_mig_new_ref (new_ref),
+      INDEX idx_media_mig_sha (sha256)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
   try {
     await pool.execute(
       'ALTER TABLE reimagine_requests ADD COLUMN conversion_id VARCHAR(36) NULL AFTER transformation'

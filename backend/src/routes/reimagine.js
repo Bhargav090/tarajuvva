@@ -8,6 +8,7 @@ const { notifyReimagineRequest } = require('../utils/notifyEmail');
 const { getReimagineCustomizeSettings } = require('../utils/siteSettings');
 const { formatSlotLabel, toISODateString, toTimeString, normalizeReimagineRequest } = require('../utils/consultationSlots');
 const { bufferToDataUrl } = require('../lib/imageDataUrl');
+const { mediaStorageIsS3, uploadBuffer } = require('../lib/s3Storage');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
 const { normalizeDeliveryZone, getDeliveryFee, DELIVERY_ZONE_LABELS } = require('../utils/delivery');
 const {
@@ -17,6 +18,8 @@ const {
   saveConversionImageFile,
   normalizeConversionImageRef,
 } = require('../lib/reimagineConversions');
+const { mapImageList, loadLegacyMap } = require('../lib/publicImageUrl');
+const { mediaReadMode } = require('../lib/s3Storage');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -73,10 +76,10 @@ async function resolveConversionImages(req, existing = {}, from_label = '') {
   let from_image = existing.from_image ?? null;
   let to_image = existing.to_image ?? null;
 
-  if (fromFile) from_image = saveConversionImageFile(fromFile);
+  if (fromFile) from_image = await saveConversionImageFile(fromFile);
   else if (clearFrom) from_image = null;
   else if (req.body.from_image != null && String(req.body.from_image).trim() !== '') {
-    from_image = normalizeConversionImageRef(req.body.from_image);
+    from_image = await normalizeConversionImageRef(req.body.from_image);
   } else if (inheritFrom && !existing.from_image) {
     const label = String(from_label || req.body.from_label || '').trim();
     if (label) {
@@ -90,10 +93,10 @@ async function resolveConversionImages(req, existing = {}, from_label = '') {
     }
   }
 
-  if (toFile) to_image = saveConversionImageFile(toFile);
+  if (toFile) to_image = await saveConversionImageFile(toFile);
   else if (clearTo) to_image = null;
   else if (req.body.to_image != null && String(req.body.to_image).trim() !== '') {
-    to_image = normalizeConversionImageRef(req.body.to_image);
+    to_image = await normalizeConversionImageRef(req.body.to_image);
   }
 
   return { from_image, to_image };
@@ -283,7 +286,13 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
 
   let images = [];
   try {
-    images = (req.files || []).map((f) => bufferToDataUrl(f.buffer, f.mimetype));
+    if (mediaStorageIsS3()) {
+      images = await Promise.all(
+        (req.files || []).map((f) => uploadBuffer(f.buffer, f.mimetype, 'requests'))
+      );
+    } else {
+      images = (req.files || []).map((f) => bufferToDataUrl(f.buffer, f.mimetype));
+    }
   } catch (err) {
     return res.status(err.status || 400).json({ success: false, message: err.message || 'Image too large.' });
   }
@@ -711,7 +720,8 @@ router.get('/requests/:id/images', authenticateAdmin, async (req, res) => {
     } catch {
       images = [];
     }
-    res.json({ success: true, id: row.id, images });
+    if (mediaReadMode() === 'legacy') await loadLegacyMap();
+    res.json({ success: true, id: row.id, images: mapImageList(images) });
   } catch (err) {
     console.error('[reimagine] GET /requests/:id/images failed:', err);
     res.status(500).json({ success: false, message: err.message || 'Failed to load images' });

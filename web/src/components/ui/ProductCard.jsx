@@ -7,7 +7,11 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
 import SizeChartLink from '../shop/SizeChartLink';
-import { productHeroImage, resolveProductImageSrc } from '../../utils/productImage';
+import {
+  productHeroImage,
+  resolveProductCardSrc,
+  resolveProductImageSrc,
+} from '../../utils/productImage';
 import { productDiscountPercent } from '../../utils/productSale';
 import AsyncImage from './AsyncImage';
 
@@ -28,7 +32,13 @@ function galleryList(product) {
   return img ? [img] : [];
 }
 
-export default function ProductCard({ product, disableEntrance = false, variant = 'default' }) {
+export default function ProductCard({
+  product,
+  disableEntrance = false,
+  variant = 'default',
+  /** Prefer eager for above-the-fold cards on shop/home */
+  imageLoading = 'lazy',
+}) {
   const { addItem } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -53,6 +63,12 @@ export default function ProductCard({ product, disableEntrance = false, variant 
   const imageTag = String(product.image_tag || '').trim();
   const wishlisted = isWishlisted(product.id);
 
+  const activeSrc = slides[activeIndex] || slides[0] || '';
+  const cardSrc = resolveProductCardSrc(activeSrc) || activeSrc;
+  const nextIndex = hasAltImages ? (activeIndex + 1) % slides.length : -1;
+  const nextFull = nextIndex >= 0 ? slides[nextIndex] : '';
+  const nextCard = nextFull ? resolveProductCardSrc(nextFull) || nextFull : '';
+
   useEffect(() => {
     setActiveIndex(0);
   }, [product.id]);
@@ -64,6 +80,15 @@ export default function ProductCard({ product, disableEntrance = false, variant 
     }, 4000);
     return () => clearInterval(id);
   }, [hasAltImages, paused, product.id, slides.length]);
+
+  // Warm the next carousel frame without mounting all slides
+  useEffect(() => {
+    if (!nextCard) return undefined;
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = nextCard;
+    return undefined;
+  }, [nextCard]);
 
   const handleAdd = () => {
     if (hasSizes && !selectedSize) {
@@ -100,21 +125,16 @@ export default function ProductCard({ product, disableEntrance = false, variant 
         onTouchStart={() => setPaused(true)}
         onTouchEnd={() => setPaused(false)}
       >
-        {slides.map((src, i) => (
-          <div
-            key={`${product.id}-${src}-${i}`}
-            className={`absolute inset-0 motion-safe:transition-opacity motion-safe:duration-700 motion-safe:ease-in-out ${
-              i === activeIndex ? 'opacity-100 z-[0]' : 'opacity-0 z-0 pointer-events-none'
-            }`}
-            aria-hidden={i !== activeIndex}
-          >
-            <AsyncImage
-              src={src}
-              alt={`${product.name}${i === 0 ? '' : ` - view ${i + 1}`}`}
-              fill
-            />
-          </div>
-        ))}
+        <div className="absolute inset-0 z-0">
+          <AsyncImage
+            key={`${product.id}-${activeIndex}-${cardSrc}`}
+            src={cardSrc}
+            fallbackSrc={activeSrc}
+            alt={product.name}
+            fill
+            loading={imageLoading}
+          />
+        </div>
         {hasAltImages && (
           <div
             className="absolute bottom-2 right-2 z-[1] flex gap-1 pointer-events-none"

@@ -3,6 +3,9 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { all, get, run } = require('../db/database');
 const { isHttpUrl, isDataUrl, parseDataUrl } = require('./imageDataUrl');
+const { mediaStorageIsS3, uploadBuffer, isS3Ref } = require('./s3Storage');
+const { normalizeRetainRef } = require('./persistImage');
+const { publicImageUrl } = require('./publicImageUrl');
 
 const EXT_BY_MIME = {
   'image/jpeg': '.jpg',
@@ -19,7 +22,7 @@ function getConversionsUploadDir() {
   return path.join(__dirname, '../../uploads/conversions');
 }
 
-function writeConversionBuffer(buffer, mimetype) {
+function writeConversionBufferToDisk(buffer, mimetype) {
   if (!buffer?.length) return null;
   if (buffer.length > MAX_CONVERSION_IMAGE_BYTES) {
     const err = new Error(
@@ -36,35 +39,49 @@ function writeConversionBuffer(buffer, mimetype) {
   return `/uploads/conversions/${filename}`;
 }
 
-/** Save upload to disk; DB stores a short path (not base64). */
-function saveConversionImageFile(file) {
+async function writeConversionBuffer(buffer, mimetype) {
+  if (!buffer?.length) return null;
+  if (buffer.length > MAX_CONVERSION_IMAGE_BYTES) {
+    const err = new Error(
+      'Image is too large. Use a file under 2MB (recommended 1200×1200 or 1200×1500 px).'
+    );
+    err.status = 400;
+    throw err;
+  }
+  if (mediaStorageIsS3()) {
+    return uploadBuffer(buffer, mimetype || 'image/jpeg', 'conversions');
+  }
+  return writeConversionBufferToDisk(buffer, mimetype);
+}
+
+/** Save upload; DB stores a short path or s3:// key (not base64). */
+async function saveConversionImageFile(file) {
   if (!file?.buffer) return null;
   return writeConversionBuffer(file.buffer, file.mimetype || 'image/jpeg');
 }
 
-function saveDataUrlConversionImage(dataUrl) {
+async function saveDataUrlConversionImage(dataUrl) {
   const parsed = parseDataUrl(dataUrl);
   if (!parsed) return null;
   return writeConversionBuffer(parsed.buffer, parsed.mime);
 }
 
-/** Accept http(s) URL or /uploads/ path; legacy data URLs are migrated to disk on save. */
-function normalizeConversionImageRef(value) {
-  const s = String(value || '').trim();
-  if (!s) return null;
-  if (isDataUrl(s)) return saveDataUrlConversionImage(s);
-  if (isHttpUrl(s) || s.startsWith('/uploads/')) return s;
-  return null;
+/** Accept http(s), /uploads/, s3://, CDN URL; legacy data URLs migrate on save. */
+async function normalizeConversionImageRef(value) {
+  return normalizeRetainRef(value, {
+    dataSave: (dataUrl) => saveDataUrlConversionImage(dataUrl),
+  });
 }
 
 function conversionMediaUrl(id, side) {
   return `/api/media/conversion/${id}/${side === 'to' ? 'to' : 'from'}`;
 }
 
-/** Public/admin API: never ship raw data URLs — use stable media URLs. */
+/** Public/admin API: never ship raw data URLs or s3:// keys — use CDN or media URLs. */
 function publicImageRef(id, side, stored) {
   const s = String(stored || '').trim();
   if (!s) return null;
+  if (isS3Ref(s)) return publicImageUrl(s);
   if (isHttpUrl(s)) return s;
   if (isDataUrl(s) || s.startsWith('/uploads/')) return conversionMediaUrl(id, side);
   return s;
@@ -72,13 +89,24 @@ function publicImageRef(id, side, stored) {
 
 function parseConversion(row, { publicUrls = true } = {}) {
   if (!row) return null;
+  const fromStored = row.from_image || null;
+  const toStored = row.to_image || null;
   return {
     ...row,
     price: Number(row.price) || 0,
     sort_order: Number(row.sort_order) || 0,
     active: row.active === 1 || row.active === true,
-    from_image: publicUrls ? publicImageRef(row.id, 'from', row.from_image) : row.from_image || null,
-    to_image: publicUrls ? publicImageRef(row.id, 'to', row.to_image) : row.to_image || null,
+    // Always resolve s3:// for browser display; keep raw /uploads & data only when publicUrls=false for admin retain of legacy blobs.
+    from_image: isS3Ref(fromStored)
+      ? publicImageUrl(fromStored)
+      : publicUrls
+        ? publicImageRef(row.id, 'from', fromStored)
+        : fromStored,
+    to_image: isS3Ref(toStored)
+      ? publicImageUrl(toStored)
+      : publicUrls
+        ? publicImageRef(row.id, 'to', toStored)
+        : toStored,
   };
 }
 

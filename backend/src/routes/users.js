@@ -5,6 +5,8 @@ const { get, run, all } = require('../db/database');
 const { enrichOrderItems } = require('../lib/orderItems');
 const { normalizeReimagineRequest } = require('../utils/consultationSlots');
 const { parsePagination, paginationMeta } = require('../lib/pagination');
+const { mapImageList, loadLegacyMap } = require('../lib/publicImageUrl');
+const { mediaReadMode } = require('../lib/s3Storage');
 
 // ── AUTH MIDDLEWARE (user-level) ──────────────────────────────────────────────
 const jwt = require('jsonwebtoken');
@@ -145,7 +147,8 @@ router.get('/me/reimagine/:id/images', authenticateUser, async (req, res) => {
     } catch {
       images = [];
     }
-    res.json({ success: true, id: row.id, images });
+    if (mediaReadMode() === 'legacy') await loadLegacyMap();
+    res.json({ success: true, id: row.id, images: mapImageList(images) });
   } catch (err) {
     console.error('[users] GET /me/reimagine/:id/images failed:', err);
     res.status(500).json({ success: false, message: err.message || 'Failed to load images' });

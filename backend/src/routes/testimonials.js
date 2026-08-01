@@ -6,6 +6,7 @@ const { get, all, run } = require('../db/database');
 const { authenticateAdmin } = require('../middleware/auth');
 const { bufferToDataUrl, isDataUrl, isHttpUrl } = require('../lib/imageDataUrl');
 const { testimonialMediaUrl } = require('../lib/mediaUrls');
+const { mediaStorageIsS3, uploadBuffer, isS3Ref, s3RefFromPublicUrl } = require('../lib/s3Storage');
 
 const MAX_REVIEW_IMAGES = 3;
 
@@ -44,22 +45,38 @@ function serializeImagePaths(paths) {
   return clean.length ? JSON.stringify(clean) : null;
 }
 
-function buildImagePathsFromRequest(req, existingPaths = []) {
+async function persistTestimonialUpload(file) {
+  if (mediaStorageIsS3()) {
+    return uploadBuffer(file.buffer, file.mimetype, 'testimonials');
+  }
+  return bufferToDataUrl(file.buffer, file.mimetype);
+}
+
+async function buildImagePathsFromRequest(req, existingPaths = []) {
   const paths = [];
   for (let i = 0; i < MAX_REVIEW_IMAGES; i += 1) {
     const file = req.files?.[`image_${i}`]?.[0];
     const retain = String(req.body[`retain_${i}`] || '').trim();
     if (file) {
       try {
-        paths.push(bufferToDataUrl(file.buffer, file.mimetype));
+        paths.push(await persistTestimonialUpload(file));
       } catch (err) {
         throw new Error(err.message || 'Image too large.');
       }
     } else if (retain) {
       if (retain.startsWith('/api/media/testimonial/')) {
         if (existingPaths[i]) paths.push(existingPaths[i]);
-      } else if (isDataUrl(retain) || retain.startsWith('/uploads/') || isHttpUrl(retain)) {
-        paths.push(retain);
+      } else {
+        const fromCdn = s3RefFromPublicUrl(retain);
+        if (fromCdn) paths.push(fromCdn);
+        else if (
+          isS3Ref(retain) ||
+          isDataUrl(retain) ||
+          retain.startsWith('/uploads/') ||
+          isHttpUrl(retain)
+        ) {
+          paths.push(isS3Ref(retain) ? `s3://${retain.replace(/^s3:\/\/*/i, '')}` : retain);
+        }
       }
     }
   }
@@ -126,7 +143,7 @@ router.post('/', (req, res, next) => {
 
   let image_paths;
   try {
-    image_paths = buildImagePathsFromRequest(req);
+    image_paths = await buildImagePathsFromRequest(req);
   } catch (err) {
     return res.status(400).json({ success: false, message: err.message });
   }
@@ -178,7 +195,7 @@ router.put('/:id', (req, res, next) => {
 
   let image_paths;
   try {
-    image_paths = buildImagePathsFromRequest(req, existingBlobPaths);
+    image_paths = await buildImagePathsFromRequest(req, existingBlobPaths);
   } catch (err) {
     return res.status(400).json({ success: false, message: err.message });
   }

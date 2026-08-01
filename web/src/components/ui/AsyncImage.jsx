@@ -14,6 +14,8 @@ export default function AsyncImage({
   timeoutMs = IMAGE_LOAD_TIMEOUT_MS,
   fallbackSrc,
   showSpinner = false,
+  /** 'lazy' (default) or 'eager' for above-the-fold cards */
+  loading = 'lazy',
   loadingClassName = 'bg-[var(--tj-bg-soft)] animate-pulse',
   brokenClassName = 'bg-black/5',
   onLoad,
@@ -74,7 +76,7 @@ export default function AsyncImage({
           alt={alt}
           width={width}
           height={height}
-          loading="lazy"
+          loading={loading}
           decoding="async"
           className={`${imgClass} object-cover transition-opacity duration-300 ${
             status === 'loaded' ? 'opacity-100' : 'opacity-0'
@@ -91,7 +93,9 @@ export default function AsyncImage({
           alt={alt}
           width={width}
           height={height}
-          className={`${imgClass} object-cover opacity-70 ${imgClassName}`}
+          loading={loading}
+          decoding="async"
+          className={`${imgClass} object-cover opacity-100 ${imgClassName}`}
         />
       )}
     </div>

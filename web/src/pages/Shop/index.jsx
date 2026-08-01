@@ -91,7 +91,12 @@ export default function Shop() {
           <>
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
               {sorted.map((p, i) => (
-                <ProductCard key={p.id} product={p} disableEntrance={i > 3} />
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  disableEntrance={i > 3}
+                  imageLoading={i < 4 ? 'eager' : 'lazy'}
+                />
               ))}
             </div>
           </>

@@ -49,7 +49,12 @@ export default function ShopPreview() {
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6">
             {products.map((p, i) => (
-              <ProductCard key={p.id} product={p} disableEntrance={i > 1} />
+              <ProductCard
+                key={p.id}
+                product={p}
+                disableEntrance={i > 1}
+                imageLoading={i < 4 ? 'eager' : 'lazy'}
+              />
             ))}
           </div>
         )}

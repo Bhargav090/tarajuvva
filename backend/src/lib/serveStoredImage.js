@@ -7,12 +7,37 @@ const {
   mimeFromExt,
   parseDataUrl,
 } = require('./imageDataUrl');
+const { isS3Ref, cdnUrl } = require('./s3Storage');
+const { publicImageUrl } = require('./publicImageUrl');
 
 const UPLOADS_DIR = path.join(__dirname, '../../uploads');
+
+function resolveLocalUpload(v) {
+  const relative = v.replace(/^\/uploads\//i, '').replace(/^\/+/, '');
+  const full = path.normalize(path.join(UPLOADS_DIR, relative));
+  if (!full.startsWith(UPLOADS_DIR)) return null;
+  if (!fs.existsSync(full)) return null;
+  const buffer = fs.readFileSync(full);
+  return { mime: mimeFromExt(path.extname(full)), buffer };
+}
 
 function resolveStoredImage(ref) {
   const v = String(ref || '').trim();
   if (!v) return null;
+
+  if (isS3Ref(v)) {
+    // May be CDN https, legacy journal data:/uploads/, or null if misconfigured
+    const resolved = publicImageUrl(v) || cdnUrl(v);
+    if (!resolved) return null;
+    if (isDataUrl(resolved)) {
+      const parsed = parseDataUrl(resolved);
+      if (!parsed) return null;
+      return { mime: parsed.mime, buffer: parsed.buffer };
+    }
+    if (isLocalUploadPath(resolved)) return resolveLocalUpload(resolved);
+    if (isHttpUrl(resolved)) return { redirect: resolved };
+    return null;
+  }
 
   if (isDataUrl(v)) {
     const parsed = parseDataUrl(v);
@@ -21,13 +46,7 @@ function resolveStoredImage(ref) {
   }
 
   if (isLocalUploadPath(v)) {
-    // Preserve nested dirs: /uploads/conversions/x.jpg → uploads/conversions/x.jpg
-    const relative = v.replace(/^\/uploads\//i, '').replace(/^\/+/, '');
-    const full = path.normalize(path.join(UPLOADS_DIR, relative));
-    if (!full.startsWith(UPLOADS_DIR)) return null;
-    if (!fs.existsSync(full)) return null;
-    const buffer = fs.readFileSync(full);
-    return { mime: mimeFromExt(path.extname(full)), buffer };
+    return resolveLocalUpload(v);
   }
 
   if (isHttpUrl(v)) {

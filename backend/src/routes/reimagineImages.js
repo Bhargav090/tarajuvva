@@ -7,6 +7,7 @@ const { authenticateAdmin } = require('../middleware/auth');
 const { allSlots, isValidSlot } = require('../lib/reimaginePresets');
 const { bufferToDataUrl } = require('../lib/imageDataUrl');
 const { reimagineMediaUrl } = require('../lib/mediaUrls');
+const { mediaStorageIsS3, uploadBuffer } = require('../lib/s3Storage');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -65,7 +66,11 @@ router.post('/', (req, res, next) => {
 
   let imagePath;
   try {
-    imagePath = bufferToDataUrl(req.file.buffer, req.file.mimetype);
+    if (mediaStorageIsS3()) {
+      imagePath = await uploadBuffer(req.file.buffer, req.file.mimetype, 'reimagine');
+    } else {
+      imagePath = bufferToDataUrl(req.file.buffer, req.file.mimetype);
+    }
   } catch (err) {
     return res.status(err.status || 400).json({ success: false, message: err.message });
   }

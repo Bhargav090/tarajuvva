@@ -7,6 +7,8 @@ const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { parseImages, pickStorableImage, enrichOrderItems } = require('../lib/orderItems');
 const { parsePagination, paginationMeta } = require('../lib/pagination');
 const { resolveImagesFromRequest, saveDataUrlProductImage } = require('../lib/productImages');
+const { mapImageList } = require('../lib/publicImageUrl');
+const { isS3Ref, s3RefFromPublicUrl } = require('../lib/s3Storage');
 const { notifyOrder } = require('../utils/notifyEmail');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
 const { getAllSizeCharts, getSizeChart, chartKeyForProduct } = require('../utils/sizeCharts');
@@ -44,7 +46,7 @@ function maybeProductUpload(req, res, next) {
 /**
  * Multipart (`data` + `images` files) or legacy JSON body (`name`, `images`, …).
  */
-function resolveProductSave(req) {
+async function resolveProductSave(req) {
   const body = req.body && typeof req.body === 'object' ? req.body : null;
   if (!body) {
     const err = new Error('Invalid product request. Refresh the admin page and try again.');
@@ -69,7 +71,7 @@ function resolveProductSave(req) {
 /** Max serialized length per image string (base64 data URLs can be large). */
 const MAX_IMAGE_STRING = 20 * 1024 * 1024;
 const DATA_URL_RE = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/i;
-const LEGACY_SRC_RE = /^(https?:\/\/|\/uploads\/)/i;
+const LEGACY_SRC_RE = /^(https?:\/\/|\/uploads\/|s3:\/\/)/i;
 
 function parseJsonArray(str, fallback = '[]') {
   try {
@@ -229,10 +231,11 @@ async function decrementStockForOrder(orderItems) {
 
 /**
  * Normalizes `images` to a non-empty array of storable references.
- * New uploads: `/uploads/products/...` on disk. Legacy rows may still have https URLs.
- * Base64 data URLs are converted to disk files so the DB stays small.
+ * New uploads: `/uploads/products/...` or `s3://...`. Legacy rows may still have https URLs.
+ * Base64 data URLs are converted to disk/S3 so the DB stays small.
+ * CDN URLs are collapsed back to s3:// keys when possible.
  */
-function normalizeProductImages(images) {
+async function normalizeProductImages(images) {
   const arr = Array.isArray(images) ? images : [];
   const out = [];
   for (let s of arr) {
@@ -243,19 +246,24 @@ function normalizeProductImages(images) {
       err.status = 400;
       throw err;
     }
+    const fromCdn = s3RefFromPublicUrl(s);
+    if (fromCdn) {
+      out.push(fromCdn);
+      continue;
+    }
     if (DATA_URL_RE.test(s)) {
-      const saved = saveDataUrlProductImage(s);
+      const saved = await saveDataUrlProductImage(s);
       if (!saved) {
         const err = new Error('Could not process one or more uploaded images');
         err.status = 400;
         throw err;
       }
       out.push(saved);
-    } else if (LEGACY_SRC_RE.test(s)) {
-      out.push(s);
+    } else if (LEGACY_SRC_RE.test(s) || isS3Ref(s)) {
+      out.push(isS3Ref(s) ? `s3://${s.replace(/^s3:\/\/*/i, '')}` : s);
     } else {
       const err = new Error(
-        'Each image must be a valid upload, base64 data URL, or legacy http(s) / /uploads/ URL'
+        'Each image must be a valid upload, base64 data URL, or legacy http(s) / /uploads/ / s3:// URL'
       );
       err.status = 400;
       throw err;
@@ -282,7 +290,7 @@ function productDbErrorMessage(err) {
 
 const parseProduct = (p) => ({
   ...p,
-  images: parseJsonArray(p.images),
+  images: mapImageList(parseJsonArray(p.images)),
   ways_to_wear: parseJsonArray(p.ways_to_wear),
   tags: parseJsonArray(p.tags),
   sizes: parseJsonArray(p.sizes),
@@ -469,8 +477,8 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   let parsed;
   let imgList;
   try {
-    ({ data: parsed, images: imgList } = resolveProductSave(req));
-    imgList = normalizeProductImages(imgList);
+    ({ data: parsed, images: imgList } = await resolveProductSave(req));
+    imgList = await normalizeProductImages(imgList);
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
   }
@@ -535,8 +543,8 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
   let parsed;
   let imgList;
   try {
-    ({ data: parsed, images: imgList } = resolveProductSave(req));
-    imgList = normalizeProductImages(imgList);
+    ({ data: parsed, images: imgList } = await resolveProductSave(req));
+    imgList = await normalizeProductImages(imgList);
   } catch (e) {
     return res.status(e.status || 400).json({ success: false, message: e.message });
   }

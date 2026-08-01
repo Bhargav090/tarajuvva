@@ -13,7 +13,18 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Security & performance middleware
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        // Allow product images from the CDN once MEDIA_STORAGE=s3 is on.
+        'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+      },
+    },
+  })
+);
 app.use(compression());
 app.use(morgan('dev'));
 const allowedOrigins = new Set([
@@ -91,6 +102,11 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await initializeDatabase();
+  if (String(process.env.MEDIA_READ || 's3').toLowerCase() === 'legacy') {
+    const { loadLegacyMap } = require('./src/lib/publicImageUrl');
+    await loadLegacyMap();
+    console.log('📷 MEDIA_READ=legacy (serving pre-S3 image refs from journal)');
+  }
   app.listen(PORT, () => {
     console.log(`\n🧵 Tarajuvva API Server`);
     console.log(`✅ Running on http://localhost:${PORT}`);
@@ -99,7 +115,8 @@ async function start() {
     const dbLoc = process.env.MYSQL_SOCKET_PATH?.trim()
       ? `socket:${process.env.MYSQL_SOCKET_PATH}`
       : `${process.env.MYSQL_HOST || '127.0.0.1'}:${process.env.MYSQL_PORT || 3306}`;
-    console.log(`🗄️  MySQL: ${dbLoc}/${process.env.MYSQL_DATABASE || 'tarajuvva'}\n`);
+    console.log(`🗄️  MySQL: ${dbLoc}/${process.env.MYSQL_DATABASE || 'tarajuvva'}`);
+    console.log(`🖼️  MEDIA_STORAGE=${process.env.MEDIA_STORAGE || 'disk'} MEDIA_READ=${process.env.MEDIA_READ || 's3'}\n`);
   });
 }
 

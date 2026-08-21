@@ -6,15 +6,15 @@ const { CHART_KEYS, getAllSizeCharts, getSizeChart, saveSizeChart } = require('.
 
 // Dashboard stats
 router.get('/stats', authenticateAdmin, async (req, res) => {
-  const totalOrders = Number((await get('SELECT COUNT(*) AS count FROM orders')).count);
-  const pendingOrders = Number((await get("SELECT COUNT(*) AS count FROM orders WHERE status = 'received'")).count);
+  const totalOrders = Number((await get('SELECT COUNT(*) AS count FROM orders WHERE deleted_at IS NULL')).count);
+  const pendingOrders = Number((await get("SELECT COUNT(*) AS count FROM orders WHERE deleted_at IS NULL AND status = 'received'")).count);
   const totalRevenue = Number(
     (await get(
-      "SELECT COALESCE(SUM(total), 0) AS total FROM orders WHERE status NOT IN ('pending_payment', 'cancelled')"
+      "SELECT COALESCE(SUM(total), 0) AS total FROM orders WHERE deleted_at IS NULL AND status NOT IN ('pending_payment', 'cancelled')"
     )).total
   );
   const paidOnline = Number(
-    (await get("SELECT COUNT(*) AS count FROM orders WHERE payment_status = 'paid'")).count
+    (await get("SELECT COUNT(*) AS count FROM orders WHERE deleted_at IS NULL AND payment_status = 'paid'")).count
   );
   const totalReimagine = Number(
     (await get(

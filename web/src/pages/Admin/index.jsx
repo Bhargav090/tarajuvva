@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useSearchParams, Navigate, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall, Ruler, Truck, Mail,
+  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall, Ruler, Truck, Mail, BarChart3,
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -31,8 +31,10 @@ import ReimagineConversionsTab from './ReimagineConversionsTab';
 import TestimonialsTab from './TestimonialsTab';
 import ContactTab from './ContactTab';
 import OrdersTab from './OrdersTab';
+import AnalyticsTab from './AnalyticsTab';
 import { downloadCsv, flattenOrderItems } from '../../utils/exportCsv';
 import { formatConsultationSlot } from '../../utils/dates';
+import api from '../../utils/api';
 import darkBrandIcon from '../../assets/icons/Artboard 2 copy 2@2x-8.png';
 import PaginationBar from '../../components/ui/PaginationBar';
 import LazyReimagineImages from '../../components/reimagine/LazyReimagineImages';
@@ -71,6 +73,7 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
 
 const TABS = [
   { id: 'overview',  label: 'Overview',          icon: LayoutDashboard },
+  { id: 'analytics', label: 'Analytics',         icon: BarChart3       },
   { id: 'orders',    label: 'Orders',             icon: ShoppingBag    },
   { id: 'reimagine', label: 'Reimagine Orders',   icon: Scissors       },
   { id: 'consultations', label: 'Consultations',  icon: PhoneCall      },
@@ -149,9 +152,68 @@ function AdminChangePasswordModal({ open, onClose }) {
   );
 }
 
+function AdminLoginScreen({ onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setErr('');
+    setLoading(true);
+    try {
+      const message = await onLogin(username, password);
+      if (message) setErr(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#241621] flex items-center justify-center px-4">
+      <form
+        onSubmit={onSubmit}
+        className="w-full max-w-sm rounded-2xl bg-white p-6 sm:p-8 border border-[#241621]/8 shadow-xl"
+      >
+        <div className="flex justify-center mb-6">
+          <img src={darkBrandIcon} alt="Tarajuvva" className="w-20 h-auto object-contain" />
+        </div>
+        <h1 className="text-xl font-black text-[#241621] font-display text-center mb-1">Admin sign in</h1>
+        <p className="text-xs text-[#241621]/50 font-body text-center mb-6">
+          Staff only. Customers use Google on the main site.
+        </p>
+        <div className="space-y-3">
+          <Input
+            label="Username"
+            name="username"
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        {err && <p className="mt-3 text-xs text-[#e34334] font-body text-center">{err}</p>}
+        <Button type="submit" variant="primary" fullWidth loading={loading} className="mt-5">
+          Sign in
+        </Button>
+      </form>
+    </div>
+  );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Admin() {
-  const { token, logout, isLoaded } = useAdminAuth();
+  const { token, login, logout, isLoaded } = useAdminAuth();
   const navigate = useNavigate();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
@@ -165,7 +227,7 @@ export default function Admin() {
   const [sidebar, setSidebar] = useState(false);
 
   if (!isLoaded) return <div className="min-h-screen bg-[#241621] flex items-center justify-center"><Spinner color="#eef4d1" size={32} /></div>;
-  if (!token) return <Navigate to="/login" replace state={{ from: '/admin' }} />;
+  if (!token) return <AdminLoginScreen onLogin={login} />;
 
   return (
     <>
@@ -231,6 +293,7 @@ export default function Admin() {
 
         <div className="p-5 sm:p-8">
           {tab === 'overview' && <OverviewTab />}
+          {tab === 'analytics' && <AnalyticsTab />}
           {tab === 'orders' && <OrdersTab />}
           {tab === 'reimagine' && <ReimagineTab kind="orders" />}
           {tab === 'consultations' && <ReimagineTab kind="consultations" />}
@@ -258,7 +321,7 @@ export default function Admin() {
       confirmVariant="red"
       onConfirm={() => {
         logout();
-        navigate('/login', { replace: true });
+        navigate('/admin', { replace: true });
       }}
     />
     <AdminChangePasswordModal open={pwOpen} onClose={() => setPwOpen(false)} />
@@ -268,6 +331,17 @@ export default function Admin() {
 
 function OverviewTab() {
   const { stats, loading } = useAdminStats();
+  const [funnel, setFunnel] = useState(null);
+
+  useEffect(() => {
+    api
+      .get('/analytics/dashboard?days=30', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('admin_token')}` },
+      })
+      .then(({ data }) => setFunnel(data?.funnel || null))
+      .catch(() => {});
+  }, []);
+
   if (loading) return <div className="flex justify-center py-20"><Spinner size={32} /></div>;
   return (
     <div>
@@ -282,6 +356,30 @@ function OverviewTab() {
         <StatCard icon={PhoneCall} label="Consultations" value={stats?.reimagine?.consultations ?? 0} color="#7A063C" />
         <StatCard icon={Users} label="Repair Waitlist" value={stats?.waitlist?.repair ?? 0} color="#e34334" />
         <StatCard icon={Users} label="Donate Waitlist" value={stats?.waitlist?.donate ?? 0} color="#1b4e81" />
+      </div>
+      <div className="mt-6 grid sm:grid-cols-2 gap-4">
+        <StatCard
+          icon={BarChart3}
+          label="Cart abandonment (30d)"
+          value={funnel?.cart_abandonment_rate == null ? '—' : `${funnel.cart_abandonment_rate}%`}
+          color="#e34334"
+          sub={
+            funnel
+              ? `${funnel.add_to_cart_sessions} carts · ${funnel.purchase_sessions} purchases`
+              : 'See Analytics for detail'
+          }
+        />
+        <StatCard
+          icon={BarChart3}
+          label="Checkout abandonment (30d)"
+          value={funnel?.checkout_abandonment_rate == null ? '—' : `${funnel.checkout_abandonment_rate}%`}
+          color="#7A063C"
+          sub={
+            funnel
+              ? `${funnel.begin_checkout_sessions} checkouts started`
+              : 'Tracking starts after deploy'
+          }
+        />
       </div>
     </div>
   );

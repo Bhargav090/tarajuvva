@@ -837,13 +837,13 @@ router.get('/orders', authenticateAdmin, async (req, res) => {
   try {
     const { status } = req.query;
     const { page, limit, offset } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
-    const where = [];
+    const where = ['deleted_at IS NULL'];
     const params = [];
     if (status) {
       where.push('status = ?');
       params.push(status);
     }
-    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const whereSql = `WHERE ${where.join(' AND ')}`;
 
     const countRow = await get(`SELECT COUNT(*) AS total FROM orders ${whereSql}`, params);
     const total = Number(countRow?.total) || 0;

@@ -16,27 +16,21 @@ const signToken = (user) =>
 
 const safeUser = (u) => ({ id: u.id, name: u.name, email: u.email, avatar: u.avatar, phone: u.phone, address: u.address, role: u.role, created_at: u.created_at });
 
-// ── REGISTER ──────────────────────────────────────────────────────────────────
-router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) return res.status(400).json({ success: false, message: 'All fields required' });
-  if (password.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
-
-  const exists = await get('SELECT id FROM users WHERE email = ?', [email]);
-  if (exists) return res.status(409).json({ success: false, message: 'Email already registered' });
-
-  const hash = await bcrypt.hash(password, 10);
-  const id = uuidv4();
-  await run('INSERT INTO users (id, name, email, password_hash) VALUES (?, ?, ?, ?)', [id, name, email, hash]);
-
-  const user = await get('SELECT * FROM users WHERE id = ?', [id]);
-  res.status(201).json({ success: true, token: signToken(user), user: safeUser(user) });
+// ── REGISTER (disabled — customers use Google only) ───────────────────────────
+router.post('/register', async (_req, res) => {
+  return res.status(410).json({
+    success: false,
+    message: 'Email sign-up is no longer available. Please continue with Google.',
+  });
 });
 
-// ── LOGIN (email/password) ────────────────────────────────────────────────────
+// ── LOGIN — admin email/password only (customers use Google) ─────────────────
 router.post('/login', async (req, res) => {
   const { username, password, email } = req.body;
   const loginEmail = (email || username || '').trim();
+  if (!loginEmail || !password) {
+    return res.status(400).json({ success: false, message: 'Username and password required' });
+  }
   const envAdminUser = process.env.ADMIN_USERNAME?.trim();
 
   // Admin — DB row (preferred) or legacy env match (creates row on first success)
@@ -70,14 +64,10 @@ router.post('/login', async (req, res) => {
     return res.json({ success: true, token, admin: { username: row.username, role: 'admin' } });
   }
 
-  const user = await get('SELECT * FROM users WHERE email = ?', [loginEmail]);
-  if (!user) return res.status(401).json({ success: false, message: 'Invalid email or password' });
-  if (!user.password_hash) return res.status(401).json({ success: false, message: 'This account uses Google Sign-In' });
-
-  const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) return res.status(401).json({ success: false, message: 'Invalid email or password' });
-
-  res.json({ success: true, token: signToken(user), user: safeUser(user) });
+  return res.status(401).json({
+    success: false,
+    message: 'Customer email login is disabled. Please continue with Google.',
+  });
 });
 
 // ── GOOGLE SSO ────────────────────────────────────────────────────────────────

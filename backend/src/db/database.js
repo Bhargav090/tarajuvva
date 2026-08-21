@@ -229,6 +229,22 @@ async function initializeDatabase() {
   `);
 
   await pool.execute(`
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id VARCHAR(36) PRIMARY KEY,
+      event_name VARCHAR(64) NOT NULL,
+      session_id VARCHAR(64) NOT NULL,
+      user_id VARCHAR(36),
+      product_id VARCHAR(36),
+      order_id VARCHAR(36),
+      meta_json TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_analytics_event_created (event_name, created_at),
+      INDEX idx_analytics_session (session_id, event_name),
+      INDEX idx_analytics_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
     CREATE TABLE IF NOT EXISTS admins (
       id VARCHAR(36) PRIMARY KEY,
       username VARCHAR(255) NOT NULL,
@@ -495,15 +511,29 @@ async function initializeDatabase() {
   const orderDeliveryAlters = [
     "ALTER TABLE orders ADD COLUMN delivery_zone VARCHAR(32) NULL AFTER address",
     'ALTER TABLE orders ADD COLUMN delivery_fee DOUBLE NULL DEFAULT 0 AFTER delivery_zone',
+    'ALTER TABLE orders ADD COLUMN deleted_at DATETIME NULL AFTER updated_at',
   ];
   for (const sql of orderDeliveryAlters) {
     try {
       await pool.execute(sql);
     } catch (e) {
       if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
-        console.warn('[db] orders delivery column add skipped:', e.message);
+        console.warn('[db] orders delivery/deleted column add skipped:', e.message);
       }
     }
+  }
+
+  // Soft-delete pre-launch test orders (everything before 8 Jul 2026).
+  try {
+    const [result] = await pool.execute(
+      `UPDATE orders SET deleted_at = CURRENT_TIMESTAMP
+       WHERE deleted_at IS NULL AND created_at < '2026-07-08 00:00:00'`
+    );
+    if (result?.affectedRows > 0) {
+      console.log(`[db] Soft-deleted ${result.affectedRows} test order(s) before 2026-07-08`);
+    }
+  } catch (e) {
+    console.warn('[db] test order soft-delete skipped:', e.message);
   }
 
   const reimagineDeliveryAlters = [

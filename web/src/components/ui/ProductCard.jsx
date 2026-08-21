@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingCart } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -14,6 +14,9 @@ import {
 } from '../../utils/productImage';
 import { productDiscountPercent } from '../../utils/productSale';
 import AsyncImage from './AsyncImage';
+
+const HOVER_CYCLE_MS = 2500;
+const SWIPE_THRESHOLD_PX = 40;
 
 function availableSizes(product) {
   if (!Array.isArray(product?.sizes)) return [];
@@ -44,9 +47,11 @@ export default function ProductCard({
   const navigate = useNavigate();
   const { isWishlisted, toggleWishlist, loading: wishlistLoading } = useWishlist();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [hovering, setHovering] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
+  const touchStartX = useRef(null);
+  const swipeMoved = useRef(false);
   const sizes = availableSizes(product);
   const hasSizes = sizes.length > 0;
   const discount = productDiscountPercent(product);
@@ -73,13 +78,14 @@ export default function ProductCard({
     setActiveIndex(0);
   }, [product.id]);
 
+  // Desktop: cycle only while hovered (~1s). No idle autoplay.
   useEffect(() => {
-    if (!hasAltImages || paused) return undefined;
+    if (!hasAltImages || !hovering) return undefined;
     const id = setInterval(() => {
       setActiveIndex((i) => (i + 1) % slides.length);
-    }, 4000);
+    }, HOVER_CYCLE_MS);
     return () => clearInterval(id);
-  }, [hasAltImages, paused, product.id, slides.length]);
+  }, [hasAltImages, hovering, product.id, slides.length]);
 
   // Warm the next carousel frame without mounting all slides
   useEffect(() => {
@@ -116,14 +122,61 @@ export default function ProductCard({
     }
   };
 
+  const onTouchStart = (e) => {
+    if (!hasAltImages) return;
+    const t = e.touches?.[0];
+    if (!t) return;
+    touchStartX.current = t.clientX;
+    swipeMoved.current = false;
+  };
+
+  const onTouchMove = (e) => {
+    if (touchStartX.current == null) return;
+    const t = e.touches?.[0];
+    if (!t) return;
+    if (Math.abs(t.clientX - touchStartX.current) > 10) {
+      swipeMoved.current = true;
+    }
+  };
+
+  const onTouchEnd = (e) => {
+    if (!hasAltImages || touchStartX.current == null) {
+      touchStartX.current = null;
+      return;
+    }
+    const t = e.changedTouches?.[0];
+    const dx = t ? t.clientX - touchStartX.current : 0;
+    touchStartX.current = null;
+    if (Math.abs(dx) < SWIPE_THRESHOLD_PX) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveIndex((i) =>
+      dx < 0 ? (i + 1) % slides.length : (i - 1 + slides.length) % slides.length
+    );
+  };
+
+  const onMediaClick = (e) => {
+    // Swipe just ended — don't navigate to PDP
+    if (swipeMoved.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      swipeMoved.current = false;
+    }
+  };
+
   const imageBlock = (aspectClass, linkWhole = true) => {
     const media = (
       <div
-        className={`relative block w-full overflow-hidden ${aspectClass} bg-[var(--tj-bg-soft)]`}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-        onTouchStart={() => setPaused(true)}
-        onTouchEnd={() => setPaused(false)}
+        className={`relative block w-full overflow-hidden ${aspectClass} bg-[var(--tj-bg-soft)] touch-pan-y`}
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => {
+          setHovering(false);
+          setActiveIndex(0);
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onClick={onMediaClick}
       >
         <div className="absolute inset-0 z-0">
           <AsyncImage
@@ -176,7 +229,7 @@ export default function ProductCard({
     );
     if (!linkWhole) return media;
     return (
-      <Link to={`/shop/${product.id}`} className="block">
+      <Link to={`/shop/${product.id}`} className="block" onClick={onMediaClick}>
         {media}
       </Link>
     );

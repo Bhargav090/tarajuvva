@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useState } from 'react';
+import { trackAnalyticsEvent } from '../utils/analytics';
 
 const CartCtx = createContext(null);
 
@@ -49,6 +50,10 @@ export function CartProvider({ children }) {
         size: size || null,
         custom_measurements: isCustom && Array.isArray(customMeasurements) ? customMeasurements : null,
       },
+    });
+    trackAnalyticsEvent('add_to_cart', {
+      productId: product?.id,
+      meta: { size: size || null, name: product?.name },
     });
     setIsOpen(true);
   };

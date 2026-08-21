@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { openRazorpayCheckout } from '../utils/razorpay';
 import { formatAddressWithPincode } from '../utils/address';
 import { getDeliveryFee, isValidDeliveryZone } from '../utils/delivery';
 import { useDeliverySettings } from './useDeliverySettings';
+import { trackAnalyticsEvent } from '../utils/analytics';
+
+function isAddressComplete(form) {
+  const line = String(form.address_line || '').trim();
+  const pin = String(form.pincode || '').trim();
+  return line.length >= 8 && /^\d{6}$/.test(pin) && isValidDeliveryZone(form.delivery_zone);
+}
 
 export function useOrderSubmit({ items, total, user, onSuccess }) {
   const { settings: deliveryFees } = useDeliverySettings();
@@ -21,11 +28,25 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
   const [done, setDone] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const addressTracked = useRef(false);
 
   const deliveryFee = isValidDeliveryZone(form.delivery_zone)
     ? getDeliveryFee('shop', form.delivery_zone, deliveryFees)
     : 0;
   const grandTotal = Number(total || 0) + deliveryFee;
+
+  // Funnel: cart → address filled → pay. Fire once when shipping details are complete.
+  useEffect(() => {
+    if (addressTracked.current || done) return;
+    if (!isAddressComplete(form)) return;
+    addressTracked.current = true;
+    trackAnalyticsEvent('address_entered', {
+      meta: {
+        delivery_zone: form.delivery_zone,
+        has_pincode: true,
+      },
+    });
+  }, [form.address_line, form.pincode, form.delivery_zone, done]);
 
   const onChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -41,6 +62,10 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
   });
 
   const placeRazorpayOrder = async (orderItems) => {
+    trackAnalyticsEvent('begin_checkout', {
+      meta: { item_count: orderItems.length, total: grandTotal },
+    });
+
     const { data } = await api.post('/shop/orders', {
       ...orderPayload(),
       items: orderItems,
@@ -73,6 +98,11 @@ export function useOrderSubmit({ items, total, user, onSuccess }) {
       razorpay_order_id: payment.razorpay_order_id,
       razorpay_payment_id: payment.razorpay_payment_id,
       razorpay_signature: payment.razorpay_signature,
+    });
+
+    trackAnalyticsEvent('purchase', {
+      orderId,
+      meta: { total: grandTotal },
     });
 
     setPlacedOrderId(orderId);

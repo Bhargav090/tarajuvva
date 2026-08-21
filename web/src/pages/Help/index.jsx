@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { WHATSAPP_DISPLAY, WHATSAPP_LINK, SOCIAL_LINKS } from '../../utils/constants';
 import { useDeliverySettings } from '../../hooks/useDeliverySettings';
@@ -363,7 +363,7 @@ function NestedQA({ items, intro }) {
 
 function AccordionItem({ section, open, onToggle }) {
   return (
-    <div className="border border-black bg-white">
+    <div id={section.id} className="border border-black bg-white scroll-mt-28">
       <button
         type="button"
         onClick={onToggle}
@@ -405,6 +405,15 @@ export default function Help() {
   const accordionSections = sections.filter((s) => s.id !== 'terms');
   const termsSection = sections.find((s) => s.id === 'terms');
 
+  useEffect(() => {
+    const hash = window.location.hash?.replace(/^#/, '');
+    if (!hash) return;
+    if (hash !== 'terms') setOpenId(hash);
+    requestAnimationFrame(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
+
   return (
     <div className="bg-white min-h-screen">
       <section className="border-b border-black" data-testid="help-page">
@@ -440,7 +449,7 @@ export default function Help() {
           ))}
 
           {termsSection && (
-            <div className="border border-black bg-white mt-6 md:mt-8">
+            <div id="terms" className="border border-black bg-white mt-6 md:mt-8 scroll-mt-28">
               <div className="px-5 py-4 border-b border-black/10">
                 <h2 className="font-display font-bold text-lg md:text-xl text-[#0a0a0a]">
                   {termsSection.title}

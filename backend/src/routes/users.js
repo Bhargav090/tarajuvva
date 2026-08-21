@@ -45,12 +45,12 @@ router.get('/me/orders', authenticateUser, async (req, res) => {
   try {
     const { page, limit, offset } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
     const countRow = await get(
-      'SELECT COUNT(*) AS total FROM orders WHERE user_id = ?',
+      'SELECT COUNT(*) AS total FROM orders WHERE deleted_at IS NULL AND user_id = ?',
       [req.user.id]
     );
     const total = Number(countRow?.total) || 0;
     const orders = await all(
-      `SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+      `SELECT * FROM orders WHERE deleted_at IS NULL AND user_id = ? ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
       [req.user.id]
     );
     const parsed = await Promise.all(
@@ -74,7 +74,7 @@ router.get('/me/orders/:id', authenticateUser, async (req, res) => {
   if (req.user.role === 'admin') {
     return res.status(403).json({ success: false, message: 'Customer account required' });
   }
-  const order = await get('SELECT * FROM orders WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
+  const order = await get('SELECT * FROM orders WHERE id = ? AND user_id = ? AND deleted_at IS NULL', [req.params.id, req.user.id]);
   if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
   const items = await enrichOrderItems(JSON.parse(order.items), get);
   res.json({ success: true, order: { ...order, items } });

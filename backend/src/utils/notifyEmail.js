@@ -657,6 +657,17 @@ function formatReimagineCustomerEmail(r) {
   };
 }
 
+function orderDiscountRows(order) {
+  const rows = [];
+  if (Number(order.coupon_discount) > 0) {
+    rows.push({ label: `Coupon ${order.coupon_code || ''}`.trim(), value: `− ${money(order.coupon_discount)}` });
+  }
+  if (Number(order.gift_card_discount) > 0) {
+    rows.push({ label: `Gift card ${order.gift_card_code || ''}`.trim(), value: `− ${money(order.gift_card_discount)}` });
+  }
+  return rows;
+}
+
 function formatOrderEmail(order) {
   const id = shortId(order.id);
   const items = parseOrderItems(order);
@@ -674,6 +685,7 @@ function formatOrderEmail(order) {
     `Phone: ${order.user_phone}`,
     `Email: ${order.user_email || '—'}`,
     `Total: ${money(order.total)}`,
+    ...orderDiscountRows(order).map((r) => `${r.label}: ${r.value}`),
     order.delivery_zone
       ? `Delivery: ${order.delivery_zone}${
           order.delivery_fee != null ? ` (${money(order.delivery_fee)})` : ''
@@ -702,6 +714,7 @@ function formatOrderEmail(order) {
       { label: 'Phone', value: order.user_phone },
       { label: 'Email', value: order.user_email || '—' },
       { label: 'Total', value: money(order.total) },
+      ...orderDiscountRows(order),
       order.delivery_zone
         ? {
             label: 'Delivery',
@@ -743,6 +756,7 @@ function formatOrderCustomerEmail(order) {
     '',
     `Order #${id}`,
     `Total: ${money(order.total)}`,
+    ...orderDiscountRows(order).map((r) => `${r.label}: ${r.value}`),
     `Payment: ${paymentLabel}`,
     '',
     'Items:',
@@ -771,6 +785,7 @@ function formatOrderCustomerEmail(order) {
     detailRows: [
       { label: 'Order', value: `#${id}` },
       { label: 'Total', value: money(order.total) },
+      ...orderDiscountRows(order),
       order.delivery_fee != null && Number(order.delivery_fee) > 0
         ? { label: 'Delivery fee', value: money(order.delivery_fee) }
         : null,
@@ -1061,6 +1076,59 @@ async function notifyContactInquiry(entry) {
   }
 }
 
+function formatGiftCardEmail(card) {
+  const uses = Number(card.max_uses) || 1;
+  const minCart = Number(card.min_cart_value) || 0;
+  const usesLabel = uses === 1 ? 'Can be used once' : `Can be used ${uses} times`;
+  const shopUrl = siteUrl('/shop');
+
+  const text = [
+    'Hi,',
+    '',
+    `You've received a Tarajuvva gift card worth ${money(card.value)}.`,
+    '',
+    `Gift card code: ${card.code}`,
+    usesLabel,
+    minCart > 0 ? `Minimum cart value: ${money(minCart)}` : null,
+    card.expires_at ? `Valid until: ${formatPickupDate(card.expires_at)}` : null,
+    card.note ? `\n${card.note}` : null,
+    '',
+    `Sign in with ${card.recipient_email} and redeem it at checkout: ${shopUrl}`,
+    '',
+    '— Tarajuvva',
+  ]
+    .filter((line) => line != null)
+    .join('\n');
+
+  const html = buildEmailHtml({
+    accent: 'burgundy',
+    eyebrow: 'Gift card',
+    title: `A ${money(card.value)} gift card for you`,
+    preheader: `Your Tarajuvva gift card code is ${card.code}`,
+    introHtml: `
+      <p style="margin:0 0 12px;">Hi,</p>
+      <p style="margin:0;">You've received a Tarajuvva gift card. Sign in with <strong>${escapeHtml(
+        card.recipient_email
+      )}</strong> and choose <strong>Redeem</strong> on the checkout page.</p>`,
+    detailRows: [
+      { label: 'Code', value: card.code },
+      { label: 'Value', value: money(card.value) },
+      { label: 'Uses', value: usesLabel },
+      minCart > 0 ? { label: 'Minimum cart', value: money(minCart) } : null,
+      card.expires_at ? { label: 'Valid until', value: formatPickupDate(card.expires_at) } : null,
+    ].filter(Boolean),
+    noteHtml: card.note ? `<p style="margin:0;">${nl2br(card.note)}</p>` : '',
+    buttons: [{ href: shopUrl, label: 'Shop now', variant: 'burgundy' }],
+  });
+
+  return { subject: `Your Tarajuvva gift card — ${money(card.value)}`, text, html };
+}
+
+async function notifyGiftCardIssued(card) {
+  if (!card?.recipient_email) return { ok: false, skipped: true };
+  return sendCustomerEmail(card.recipient_email, formatGiftCardEmail(card));
+}
+
 module.exports = {
   NOTIFY_TO,
   sendNotifyEmail,
@@ -1070,4 +1138,5 @@ module.exports = {
   notifyOrderShipped,
   notifyWaitlistEntry,
   notifyContactInquiry,
+  notifyGiftCardIssued,
 };

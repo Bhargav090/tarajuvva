@@ -631,6 +631,84 @@ async function initializeDatabase() {
     }
   }
 
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS coupons (
+      id VARCHAR(36) PRIMARY KEY,
+      code VARCHAR(64) NOT NULL,
+      description VARCHAR(255) NULL,
+      discount_type VARCHAR(16) NOT NULL DEFAULT 'percent',
+      discount_value DOUBLE NOT NULL DEFAULT 0,
+      max_discount DOUBLE NULL,
+      min_cart_value DOUBLE NOT NULL DEFAULT 0,
+      audience VARCHAR(16) NOT NULL DEFAULT 'all',
+      allowed_emails TEXT NULL,
+      usage_limit INT NULL,
+      per_user_limit INT NULL,
+      starts_at DATE NULL,
+      expires_at DATE NULL,
+      active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_coupons_code (code)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS gift_cards (
+      id VARCHAR(36) PRIMARY KEY,
+      code VARCHAR(64) NOT NULL,
+      batch_id VARCHAR(36) NULL,
+      recipient_email VARCHAR(255) NULL,
+      value DOUBLE NOT NULL DEFAULT 0,
+      max_uses INT NOT NULL DEFAULT 1,
+      min_cart_value DOUBLE NOT NULL DEFAULT 0,
+      expires_at DATE NULL,
+      note VARCHAR(255) NULL,
+      active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_gift_cards_code (code),
+      INDEX idx_gift_cards_email (recipient_email),
+      INDEX idx_gift_cards_batch (batch_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS promo_redemptions (
+      id VARCHAR(36) PRIMARY KEY,
+      kind VARCHAR(16) NOT NULL,
+      promo_id VARCHAR(36) NOT NULL,
+      code VARCHAR(64) NOT NULL,
+      order_id VARCHAR(36) NOT NULL,
+      user_id VARCHAR(36) NULL,
+      user_email VARCHAR(255) NULL,
+      discount_amount DOUBLE NOT NULL DEFAULT 0,
+      status VARCHAR(16) NOT NULL DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_promo_red_promo (kind, promo_id, status),
+      INDEX idx_promo_red_order (order_id),
+      INDEX idx_promo_red_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  const orderPromoAlters = [
+    'ALTER TABLE orders ADD COLUMN subtotal DOUBLE NULL AFTER delivery_fee',
+    'ALTER TABLE orders ADD COLUMN coupon_code VARCHAR(64) NULL AFTER subtotal',
+    'ALTER TABLE orders ADD COLUMN coupon_discount DOUBLE NOT NULL DEFAULT 0 AFTER coupon_code',
+    'ALTER TABLE orders ADD COLUMN gift_card_code VARCHAR(64) NULL AFTER coupon_discount',
+    'ALTER TABLE orders ADD COLUMN gift_card_discount DOUBLE NOT NULL DEFAULT 0 AFTER gift_card_code',
+  ];
+  for (const sql of orderPromoAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+        console.warn('[db] orders promo column add skipped:', e.message);
+      }
+    }
+  }
+
   const { ensureReimagineConversionsSeeded } = require('../lib/reimagineConversions');
   await ensureReimagineConversionsSeeded();
 

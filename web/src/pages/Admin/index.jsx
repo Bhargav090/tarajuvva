@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   LayoutDashboard, ShoppingBag, Scissors, Users, Menu, X,
-  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall, Ruler, Truck, Mail, BarChart3,
+  LogOut, TrendingUp, Package, Key, Tag, MessageSquareQuote, PhoneCall, Ruler, Truck, Mail, BarChart3, Ticket,
 } from 'lucide-react';
 import {
   useAdminAuth,
@@ -32,6 +32,7 @@ import TestimonialsTab from './TestimonialsTab';
 import ContactTab from './ContactTab';
 import OrdersTab from './OrdersTab';
 import AnalyticsTab from './AnalyticsTab';
+import PromotionsTab from './PromotionsTab';
 import { downloadCsv, flattenOrderItems } from '../../utils/exportCsv';
 import { formatConsultationSlot } from '../../utils/dates';
 import api from '../../utils/api';
@@ -75,6 +76,7 @@ const TABS = [
   { id: 'overview',  label: 'Overview',          icon: LayoutDashboard },
   { id: 'analytics', label: 'Analytics',         icon: BarChart3       },
   { id: 'orders',    label: 'Orders',             icon: ShoppingBag    },
+  { id: 'promotions', label: 'Coupons & Gifts',   icon: Ticket         },
   { id: 'reimagine', label: 'Reimagine Orders',   icon: Scissors       },
   { id: 'consultations', label: 'Consultations',  icon: PhoneCall      },
   { id: 'waitlist',  label: 'Waitlist',           icon: Users          },
@@ -253,7 +255,7 @@ export default function Admin() {
               <img src={darkBrandIcon} alt="Tarajuvva" className="w-24 h-auto object-contain" />
             </div>
 
-            <nav className="flex-1 px-3 py-4 space-y-1">
+            <nav className="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1">
               {TABS.map(t => (
                 <button key={t.id} onClick={() => { setTab(t.id); setSidebar(false); }}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold font-display transition-all ${
@@ -295,6 +297,7 @@ export default function Admin() {
           {tab === 'overview' && <OverviewTab />}
           {tab === 'analytics' && <AnalyticsTab />}
           {tab === 'orders' && <OrdersTab />}
+          {tab === 'promotions' && <PromotionsTab />}
           {tab === 'reimagine' && <ReimagineTab kind="orders" />}
           {tab === 'consultations' && <ReimagineTab kind="consultations" />}
           {tab === 'waitlist' && <WaitlistTab />}

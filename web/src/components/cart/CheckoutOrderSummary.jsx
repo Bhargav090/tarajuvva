@@ -9,6 +9,10 @@ export default function CheckoutOrderSummary({
   deliveryFee = 0,
   grandTotal,
   deliveryZone = '',
+  couponCode = '',
+  couponDiscount = 0,
+  giftCardCode = '',
+  giftCardDiscount = 0,
   onRemove,
   onUpdateQty,
 }) {
@@ -67,6 +71,22 @@ export default function CheckoutOrderSummary({
                 : 'Select location'}
             </span>
           </div>
+          {Number(couponDiscount) > 0 && (
+            <div className="flex justify-between gap-3">
+              <span>Coupon {couponCode ? `(${couponCode})` : ''}</span>
+              <span className="font-semibold text-[#0a0a0a] shrink-0">
+                −₹{Number(couponDiscount).toLocaleString('en-IN')}
+              </span>
+            </div>
+          )}
+          {Number(giftCardDiscount) > 0 && (
+            <div className="flex justify-between gap-3">
+              <span>Gift card {giftCardCode ? `(${giftCardCode})` : ''}</span>
+              <span className="font-semibold text-[#0a0a0a] shrink-0">
+                −₹{Number(giftCardDiscount).toLocaleString('en-IN')}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex justify-between items-baseline pt-2 border-t border-black/15">
           <span className="text-sm font-bold uppercase tracking-wider text-black/45 font-display">Total</span>

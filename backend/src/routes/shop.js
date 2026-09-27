@@ -13,6 +13,14 @@ const { notifyOrder } = require('../utils/notifyEmail');
 const { getRazorpayConfig, getRazorpayClient, verifyPaymentSignature, toPaise } = require('../utils/razorpay');
 const { getAllSizeCharts, getSizeChart, chartKeyForProduct } = require('../utils/sizeCharts');
 const { normalizeDeliveryZone, getDeliveryFee, DELIVERY_ZONE_LABELS } = require('../utils/delivery');
+const {
+  computePromotions,
+  reserveRedemptions,
+  markRedemptionsApplied,
+  releaseRedemptions,
+  deleteRedemptionsForOrder,
+  listAvailableGiftCards,
+} = require('../lib/promotions');
 
 const productImageUpload = multer({
   storage: multer.memoryStorage(),
@@ -683,19 +691,67 @@ router.get('/razorpay/key', (req, res) => {
   res.json({ success: true, key_id: cfg.key_id });
 });
 
+/** Customer account for promo checks — gift cards / user-specific coupons match the account email. */
+async function loadCheckoutUser(req, res) {
+  if (req.user.role === 'admin') {
+    res.status(403).json({ success: false, message: 'Sign in with a customer account to place orders' });
+    return null;
+  }
+  const dbUser = await get('SELECT id, email FROM users WHERE id = ?', [req.user.id]);
+  if (!dbUser) {
+    res.status(401).json({ success: false, message: 'Account not found. Please sign in again.' });
+    return null;
+  }
+  return dbUser;
+}
+
+router.get('/gift-cards/mine', authenticateUser, async (req, res) => {
+  try {
+    const dbUser = await loadCheckoutUser(req, res);
+    if (!dbUser) return;
+    res.json({ success: true, gift_cards: await listAvailableGiftCards(dbUser.email) });
+  } catch (err) {
+    console.error('[shop] GET /gift-cards/mine failed:', err);
+    res.status(500).json({ success: false, message: 'Could not load gift cards' });
+  }
+});
+
+router.post('/promotions/preview', authenticateUser, async (req, res) => {
+  try {
+    const dbUser = await loadCheckoutUser(req, res);
+    if (!dbUser) return;
+    let subtotal;
+    try {
+      ({ total: subtotal } = await resolveOrderItems(req.body.items));
+    } catch (err) {
+      return res.status(err.status || 400).json({ success: false, message: err.message });
+    }
+    const zone = normalizeDeliveryZone(req.body.delivery_zone);
+    const deliveryFee = zone ? await getDeliveryFee('shop', zone) : 0;
+    const summary = await computePromotions({
+      userId: dbUser.id,
+      userEmail: dbUser.email,
+      subtotal,
+      deliveryFee,
+      couponCode: req.body.coupon_code,
+      giftCardCode: req.body.gift_card_code,
+      lenient: true,
+    });
+    const { errors, ...rest } = summary;
+    res.json({ success: true, summary: rest, errors });
+  } catch (err) {
+    console.error('[shop] POST /promotions/preview failed:', err);
+    res.status(500).json({ success: false, message: 'Could not apply discount. Please try again.' });
+  }
+});
+
 router.post('/orders', authenticateUser, async (req, res) => {
   const { user_name, user_email, user_phone, address, items, notes } = req.body;
   if (!user_name || !user_phone || !address || !items)
     return res.status(400).json({ success: false, message: 'Missing required fields' });
 
-  if (req.user.role === 'admin') {
-    return res.status(403).json({ success: false, message: 'Sign in with a customer account to place orders' });
-  }
-
-  const dbUser = await get('SELECT id FROM users WHERE id = ?', [req.user.id]);
-  if (!dbUser) {
-    return res.status(401).json({ success: false, message: 'Account not found. Please sign in again.' });
-  }
+  const dbUser = await loadCheckoutUser(req, res);
+  if (!dbUser) return;
 
   const deliveryZone = normalizeDeliveryZone(req.body.delivery_zone);
   if (!deliveryZone) {
@@ -714,26 +770,87 @@ router.post('/orders', authenticateUser, async (req, res) => {
     return res.status(err.status || 400).json({ success: false, message: err.message });
   }
 
-  const total = subtotal + deliveryFee;
+  let pricing;
+  try {
+    pricing = await computePromotions({
+      userId: dbUser.id,
+      userEmail: dbUser.email,
+      subtotal,
+      deliveryFee,
+      couponCode: req.body.coupon_code,
+      giftCardCode: req.body.gift_card_code,
+    });
+  } catch (err) {
+    if (err.status && err.status < 500) {
+      return res.status(err.status).json({ success: false, message: err.message });
+    }
+    console.error('[shop] promotion check failed:', err);
+    return res.status(500).json({ success: false, message: 'Could not apply discount. Please try again.' });
+  }
+
+  const total = pricing.total;
   const id = uuidv4();
   const user_id = dbUser.id;
+  const fullyCovered = total <= 0;
 
-  const rzp = getRazorpayClient();
-  if (!rzp) {
+  const rzp = fullyCovered ? null : getRazorpayClient();
+  if (!fullyCovered && !rzp) {
     return res.status(503).json({ success: false, message: 'Online payments are not configured' });
   }
 
   await run(
     `INSERT INTO orders (
-      id,user_id,user_name,user_email,user_phone,address,delivery_zone,delivery_fee,items,total,
-      status,payment_method,payment_status,notes
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      id,user_id,user_name,user_email,user_phone,address,delivery_zone,delivery_fee,subtotal,
+      coupon_code,coupon_discount,gift_card_code,gift_card_discount,items,total,
+      status,payment_method,payment_status,paid_at,notes
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,${fullyCovered ? 'CURRENT_TIMESTAMP' : 'NULL'},?)`,
     [
       id, user_id, user_name, user_email || null, user_phone, address,
-      deliveryZone, deliveryFee, JSON.stringify(orderItems), total,
-      'pending_payment', 'razorpay', 'pending', notes || null,
+      deliveryZone, deliveryFee, subtotal,
+      pricing.coupon ? pricing.coupon.code : null, pricing.coupon_discount,
+      pricing.gift_card ? pricing.gift_card.code : null, pricing.gift_card_discount,
+      JSON.stringify(orderItems), total,
+      fullyCovered ? 'received' : 'pending_payment',
+      fullyCovered ? 'promo' : 'razorpay',
+      fullyCovered ? 'paid' : 'pending',
+      notes || null,
     ]
   );
+
+  await reserveRedemptions({
+    orderId: id,
+    userId: user_id,
+    userEmail: dbUser.email,
+    breakdown: pricing,
+    status: fullyCovered ? 'applied' : 'pending',
+  });
+
+  const delivery = {
+    zone: deliveryZone,
+    zone_label: DELIVERY_ZONE_LABELS[deliveryZone],
+    fee: deliveryFee,
+    subtotal,
+    coupon_discount: pricing.coupon_discount,
+    gift_card_discount: pricing.gift_card_discount,
+    total,
+  };
+
+  if (fullyCovered) {
+    try {
+      await decrementStockForOrder(orderItems);
+    } catch (err) {
+      console.error('[shop] stock decrement for promo order failed:', err);
+    }
+    const paidRow = await get('SELECT * FROM orders WHERE id=?', [id]);
+    notifyOrder(paidRow).catch(() => {});
+    return res.status(201).json({
+      success: true,
+      paid: true,
+      message: 'Order placed. Your coupon / gift card covered the full amount.',
+      order: { ...paidRow, items: await enrichOrderItems(orderItems, get) },
+      delivery,
+    });
+  }
 
   let rzpOrder;
   try {
@@ -749,6 +866,7 @@ router.post('/orders', authenticateUser, async (req, res) => {
       },
     });
   } catch (err) {
+    await deleteRedemptionsForOrder(id);
     await run('DELETE FROM orders WHERE id = ?', [id]);
     console.error('[razorpay] order create failed:', err);
     return res.status(502).json({ success: false, message: 'Could not start payment. Please try again.' });
@@ -763,13 +881,7 @@ router.post('/orders', authenticateUser, async (req, res) => {
   return res.status(201).json({
     success: true,
     order: { ...row, items: itemsWithImages },
-    delivery: {
-      zone: deliveryZone,
-      zone_label: DELIVERY_ZONE_LABELS[deliveryZone],
-      fee: deliveryFee,
-      subtotal,
-      total,
-    },
+    delivery,
     razorpay: {
       key_id: cfg.key_id,
       order_id: rzpOrder.id,
@@ -806,6 +918,7 @@ router.post('/orders/:id/razorpay/verify', authenticateUser, async (req, res) =>
       'UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       ['failed', req.params.id]
     );
+    await releaseRedemptions(req.params.id);
     return res.status(400).json({ success: false, message: 'Payment verification failed' });
   }
 
@@ -814,6 +927,7 @@ router.post('/orders/:id/razorpay/verify', authenticateUser, async (req, res) =>
      paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
     [razorpay_order_id, razorpay_payment_id, req.params.id]
   );
+  await markRedemptionsApplied(req.params.id);
 
   try {
     const paidItems = JSON.parse(order.items || '[]');

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Phone, Mail, CreditCard, Package, User, Truck } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Phone, Mail, CreditCard, Package, User, Truck, Ticket } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { Badge } from '../../components/ui/Badge';
@@ -158,6 +158,20 @@ export default function OrderDetail() {
                       ? ` - ₹${Number(order.delivery_fee).toLocaleString('en-IN')}`
                       : ''}
                   </span>
+                </InfoRow>
+              )}
+              {(Number(order.coupon_discount) > 0 || Number(order.gift_card_discount) > 0) && (
+                <InfoRow icon={Ticket} label="Discounts">
+                  {Number(order.coupon_discount) > 0 && (
+                    <p>
+                      Coupon {order.coupon_code} - ₹{Number(order.coupon_discount).toLocaleString('en-IN')} off
+                    </p>
+                  )}
+                  {Number(order.gift_card_discount) > 0 && (
+                    <p>
+                      Gift card {order.gift_card_code} - ₹{Number(order.gift_card_discount).toLocaleString('en-IN')} off
+                    </p>
+                  )}
                 </InfoRow>
               )}
               {order.tracking_url && (

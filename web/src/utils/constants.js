@@ -214,6 +214,7 @@ export const SOCIAL_LINKS = {
 export const PAYMENT_METHOD_LABELS = {
   cod: 'Cash on delivery',
   razorpay: 'Paid online (Razorpay)',
+  promo: 'Covered by coupon / gift card',
 };
 
 export const PAYMENT_STATUS_LABELS = {

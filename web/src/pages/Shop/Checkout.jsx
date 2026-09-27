@@ -6,6 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useOrderSubmit } from '../../hooks/useOrderSubmit';
 import CheckoutOrderSummary from '../../components/cart/CheckoutOrderSummary';
+import CheckoutPromotions from '../../components/cart/CheckoutPromotions';
 import DeliveryZonePicker from '../../components/ui/DeliveryZonePicker';
 import { Input, Textarea } from '../../components/ui/FormField';
 import Button from '../../components/ui/Button';
@@ -35,6 +36,16 @@ export default function Checkout() {
     deliveryFee,
     deliveryFees,
     grandTotal,
+    couponCode,
+    giftCardCode,
+    couponDiscount,
+    giftCardDiscount,
+    promoLoading,
+    availableGiftCards,
+    applyCoupon,
+    applyGiftCard,
+    removeCoupon,
+    removeGiftCard,
   } = useOrderSubmit({
     items, total,
     user,
@@ -151,6 +162,18 @@ export default function Checkout() {
               />
               <Textarea label="Order notes (optional)" name="notes" value={form.notes} onChange={onChange} rows={2} />
             </div>
+            <CheckoutPromotions
+              couponCode={couponCode}
+              giftCardCode={giftCardCode}
+              couponDiscount={couponDiscount}
+              giftCardDiscount={giftCardDiscount}
+              availableGiftCards={availableGiftCards}
+              promoLoading={promoLoading}
+              onApplyCoupon={applyCoupon}
+              onRemoveCoupon={removeCoupon}
+              onApplyGiftCard={applyGiftCard}
+              onRemoveGiftCard={removeGiftCard}
+            />
             <div className="border border-black/10 p-4 space-y-3">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-black/45 font-display">
                 Payment method
@@ -164,7 +187,7 @@ export default function Checkout() {
               </div>
             </div>
             <Button type="submit" variant="primary" size="xl" fullWidth loading={loading} icon={ShoppingBag}>
-              {`Pay ₹${grandTotal.toLocaleString('en-IN')}`}
+              {grandTotal > 0 ? `Pay ₹${grandTotal.toLocaleString('en-IN')}` : 'Place order'}
             </Button>
           </form>
 
@@ -175,6 +198,10 @@ export default function Checkout() {
             deliveryFee={deliveryFee}
             grandTotal={grandTotal}
             deliveryZone={form.delivery_zone}
+            couponCode={couponCode}
+            couponDiscount={couponDiscount}
+            giftCardCode={giftCardCode}
+            giftCardDiscount={giftCardDiscount}
             onRemove={removeItem}
             onUpdateQty={updateQty}
           />

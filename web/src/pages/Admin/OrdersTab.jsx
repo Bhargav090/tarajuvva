@@ -14,6 +14,7 @@ import {
   Check,
   Truck,
   ExternalLink,
+  Ticket,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAdminOrders } from '../../hooks/useAdmin';
@@ -326,6 +327,27 @@ function OrderCard({ order, updateStatus }) {
                     </span>
                   </DetailRow>
                 )}
+                {(Number(order.coupon_discount) > 0 || Number(order.gift_card_discount) > 0) && (
+                  <DetailRow icon={Ticket} label="Discounts">
+                    {order.subtotal != null && (
+                      <p className="text-xs text-[#241621]/50">
+                        Items subtotal ₹{Number(order.subtotal).toLocaleString('en-IN')}
+                      </p>
+                    )}
+                    {Number(order.coupon_discount) > 0 && (
+                      <p>
+                        Coupon <span className="font-mono-tj">{order.coupon_code}</span> · −₹
+                        {Number(order.coupon_discount).toLocaleString('en-IN')}
+                      </p>
+                    )}
+                    {Number(order.gift_card_discount) > 0 && (
+                      <p>
+                        Gift card <span className="font-mono-tj">{order.gift_card_code}</span> · −₹
+                        {Number(order.gift_card_discount).toLocaleString('en-IN')}
+                      </p>
+                    )}
+                  </DetailRow>
+                )}
                 {order.tracking_url && (
                   <DetailRow icon={Truck} label="Tracking link">
                     <a
@@ -376,6 +398,7 @@ export default function OrdersTab() {
       [
         'id', 'created_at', 'user_name', 'user_email', 'user_phone', 'address',
         'delivery_zone', 'delivery_fee',
+        'subtotal', 'coupon_code', 'coupon_discount', 'gift_card_code', 'gift_card_discount',
         'items', 'total', 'status', 'payment_method', 'payment_status', 'tracking_url', 'notes',
       ],
       orders.map((o) => [
@@ -387,6 +410,11 @@ export default function OrdersTab() {
         o.address,
         o.delivery_zone,
         o.delivery_fee,
+        o.subtotal,
+        o.coupon_code,
+        o.coupon_discount,
+        o.gift_card_code,
+        o.gift_card_discount,
         flattenOrderItems(o.items),
         o.total,
         o.status,

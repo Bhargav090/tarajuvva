@@ -426,6 +426,19 @@ export default function Profile() {
                       </dd>
                     </div>
                   )}
+                  {(Number(r.coupon_discount) > 0 || Number(r.gift_card_discount) > 0) && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Discounts</dt>
+                      <dd className="text-[#241621]/75 font-body space-y-0.5">
+                        {Number(r.coupon_discount) > 0 && (
+                          <p>Coupon {r.coupon_code} - ₹{Number(r.coupon_discount).toLocaleString('en-IN')} off</p>
+                        )}
+                        {Number(r.gift_card_discount) > 0 && (
+                          <p>Gift card {r.gift_card_code} - ₹{Number(r.gift_card_discount).toLocaleString('en-IN')} off</p>
+                        )}
+                      </dd>
+                    </div>
+                  )}
                   {r.notes && (
                     <div className="sm:col-span-2">
                       <dt className="text-[10px] uppercase tracking-wider text-[#241621]/40 font-display">Your notes</dt>

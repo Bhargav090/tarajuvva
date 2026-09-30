@@ -55,6 +55,7 @@ export default function CustomizeFormWizard({
   completeLabel = 'Continue to payment',
   cardStep: controlledCardStep,
   onCardStepChange,
+  promotions = null,
 }) {
   const [uncontrolledCardStep, setUncontrolledCardStep] = useState(0);
   const isControlled = typeof controlledCardStep === 'number' && typeof onCardStepChange === 'function';
@@ -368,6 +369,10 @@ export default function CustomizeFormWizard({
         </motion.div>
       </AnimatePresence>
       </div>
+
+      {isLast && promotions && !requestCallback ? (
+        <div className="mt-4 shrink-0">{promotions}</div>
+      ) : null}
 
       <div className="mt-4 pt-3 border-t border-black/10 flex items-center gap-3 shrink-0">
         {cardStep > 0 && (

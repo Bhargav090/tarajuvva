@@ -86,11 +86,15 @@ const COUPON_STATS_SQL = `
     SELECT pr.promo_id,
       COUNT(*) AS uses,
       SUM(pr.discount_amount) AS discount,
-      SUM(COALESCE(o.total, 0)) AS revenue,
+      SUM(COALESCE(o.total, GREATEST(0,
+        COALESCE(rr.consultation_fee, 0) + COALESCE(rr.delivery_fee, 0)
+        - COALESCE(rr.coupon_discount, 0) - COALESCE(rr.gift_card_discount, 0)
+      ), 0)) AS revenue,
       COUNT(DISTINCT pr.user_id) AS customers,
       MAX(pr.created_at) AS last_used_at
     FROM promo_redemptions pr
     LEFT JOIN orders o ON o.id = pr.order_id
+    LEFT JOIN reimagine_requests rr ON rr.id = pr.order_id
     WHERE pr.kind = 'coupon' AND pr.status = 'applied'
     GROUP BY pr.promo_id
   ) r ON r.promo_id = c.id`;
@@ -420,8 +424,13 @@ router.get('/stats', async (req, res) => {
     );
     const couponUse = await get(
       `SELECT COUNT(*) AS redemptions, COALESCE(SUM(pr.discount_amount), 0) AS discount,
-        COALESCE(SUM(o.total), 0) AS revenue, COUNT(DISTINCT pr.user_id) AS customers
-       FROM promo_redemptions pr LEFT JOIN orders o ON o.id = pr.order_id
+        COALESCE(SUM(COALESCE(o.total, GREATEST(0,
+          COALESCE(rr.consultation_fee, 0) + COALESCE(rr.delivery_fee, 0)
+          - COALESCE(rr.coupon_discount, 0) - COALESCE(rr.gift_card_discount, 0)
+        ), 0)), 0) AS revenue, COUNT(DISTINCT pr.user_id) AS customers
+       FROM promo_redemptions pr
+       LEFT JOIN orders o ON o.id = pr.order_id
+       LEFT JOIN reimagine_requests rr ON rr.id = pr.order_id
        WHERE pr.kind = 'coupon' AND pr.status = 'applied'`
     );
     const giftTotals = await get(
@@ -437,13 +446,24 @@ router.get('/stats', async (req, res) => {
     );
     const giftUse = await get(
       `SELECT COUNT(*) AS redemptions, COALESCE(SUM(pr.discount_amount), 0) AS redeemed,
-        COALESCE(SUM(o.total), 0) AS revenue
-       FROM promo_redemptions pr LEFT JOIN orders o ON o.id = pr.order_id
+        COALESCE(SUM(COALESCE(o.total, GREATEST(0,
+          COALESCE(rr.consultation_fee, 0) + COALESCE(rr.delivery_fee, 0)
+          - COALESCE(rr.coupon_discount, 0) - COALESCE(rr.gift_card_discount, 0)
+        ), 0)), 0) AS revenue
+       FROM promo_redemptions pr
+       LEFT JOIN orders o ON o.id = pr.order_id
+       LEFT JOIN reimagine_requests rr ON rr.id = pr.order_id
        WHERE pr.kind = 'gift_card' AND pr.status = 'applied'`
     );
     const topCoupons = await all(
-      `SELECT pr.code, COUNT(*) AS uses, SUM(pr.discount_amount) AS discount, SUM(COALESCE(o.total, 0)) AS revenue
-       FROM promo_redemptions pr LEFT JOIN orders o ON o.id = pr.order_id
+      `SELECT pr.code, COUNT(*) AS uses, SUM(pr.discount_amount) AS discount,
+        SUM(COALESCE(o.total, GREATEST(0,
+          COALESCE(rr.consultation_fee, 0) + COALESCE(rr.delivery_fee, 0)
+          - COALESCE(rr.coupon_discount, 0) - COALESCE(rr.gift_card_discount, 0)
+        ), 0)) AS revenue
+       FROM promo_redemptions pr
+       LEFT JOIN orders o ON o.id = pr.order_id
+       LEFT JOIN reimagine_requests rr ON rr.id = pr.order_id
        WHERE pr.kind = 'coupon' AND pr.status = 'applied'
        GROUP BY pr.code ORDER BY uses DESC, discount DESC LIMIT 5`
     );
@@ -458,8 +478,14 @@ router.get('/stats', async (req, res) => {
     );
     const recent = await all(
       `SELECT pr.id, pr.kind, pr.code, pr.user_email, pr.discount_amount, pr.created_at, pr.order_id,
-        o.total AS order_total, o.user_name
-       FROM promo_redemptions pr LEFT JOIN orders o ON o.id = pr.order_id
+        COALESCE(o.total, GREATEST(0,
+          COALESCE(rr.consultation_fee, 0) + COALESCE(rr.delivery_fee, 0)
+          - COALESCE(rr.coupon_discount, 0) - COALESCE(rr.gift_card_discount, 0)
+        )) AS order_total,
+        COALESCE(o.user_name, rr.user_name) AS user_name
+       FROM promo_redemptions pr
+       LEFT JOIN orders o ON o.id = pr.order_id
+       LEFT JOIN reimagine_requests rr ON rr.id = pr.order_id
        WHERE pr.status = 'applied'
        ORDER BY pr.created_at DESC LIMIT 20`
     );

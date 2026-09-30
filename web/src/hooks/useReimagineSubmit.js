@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
@@ -57,13 +57,13 @@ function clampCardStep(raw, maxInclusive) {
   return Math.min(Math.floor(n), maxInclusive);
 }
 
-export function needsReimaginePayment(isCustomize, details, price, deliveryFees) {
+export function needsReimaginePayment(isCustomize, details, price, deliveryFees, discountTotal = 0) {
   if (details.request_callback) return false;
   const delivery =
     !isCustomize && isValidDeliveryZone(details.delivery_zone)
       ? getDeliveryFee('reimagine', details.delivery_zone, deliveryFees)
       : 0;
-  return Number(price) + delivery > 0;
+  return Number(price) + delivery - Number(discountTotal || 0) > 0;
 }
 
 export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
@@ -118,6 +118,13 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
   const [doneCallback, setDoneCallback] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
 
+  const [couponCode, setCouponCode] = useState('');
+  const [giftCardCode, setGiftCardCode] = useState('');
+  const [promo, setPromo] = useState(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [availableGiftCards, setAvailableGiftCards] = useState([]);
+  const previewSeq = useRef(0);
+
   const redirectToLogin = useCallback(
     (from = authReturnTo) => {
       if (isCustomize) {
@@ -144,7 +151,139 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     !isCustomize && isValidDeliveryZone(details.delivery_zone)
       ? getDeliveryFee('reimagine', details.delivery_zone, deliveryFees)
       : 0;
-  const payPrice = Number(basePrice || 0) + deliveryFee;
+  const couponDiscount = couponCode ? Number(promo?.coupon_discount || 0) : 0;
+  const giftCardDiscount = giftCardCode ? Number(promo?.gift_card_discount || 0) : 0;
+  const discountTotal = couponDiscount + giftCardDiscount;
+  const payPrice = Math.max(
+    0,
+    Math.round((Number(basePrice || 0) + deliveryFee - discountTotal) * 100) / 100
+  );
+  const showPromotions = !details.request_callback && Number(basePrice || 0) + deliveryFee > 0;
+
+  const requestPreview = useCallback(
+    async ({ coupon, gift }) => {
+      const { data } = await api.post('/reimagine/promotions/preview', {
+        conversion_id: !isCustomize ? conversionId || undefined : undefined,
+        is_consultation: isCustomize && !details.request_callback ? '1' : undefined,
+        request_callback: details.request_callback ? '1' : undefined,
+        delivery_zone:
+          !isCustomize && isValidDeliveryZone(details.delivery_zone)
+            ? details.delivery_zone
+            : undefined,
+        coupon_code: coupon || undefined,
+        gift_card_code: gift || undefined,
+      });
+      return { summary: data.summary || null, errors: data.errors || {} };
+    },
+    [isCustomize, conversionId, details.request_callback, details.delivery_zone]
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    api
+      .get('/reimagine/gift-cards/mine')
+      .then(({ data }) => {
+        if (!cancelled) setAvailableGiftCards(data.gift_cards || []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // Delivery / price changes can invalidate a min-cart coupon — re-check applied codes.
+  useEffect(() => {
+    if (done || (!couponCode && !giftCardCode) || !showPromotions) return;
+    const seq = ++previewSeq.current;
+    requestPreview({ coupon: couponCode, gift: giftCardCode })
+      .then(({ summary, errors }) => {
+        if (seq !== previewSeq.current) return;
+        if (errors.coupon) {
+          setCouponCode('');
+          toast.error(`Coupon removed: ${errors.coupon}`);
+        }
+        if (errors.gift_card) {
+          setGiftCardCode('');
+          toast.error(`Gift card removed: ${errors.gift_card}`);
+        }
+        setPromo(summary);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [basePrice, deliveryFee, details.delivery_zone, conversionId, isCustomize]);
+
+  const applyPromo = async ({ coupon, gift }, field) => {
+    setPromoLoading(true);
+    const seq = ++previewSeq.current;
+    try {
+      const { summary, errors } = await requestPreview({ coupon, gift });
+      if (seq !== previewSeq.current) return false;
+      if (errors[field]) {
+        toast.error(errors[field]);
+        return false;
+      }
+      const otherField = field === 'coupon' ? 'gift_card' : 'coupon';
+      if (errors[otherField]) {
+        if (otherField === 'coupon') setCouponCode('');
+        else setGiftCardCode('');
+        toast.error(errors[otherField]);
+      }
+      setCouponCode(summary?.coupon?.code || '');
+      setGiftCardCode(summary?.gift_card?.code || '');
+      setPromo(summary);
+      toast.success(field === 'coupon' ? 'Coupon applied' : 'Gift card redeemed');
+      return true;
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not apply. Please try again.');
+      return false;
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const applyCoupon = (code) => {
+    const next = String(code || '').trim().toUpperCase();
+    if (!next) {
+      toast.error('Enter a coupon code');
+      return Promise.resolve(false);
+    }
+    return applyPromo({ coupon: next, gift: giftCardCode }, 'coupon');
+  };
+
+  const applyGiftCard = (code) => {
+    const next = String(code || '').trim().toUpperCase();
+    if (!next) {
+      toast.error('Enter a gift card code');
+      return Promise.resolve(false);
+    }
+    return applyPromo({ coupon: couponCode, gift: next }, 'gift_card');
+  };
+
+  const clearPromo = async (field) => {
+    const coupon = field === 'coupon' ? '' : couponCode;
+    const gift = field === 'gift_card' ? '' : giftCardCode;
+    if (field === 'coupon') setCouponCode('');
+    else setGiftCardCode('');
+    const seq = ++previewSeq.current;
+    if (!coupon && !gift) {
+      setPromo(null);
+      return;
+    }
+    try {
+      const { summary } = await requestPreview({ coupon, gift });
+      if (seq === previewSeq.current) setPromo(summary);
+    } catch {
+      /* totals fall back until the next preview */
+    }
+  };
+
+  const clearPromoState = () => {
+    setCouponCode('');
+    setGiftCardCode('');
+    setPromo(null);
+    setAvailableGiftCards([]);
+  };
 
   // Keep draft fresh while filling the customize wizard (survives login remount)
   useEffect(() => {
@@ -248,6 +387,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     setDetails(emptyDetails());
     setFiles([]);
     setPrefilled(false);
+    clearPromoState();
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
 
@@ -263,6 +403,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       setDetails(emptyDetails());
       setFiles([]);
       setPrefilled(false);
+      clearPromoState();
       goToStep(0, { garment: '', transformation: '', conversion: '' }, { replace: true });
       return;
     }
@@ -331,7 +472,12 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
 
   const postRequest = async (extraFields = {}) => {
     const fd = new FormData();
-    const fields = buildSubmitFields({ ...buildPayloadFields(), ...extraFields });
+    const fields = buildSubmitFields({
+      ...buildPayloadFields(),
+      ...extraFields,
+      ...(couponCode ? { coupon_code: couponCode } : {}),
+      ...(giftCardCode ? { gift_card_code: giftCardCode } : {}),
+    });
     Object.entries(fields).forEach(([k, v]) => fd.append(k, v ?? ''));
     files.forEach((f) => fd.append('images', f));
     const { data } = await api.post('/reimagine/requests', fd);
@@ -363,6 +509,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
 
     clearCustomizeDraft();
     clearRemakeDraft();
+    clearPromoState();
     setDone(true);
     setDoneCallback(false);
     toast.success(verified.message || 'Payment confirmed');
@@ -387,6 +534,7 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     setCustomizeCardStep(0);
     setRemakeCardStep(0);
     setPrefilled(false);
+    clearPromoState();
     clearCustomizeDraft();
     clearRemakeDraft();
     setSearchParams({}, { replace: true });
@@ -440,6 +588,15 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     return true;
   };
 
+  const finishPromoCovered = (data) => {
+    clearCustomizeDraft();
+    clearRemakeDraft();
+    clearPromoState();
+    setDone(true);
+    setDoneCallback(false);
+    toast.success(data.message || 'Request placed. Your coupon / gift card covered the full amount.');
+  };
+
   const submitRequest = async (extraFields = {}) => {
     if (!user) {
       redirectToLogin();
@@ -449,12 +606,17 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     setLoading(true);
     try {
       const data = await postRequest(extraFields);
+      if (data.paid) {
+        finishPromoCovered(data);
+        return;
+      }
       if (data.requires_payment && data.razorpay) {
         await completeRazorpayPayment(data);
         return;
       }
       clearCustomizeDraft();
       clearRemakeDraft();
+      clearPromoState();
       setDone(true);
       setDoneCallback(Boolean(extraFields.request_callback === '1' || details.request_callback));
     } catch (err) {
@@ -463,6 +625,10 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       setLoading(false);
     }
   };
+
+  const shouldCharge =
+    needsReimaginePayment(isCustomize, details, basePrice, deliveryFees, discountTotal) ||
+    Boolean(couponCode || giftCardCode);
 
   const onWizardComplete = (e) => {
     e?.preventDefault();
@@ -478,8 +644,8 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       return;
     }
 
-    // Open Razorpay immediately - no intermediate payment screen
-    if (needsReimaginePayment(isCustomize, details, basePrice, deliveryFees)) {
+    // Open Razorpay (or promo-covered place) immediately - no intermediate payment screen
+    if (shouldCharge) {
       void onPayment();
       return;
     }
@@ -503,11 +669,16 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     try {
       const payFields = { payment_method: 'razorpay' };
       const data = await postRequest(payFields);
+      if (data.paid) {
+        finishPromoCovered(data);
+        return;
+      }
       if (data.requires_payment && data.razorpay) {
         await completeRazorpayPayment(data);
       } else {
         clearCustomizeDraft();
         clearRemakeDraft();
+        clearPromoState();
         setDone(true);
       }
     } catch (err) {
@@ -525,7 +696,11 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
       return;
     }
     // Open Razorpay immediately - no intermediate payment screen
-    if (needsReimaginePayment(false, details, basePrice, deliveryFees)) {
+    if (
+      needsReimaginePayment(false, details, basePrice, deliveryFees, discountTotal) ||
+      couponCode ||
+      giftCardCode
+    ) {
       void onPayment();
       return;
     }
@@ -563,10 +738,22 @@ export function useReimagineSubmit({ sessionPrice = 0, remakePrice = 0 } = {}) {
     done,
     doneCallback,
     resetDone,
-    needsPayment: needsReimaginePayment(isCustomize, details, basePrice, deliveryFees),
+    needsPayment: shouldCharge && payPrice > 0,
     payPrice,
     basePrice,
     deliveryFee,
     deliveryFees,
+    couponCode,
+    giftCardCode,
+    couponDiscount,
+    giftCardDiscount,
+    promo,
+    promoLoading,
+    availableGiftCards,
+    showPromotions,
+    applyCoupon,
+    applyGiftCard,
+    removeCoupon: () => clearPromo('coupon'),
+    removeGiftCard: () => clearPromo('gift_card'),
   };
 }

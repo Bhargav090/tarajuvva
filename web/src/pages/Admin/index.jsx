@@ -401,7 +401,9 @@ function ReimagineTab({ kind = 'orders' }) {
         'delivery_zone', 'delivery_fee',
         'garment_type', 'transformation', 'garment_size', 'transformation_size', 'height_ft', 'height_in',
         'is_custom', 'notes', 'status',
-        'pickup_date', 'pickup_period', 'payment_status', 'consultation_fee', 'callback_requested',
+        'pickup_date', 'pickup_period', 'payment_status', 'consultation_fee',
+        'coupon_code', 'coupon_discount', 'gift_card_code', 'gift_card_discount',
+        'callback_requested',
       ],
       requests.map((r) => [
         r.id,
@@ -425,6 +427,10 @@ function ReimagineTab({ kind = 'orders' }) {
         r.pickup_period,
         r.payment_status,
         r.consultation_fee,
+        r.coupon_code,
+        r.coupon_discount,
+        r.gift_card_code,
+        r.gift_card_discount,
         r.callback_requested ? 'yes' : 'no',
       ])
     );
@@ -546,6 +552,19 @@ function ReimagineTab({ kind = 'orders' }) {
                     {r.delivery_fee != null
                       ? ` · ₹${Number(r.delivery_fee).toLocaleString('en-IN')}`
                       : ''}
+                  </dd>
+                </div>
+              )}
+              {(Number(r.coupon_discount) > 0 || Number(r.gift_card_discount) > 0) && (
+                <div className="sm:col-span-2">
+                  <dt className="text-[10px] font-mono-tj uppercase tracking-wider text-[#241621]/45 mb-0.5">Discounts</dt>
+                  <dd className="text-[#241621] font-body space-y-0.5">
+                    {Number(r.coupon_discount) > 0 && (
+                      <p>Coupon {r.coupon_code} · −₹{Number(r.coupon_discount).toLocaleString('en-IN')}</p>
+                    )}
+                    {Number(r.gift_card_discount) > 0 && (
+                      <p>Gift card {r.gift_card_code} · −₹{Number(r.gift_card_discount).toLocaleString('en-IN')}</p>
+                    )}
                   </dd>
                 </div>
               )}

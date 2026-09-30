@@ -6,6 +6,7 @@ import VerticalPageHero from '../../components/ui/VerticalPageHero';
 import SuccessNav from '../../components/ui/SuccessNav';
 import ReimagineFormWizard, { REIMAGINE_FORM_STEPS } from '../../components/reimagine/ReimagineFormWizard';
 import CustomizeFormWizard from '../../components/reimagine/CustomizeFormWizard';
+import CheckoutPromotions from '../../components/cart/CheckoutPromotions';
 import {
   ReimagineRemakeCard,
   ReimagineCustomizeCard,
@@ -19,6 +20,12 @@ import { useReimagineCustomizeSettings } from '../../hooks/useReimagineCustomize
 import { useReimagineConversions } from '../../hooks/useReimagineConversions';
 import { uploadUrl } from '../../utils/uploadUrl';
 import reimagineVideo from '../../assets/reimagine.mov';
+
+function payLabel(needsPayment, payPrice, hasPromo) {
+  if (needsPayment) return `Pay ₹${Number(payPrice || 0).toLocaleString('en-IN')}`;
+  if (hasPromo) return 'Place order';
+  return 'Submit request';
+}
 
 export default function Reimagine() {
   const location = useLocation();
@@ -61,6 +68,17 @@ export default function Reimagine() {
     needsPayment,
     payPrice,
     deliveryFees,
+    couponCode,
+    giftCardCode,
+    couponDiscount,
+    giftCardDiscount,
+    promoLoading,
+    availableGiftCards,
+    showPromotions,
+    applyCoupon,
+    applyGiftCard,
+    removeCoupon,
+    removeGiftCard,
   } = useReimagineSubmit({
     sessionPrice: customizeSettings.price,
     remakePrice,
@@ -79,6 +97,48 @@ export default function Reimagine() {
     ? uploadUrl(selectedConversion.to_image)
     : '';
   const transformOptions = optionsForFrom(garment);
+  const hasPromo = Boolean(couponCode || giftCardCode);
+
+  const promotionsUi = showPromotions ? (
+    <div className="space-y-3">
+      <CheckoutPromotions
+        couponCode={couponCode}
+        giftCardCode={giftCardCode}
+        couponDiscount={couponDiscount}
+        giftCardDiscount={giftCardDiscount}
+        availableGiftCards={availableGiftCards}
+        promoLoading={promoLoading}
+        onApplyCoupon={applyCoupon}
+        onRemoveCoupon={removeCoupon}
+        onApplyGiftCard={applyGiftCard}
+        onRemoveGiftCard={removeGiftCard}
+      />
+      {(Number(couponDiscount) > 0 || Number(giftCardDiscount) > 0) && (
+        <div className="text-sm font-body text-black/55 space-y-1 px-1">
+          {Number(couponDiscount) > 0 && (
+            <div className="flex justify-between gap-3">
+              <span>Coupon {couponCode ? `(${couponCode})` : ''}</span>
+              <span className="font-semibold text-[#0a0a0a]">
+                −₹{Number(couponDiscount).toLocaleString('en-IN')}
+              </span>
+            </div>
+          )}
+          {Number(giftCardDiscount) > 0 && (
+            <div className="flex justify-between gap-3">
+              <span>Gift card {giftCardCode ? `(${giftCardCode})` : ''}</span>
+              <span className="font-semibold text-[#0a0a0a]">
+                −₹{Number(giftCardDiscount).toLocaleString('en-IN')}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between gap-3 pt-1 border-t border-black/10 font-display font-bold text-[#0a0a0a]">
+            <span>Total</span>
+            <span>₹{Number(payPrice || 0).toLocaleString('en-IN')}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   useLayoutEffect(() => {
     if (done) window.scrollTo({ top: 0, left: 0 });
@@ -183,12 +243,9 @@ export default function Reimagine() {
                     loading={loading}
                     cardStep={customizeCardStep}
                     onCardStepChange={setCustomizeCardStep}
+                    promotions={promotionsUi}
                     submitLabel="Submit customize request"
-                    completeLabel={
-                      needsPayment
-                        ? `Pay ₹${Number(customizeSettings.price || 0).toLocaleString('en-IN')}`
-                        : 'Submit request'
-                    }
+                    completeLabel={payLabel(needsPayment, payPrice, hasPromo)}
                   />
                 </div>
               </motion.div>
@@ -369,11 +426,8 @@ export default function Reimagine() {
                           cardStep={remakeCardStep}
                           onCardStepChange={setRemakeCardStep}
                           deliveryFees={deliveryFees}
-                          completeLabel={
-                            needsPayment
-                              ? `Pay ₹${Number(payPrice || 0).toLocaleString('en-IN')}`
-                              : 'Submit request'
-                          }
+                          promotions={promotionsUi}
+                          completeLabel={payLabel(needsPayment, payPrice, hasPromo)}
                           preferGarmentStep={Boolean(String(details.notes || '').trim())}
                         />
                       </div>

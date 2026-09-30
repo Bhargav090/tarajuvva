@@ -93,9 +93,11 @@ router.get('/me/reimagine', authenticateUser, async (req, res) => {
     // List without images column — fetch photos lazily via /me/reimagine/:id/images
     const requests = await all(
       `SELECT
-        id, user_id, user_name, user_phone, user_email, address, garment_type, transformation,
+        id, user_id, user_name, user_phone, user_email, address, delivery_zone, delivery_fee,
+        garment_type, transformation,
         conversion_id, notes, garment_size, transformation_size, height_ft, height_in,
         status, admin_notes, pickup_date, pickup_period, payment_status, consultation_fee,
+        coupon_code, coupon_discount, gift_card_code, gift_card_discount,
         is_custom, consultation_paid, callback_requested, consultation_date, consultation_time,
         consultation_slot_id, created_at, updated_at,
         CASE

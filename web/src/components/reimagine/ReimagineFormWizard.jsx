@@ -113,6 +113,7 @@ export default function ReimagineFormWizard({
   cardStep: controlledCardStep,
   onCardStepChange,
   deliveryFees,
+  promotions = null,
 }) {
   const lastIdx = Math.max(0, steps.length - 1);
   const isControlled = typeof controlledCardStep === 'number' && typeof onCardStepChange === 'function';
@@ -398,6 +399,10 @@ export default function ReimagineFormWizard({
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {isLast && promotions ? (
+        <div className="mt-4 shrink-0">{promotions}</div>
+      ) : null}
 
       <div className="mt-4 pt-3 border-t border-black/10 flex items-center gap-3 shrink-0">
         {cardStep > 0 && (

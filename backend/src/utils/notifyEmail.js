@@ -441,6 +441,10 @@ function reimagineConsultPrice(r) {
   return r.consultation_price ?? r.consultation_fee ?? null;
 }
 
+function reimagineDiscountRows(r) {
+  return orderDiscountRows(r);
+}
+
 function formatReimagineRequestEmail(r) {
   const id = shortId(r.id);
   const isCustom = Boolean(r.is_custom);
@@ -448,6 +452,7 @@ function formatReimagineRequestEmail(r) {
   const consultPrice = reimagineConsultPrice(r);
   const pickup = formatPickupSummary(r);
   const fit = formatFitSummary(r);
+  const discounts = reimagineDiscountRows(r);
 
   const text = [
     isCustom ? `New CUSTOM Reimagine consultation #${id}` : `New Reimagine order #${id}`,
@@ -461,6 +466,7 @@ function formatReimagineRequestEmail(r) {
     r.consultation_paid ? `Consultation booked: Yes` : null,
     r.payment_status === 'paid' ? `Payment: Paid` : r.payment_status ? `Payment: ${r.payment_status}` : null,
     consultPrice ? `Consultation price: ${money(consultPrice)}` : null,
+    ...discounts.map((d) => `${d.label}: ${d.value}`),
     r.callback_requested ? 'Callback requested: Yes — team to contact customer' : null,
     slotLabel ? `Consultation slot: ${slotLabel}` : null,
     pickup ? `Preferred pickup: ${pickup}` : null,
@@ -501,6 +507,7 @@ function formatReimagineRequestEmail(r) {
       r.consultation_paid ? { label: 'Consultation', value: 'Booked' } : null,
       r.payment_status ? { label: 'Payment', value: r.payment_status === 'paid' ? 'Paid' : r.payment_status } : null,
       consultPrice ? { label: 'Consult price', value: money(consultPrice) } : null,
+      ...discounts,
       r.callback_requested ? { label: 'Callback', value: 'Yes — contact customer' } : null,
       slotLabel ? { label: 'Slot', value: slotLabel } : null,
       pickup ? { label: 'Pickup', value: pickup } : null,
@@ -612,6 +619,7 @@ function formatReimagineCustomerEmail(r) {
     fit ? `Fit: ${fit}` : null,
     slotLabel ? `Consultation: ${slotLabel}` : null,
     pickup ? `Preferred pickup: ${pickup}` : null,
+    ...reimagineDiscountRows(r).map((d) => `${d.label}: ${d.value}`),
     paid ? 'Your payment is confirmed.' : null,
     '',
     "We'll review your order and get back within 24 hours.",
@@ -643,6 +651,7 @@ function formatReimagineCustomerEmail(r) {
       fit ? { label: 'Fit', value: fit } : null,
       slotLabel ? { label: 'Consultation', value: slotLabel } : null,
       pickup ? { label: 'Preferred pickup', value: pickup } : null,
+      ...reimagineDiscountRows(r),
     ].filter(Boolean),
     buttons: [
       { href: siteUrl('/profile/reimagine'), label: 'View my orders', variant: 'burgundy' },
@@ -1093,7 +1102,7 @@ function formatGiftCardEmail(card) {
     card.expires_at ? `Valid until: ${formatPickupDate(card.expires_at)}` : null,
     card.note ? `\n${card.note}` : null,
     '',
-    `Sign in with ${card.recipient_email} and redeem it at checkout: ${shopUrl}`,
+    `Sign in with ${card.recipient_email} and redeem it at Shop or Reimagine checkout: ${shopUrl}`,
     '',
     '— Tarajuvva',
   ]
@@ -1109,7 +1118,7 @@ function formatGiftCardEmail(card) {
       <p style="margin:0 0 12px;">Hi,</p>
       <p style="margin:0;">You've received a Tarajuvva gift card. Sign in with <strong>${escapeHtml(
         card.recipient_email
-      )}</strong> and choose <strong>Redeem</strong> on the checkout page.</p>`,
+      )}</strong> and redeem it at Shop or Reimagine checkout.</p>`,
     detailRows: [
       { label: 'Code', value: card.code },
       { label: 'Value', value: money(card.value) },
@@ -1118,7 +1127,10 @@ function formatGiftCardEmail(card) {
       card.expires_at ? { label: 'Valid until', value: formatPickupDate(card.expires_at) } : null,
     ].filter(Boolean),
     noteHtml: card.note ? `<p style="margin:0;">${nl2br(card.note)}</p>` : '',
-    buttons: [{ href: shopUrl, label: 'Shop now', variant: 'burgundy' }],
+    buttons: [
+      { href: shopUrl, label: 'Shop now', variant: 'burgundy' },
+      { href: siteUrl('/reimagine'), label: 'Reimagine', variant: 'outline' },
+    ],
   });
 
   return { subject: `Your Tarajuvva gift card — ${money(card.value)}`, text, html };

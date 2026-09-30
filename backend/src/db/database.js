@@ -709,6 +709,22 @@ async function initializeDatabase() {
     }
   }
 
+  const reimaginePromoAlters = [
+    'ALTER TABLE reimagine_requests ADD COLUMN coupon_code VARCHAR(64) NULL AFTER consultation_fee',
+    'ALTER TABLE reimagine_requests ADD COLUMN coupon_discount DOUBLE NOT NULL DEFAULT 0 AFTER coupon_code',
+    'ALTER TABLE reimagine_requests ADD COLUMN gift_card_code VARCHAR(64) NULL AFTER coupon_discount',
+    'ALTER TABLE reimagine_requests ADD COLUMN gift_card_discount DOUBLE NOT NULL DEFAULT 0 AFTER gift_card_code',
+  ];
+  for (const sql of reimaginePromoAlters) {
+    try {
+      await pool.execute(sql);
+    } catch (e) {
+      if (e.code !== 'ER_DUP_FIELDNAME' && e.errno !== 1060) {
+        console.warn('[db] reimagine_requests promo column add skipped:', e.message);
+      }
+    }
+  }
+
   const { ensureReimagineConversionsSeeded } = require('../lib/reimagineConversions');
   await ensureReimagineConversionsSeeded();
 

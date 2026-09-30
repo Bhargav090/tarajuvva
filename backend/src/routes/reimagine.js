@@ -20,6 +20,104 @@ const {
 } = require('../lib/reimagineConversions');
 const { mapImageList, loadLegacyMap } = require('../lib/publicImageUrl');
 const { mediaReadMode } = require('../lib/s3Storage');
+const {
+  computePromotions,
+  reserveRedemptions,
+  markRedemptionsApplied,
+  releaseRedemptions,
+  deleteRedemptionsForOrder,
+  listAvailableGiftCards,
+} = require('../lib/promotions');
+
+/** Customer account for promo checks — gift cards / user-specific coupons match the account email. */
+async function loadCheckoutUser(req, res) {
+  if (req.user.role === 'admin') {
+    res.status(403).json({
+      success: false,
+      message: 'Sign in with a customer account to submit requests',
+    });
+    return null;
+  }
+  const dbUser = await get('SELECT id, email FROM users WHERE id = ?', [req.user.id]);
+  if (!dbUser) {
+    res.status(401).json({ success: false, message: 'Account not found. Please sign in again.' });
+    return null;
+  }
+  return dbUser;
+}
+
+/**
+ * Resolve remake / consultation base amount + remake delivery fee.
+ * Used by promotions preview and request create.
+ */
+async function resolveReimaginePricing({
+  conversion_id,
+  is_consultation,
+  request_callback,
+  delivery_zone,
+  is_custom,
+  transformation,
+}) {
+  const callbackRequested =
+    request_callback === '1' || request_callback === 1 || request_callback === true;
+  const consultation =
+    !callbackRequested &&
+    (is_consultation === '1' || is_consultation === 1 || is_consultation === true);
+  const custom =
+    consultation ||
+    callbackRequested ||
+    is_custom === '1' ||
+    is_custom === 1 ||
+    is_custom === true ||
+    transformation === 'Custom';
+
+  const settings = await getReimagineCustomizeSettings();
+  const consultationFee = consultation ? settings.price : 0;
+
+  let conversion = null;
+  if (!consultation && !callbackRequested && conversion_id) {
+    conversion = await getConversionById(String(conversion_id).trim());
+    if (!conversion || !conversion.active) {
+      const err = new Error('Selected reimagine conversion is unavailable.');
+      err.status = 400;
+      throw err;
+    }
+  }
+
+  const remakePrice = conversion ? Number(conversion.price) || 0 : 0;
+  const isRemake = !consultation && !callbackRequested;
+  let deliveryZone = normalizeDeliveryZone(delivery_zone);
+  let deliveryFee = 0;
+
+  if (isRemake) {
+    if (!deliveryZone) {
+      const err = new Error(
+        'Please select whether pickup/delivery is in Hyderabad & around or outside Hyderabad.'
+      );
+      err.status = 400;
+      throw err;
+    }
+    deliveryFee = await getDeliveryFee('reimagine', deliveryZone);
+  } else {
+    deliveryZone = deliveryZone || null;
+    deliveryFee = 0;
+  }
+
+  const baseAmount = Math.max(0, consultation ? consultationFee : remakePrice);
+  return {
+    callbackRequested,
+    consultation,
+    custom,
+    settings,
+    consultationFee,
+    conversion,
+    remakePrice,
+    isRemake,
+    deliveryZone,
+    deliveryFee,
+    baseAmount,
+  };
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -237,6 +335,70 @@ router.get('/transformations/:garment', async (req, res) => {
   });
 });
 
+router.get('/gift-cards/mine', authenticateUser, async (req, res) => {
+  try {
+    const dbUser = await loadCheckoutUser(req, res);
+    if (!dbUser) return;
+    res.json({ success: true, gift_cards: await listAvailableGiftCards(dbUser.email) });
+  } catch (err) {
+    console.error('[reimagine] GET /gift-cards/mine failed:', err);
+    res.status(500).json({ success: false, message: 'Could not load gift cards' });
+  }
+});
+
+router.post('/promotions/preview', authenticateUser, async (req, res) => {
+  try {
+    const dbUser = await loadCheckoutUser(req, res);
+    if (!dbUser) return;
+
+    let pricingBase;
+    try {
+      pricingBase = await resolveReimaginePricing({
+        conversion_id: req.body.conversion_id,
+        is_consultation: req.body.is_consultation,
+        request_callback: req.body.request_callback,
+        delivery_zone: req.body.delivery_zone,
+        is_custom: req.body.is_custom,
+        transformation: req.body.transformation,
+      });
+    } catch (err) {
+      return res.status(err.status || 400).json({ success: false, message: err.message });
+    }
+
+    if (pricingBase.callbackRequested) {
+      return res.json({
+        success: true,
+        summary: {
+          subtotal: 0,
+          delivery_fee: 0,
+          coupon: null,
+          coupon_discount: 0,
+          gift_card: null,
+          gift_card_discount: 0,
+          total: 0,
+        },
+        errors: {},
+      });
+    }
+
+    const deliveryFee = pricingBase.isRemake ? pricingBase.deliveryFee : 0;
+    const summary = await computePromotions({
+      userId: dbUser.id,
+      userEmail: dbUser.email,
+      subtotal: pricingBase.baseAmount,
+      deliveryFee,
+      couponCode: req.body.coupon_code,
+      giftCardCode: req.body.gift_card_code,
+      lenient: true,
+    });
+    const { errors, ...rest } = summary;
+    res.json({ success: true, summary: rest, errors });
+  } catch (err) {
+    console.error('[reimagine] POST /promotions/preview failed:', err);
+    res.status(500).json({ success: false, message: 'Could not apply discount. Please try again.' });
+  }
+});
+
 router.post('/requests', authenticateUser, upload.array('images', 5), async (req, res) => {
   const {
     user_name,
@@ -275,14 +437,8 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
     return res.status(400).json({ success: false, message: 'Pickup / delivery address is required' });
   }
 
-  if (req.user.role === 'admin') {
-    return res.status(403).json({ success: false, message: 'Sign in with a customer account to submit requests' });
-  }
-
-  const dbUser = await get('SELECT id FROM users WHERE id = ?', [req.user.id]);
-  if (!dbUser) {
-    return res.status(401).json({ success: false, message: 'Account not found. Please sign in again.' });
-  }
+  const dbUser = await loadCheckoutUser(req, res);
+  if (!dbUser) return;
 
   let images = [];
   try {
@@ -299,52 +455,64 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
 
   const id = uuidv4();
   const user_id = dbUser.id;
-  const callbackRequested =
-    request_callback === '1' || request_callback === 1 || request_callback === true;
-  const consultation =
-    !callbackRequested &&
-    (is_consultation === '1' || is_consultation === 1 || is_consultation === true);
-  const custom =
-    consultation ||
-    callbackRequested ||
-    is_custom === '1' ||
-    is_custom === 1 ||
-    is_custom === true ||
-    transformation === 'Custom';
 
-  const settings = await getReimagineCustomizeSettings();
-  const consultationFee = consultation ? settings.price : 0;
-
-  let conversion = null;
-  if (!consultation && !callbackRequested && conversion_id) {
-    conversion = await getConversionById(String(conversion_id).trim());
-    if (!conversion || !conversion.active) {
-      return res.status(400).json({ success: false, message: 'Selected reimagine conversion is unavailable.' });
-    }
+  let pricingBase;
+  try {
+    pricingBase = await resolveReimaginePricing({
+      conversion_id,
+      is_consultation,
+      request_callback,
+      delivery_zone: req.body.delivery_zone,
+      is_custom,
+      transformation,
+    });
+  } catch (err) {
+    return res.status(err.status || 400).json({ success: false, message: err.message });
   }
 
-  const remakePrice = conversion ? Number(conversion.price) || 0 : 0;
-  const isRemake = !consultation && !callbackRequested;
-  let deliveryZone = normalizeDeliveryZone(req.body.delivery_zone);
-  let deliveryFee = 0;
+  const {
+    callbackRequested,
+    consultation,
+    custom,
+    consultationFee,
+    conversion,
+    isRemake,
+    deliveryZone,
+    deliveryFee,
+    baseAmount,
+  } = pricingBase;
 
-  if (isRemake) {
-    if (!deliveryZone) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please select whether pickup/delivery is in Hyderabad & around or outside Hyderabad.',
+  let pricing = {
+    coupon: null,
+    coupon_discount: 0,
+    gift_card: null,
+    gift_card_discount: 0,
+    total: baseAmount + (isRemake ? deliveryFee : 0),
+  };
+
+  if (!callbackRequested && (req.body.coupon_code || req.body.gift_card_code || payment_method === 'razorpay')) {
+    try {
+      pricing = await computePromotions({
+        userId: dbUser.id,
+        userEmail: dbUser.email,
+        subtotal: baseAmount,
+        deliveryFee: isRemake ? deliveryFee : 0,
+        couponCode: req.body.coupon_code,
+        giftCardCode: req.body.gift_card_code,
       });
+    } catch (err) {
+      if (err.status && err.status < 500) {
+        return res.status(err.status).json({ success: false, message: err.message });
+      }
+      console.error('[reimagine] promotion check failed:', err);
+      return res.status(500).json({ success: false, message: 'Could not apply discount. Please try again.' });
     }
-    deliveryFee = await getDeliveryFee('reimagine', deliveryZone);
-  } else if (deliveryZone) {
-    deliveryFee = 0;
-  } else {
-    deliveryZone = null;
   }
 
-  const baseAmount = Math.max(0, consultation ? consultationFee : remakePrice);
-  const paymentAmount = baseAmount + (isRemake ? deliveryFee : 0);
-  const wantsRazorpay = payment_method === 'razorpay' && paymentAmount > 0;
+  const paymentAmount = pricing.total;
+  const fullyCovered =
+    !callbackRequested && payment_method === 'razorpay' && paymentAmount <= 0 && baseAmount + (isRemake ? deliveryFee : 0) > 0;
+  const wantsRazorpay = payment_method === 'razorpay' && paymentAmount > 0 && !fullyCovered;
 
   const resolvedGarment = conversion ? conversion.from_label : garment_type.trim();
   const resolvedTransform = conversion
@@ -418,7 +586,13 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
   const transformationLabel = resolvedTransform;
 
   const status = wantsRazorpay ? 'pending_payment' : 'pending_review';
-  const paymentStatus = wantsRazorpay ? 'pending' : callbackRequested || consultationFee === 0 ? 'not_required' : 'pending';
+  const paymentStatus = wantsRazorpay
+    ? 'pending'
+    : fullyCovered
+      ? 'paid'
+      : callbackRequested || consultationFee === 0
+        ? 'not_required'
+        : 'pending';
 
   await run(
     `INSERT INTO reimagine_requests (
@@ -427,8 +601,10 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       garment_size,transformation_size,height_ft,height_in,
       images,status,
       is_custom,consultation_paid,consultation_slot_id,consultation_date,consultation_time,callback_requested,
-      pickup_date,pickup_period,payment_status,consultation_fee
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      pickup_date,pickup_period,payment_status,consultation_fee,
+      coupon_code,coupon_discount,gift_card_code,gift_card_discount,
+      paid_at
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,${fullyCovered ? 'CURRENT_TIMESTAMP' : 'NULL'})`,
     [
       id,
       user_id,
@@ -449,7 +625,7 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       JSON.stringify(images),
       status,
       custom ? 1 : 0,
-      consultation && !wantsRazorpay ? 1 : 0,
+      consultation && (fullyCovered || !wantsRazorpay) ? 1 : 0,
       slotId,
       consultationDate,
       consultationTime,
@@ -458,12 +634,83 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       pickupPeriod,
       paymentStatus,
       baseAmount || null,
+      pricing.coupon ? pricing.coupon.code : null,
+      pricing.coupon_discount || 0,
+      pricing.gift_card ? pricing.gift_card.code : null,
+      pricing.gift_card_discount || 0,
     ]
   );
+
+  if (pricing.coupon || pricing.gift_card) {
+    await reserveRedemptions({
+      orderId: id,
+      userId: user_id,
+      userEmail: dbUser.email,
+      breakdown: pricing,
+      status: fullyCovered ? 'applied' : wantsRazorpay ? 'pending' : 'applied',
+    });
+  }
+
+  const deliveryPayload = isRemake
+    ? {
+        zone: deliveryZone,
+        zone_label: DELIVERY_ZONE_LABELS[deliveryZone],
+        fee: deliveryFee,
+        subtotal: baseAmount,
+        coupon_discount: pricing.coupon_discount,
+        gift_card_discount: pricing.gift_card_discount,
+        total: paymentAmount,
+      }
+    : {
+        zone: null,
+        fee: 0,
+        subtotal: baseAmount,
+        coupon_discount: pricing.coupon_discount,
+        gift_card_discount: pricing.gift_card_discount,
+        total: paymentAmount,
+      };
+
+  if (fullyCovered) {
+    if (consultation && slotId) {
+      const ok = await bookConsultationSlot(id, slotId);
+      if (!ok) {
+        await deleteRedemptionsForOrder(id);
+        await run('DELETE FROM reimagine_requests WHERE id = ?', [id]);
+        return res.status(409).json({
+          success: false,
+          message: 'Selected time slot was just booked. Please pick another.',
+        });
+      }
+    }
+
+    const row = await get('SELECT * FROM reimagine_requests WHERE id = ?', [id]);
+    notifyReimagineRequest(
+      await buildNotifyPayload(row, {
+        is_custom: custom,
+        consultation_paid: consultation,
+        callback_requested: callbackRequested,
+        consultation_price: consultationFee || null,
+        consultation_slot_label: slotLabel,
+        pickup_date: pickupDate,
+        pickup_period: pickupPeriod,
+      })
+    ).catch((err) => {
+      console.error('[reimagine] notifyReimagineRequest (promo) failed:', err?.message || err);
+    });
+
+    return res.status(201).json({
+      success: true,
+      paid: true,
+      message: 'Request placed. Your coupon / gift card covered the full amount.',
+      requestId: id,
+      delivery: deliveryPayload,
+    });
+  }
 
   if (wantsRazorpay) {
     const rzp = getRazorpayClient();
     if (!rzp) {
+      await deleteRedemptionsForOrder(id);
       await run('DELETE FROM reimagine_requests WHERE id = ?', [id]);
       return res.status(503).json({ success: false, message: 'Online payments are not configured' });
     }
@@ -477,6 +724,7 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
         notes: { request_id: id, user_id },
       });
     } catch (err) {
+      await deleteRedemptionsForOrder(id);
       await run('DELETE FROM reimagine_requests WHERE id = ?', [id]);
       console.error('[razorpay] reimagine order create failed:', err);
       return res.status(502).json({ success: false, message: 'Could not start payment. Please try again.' });
@@ -489,15 +737,7 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
       success: true,
       requestId: id,
       requires_payment: true,
-      delivery: isRemake
-        ? {
-            zone: deliveryZone,
-            zone_label: DELIVERY_ZONE_LABELS[deliveryZone],
-            fee: deliveryFee,
-            subtotal: baseAmount,
-            total: paymentAmount,
-          }
-        : null,
+      delivery: deliveryPayload,
       razorpay: {
         key_id: cfg.key_id,
         order_id: rzpOrder.id,
@@ -510,6 +750,7 @@ router.post('/requests', authenticateUser, upload.array('images', 5), async (req
   if (consultation && slotId) {
     const ok = await bookConsultationSlot(id, slotId);
     if (!ok) {
+      await deleteRedemptionsForOrder(id);
       await run('DELETE FROM reimagine_requests WHERE id = ?', [id]);
       return res.status(409).json({ success: false, message: 'Selected time slot was just booked. Please pick another.' });
     }
@@ -563,6 +804,11 @@ router.post('/requests/:id/razorpay/verify', authenticateUser, async (req, res) 
   }
 
   if (!verifyPaymentSignature({ razorpay_order_id, razorpay_payment_id, razorpay_signature })) {
+    await run(
+      'UPDATE reimagine_requests SET payment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      ['failed', req.params.id]
+    );
+    await releaseRedemptions(req.params.id);
     return res.status(400).json({ success: false, message: 'Payment verification failed' });
   }
 
@@ -573,6 +819,7 @@ router.post('/requests/:id/razorpay/verify', authenticateUser, async (req, res) 
         `UPDATE reimagine_requests SET status = 'cancelled', payment_status = 'paid_slot_lost', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         [row.id]
       );
+      await markRedemptionsApplied(row.id);
       return res.status(409).json({
         success: false,
         message: 'Payment received but the consultation slot was taken. Our team will contact you to reschedule.',
@@ -596,6 +843,7 @@ router.post('/requests/:id/razorpay/verify', authenticateUser, async (req, res) 
      WHERE id = ?`,
     [wasConsultation ? 1 : 0, razorpay_payment_id, row.id]
   );
+  await markRedemptionsApplied(row.id);
 
   const updated = await get('SELECT * FROM reimagine_requests WHERE id = ?', [row.id]);
   const slotLabel =
@@ -634,6 +882,7 @@ const REIMAGINE_LIST_SELECT = `
   garment_type, transformation,
   conversion_id, notes, garment_size, transformation_size, height_ft, height_in,
   status, admin_notes, pickup_date, pickup_period, payment_status, consultation_fee,
+  coupon_code, coupon_discount, gift_card_code, gift_card_discount,
   is_custom, consultation_paid, callback_requested, consultation_date, consultation_time,
   consultation_slot_id, created_at, updated_at,
   CASE

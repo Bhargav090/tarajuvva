@@ -335,7 +335,7 @@ export default function UsersTab({ onNavigateTab }) {
   // Stats calculation
   const stats = useMemo(() => {
     const total = users.length;
-    const withOrders = users.filter((u) => Number(u.order_count) > 0);
+    const withOrders = users.filter((u) => Number(u.order_count) > 0 && Number(u.total_spent) > 0);
     const totalRevenue = users.reduce((acc, u) => acc + Number(u.total_spent || 0), 0);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -355,7 +355,7 @@ export default function UsersTab({ onNavigateTab }) {
 
     // Filter type
     if (filter === 'buyers') {
-      result = result.filter((u) => Number(u.order_count) > 0);
+      result = result.filter((u) => Number(u.order_count) > 0 && Number(u.total_spent) > 0);
     } else if (filter === 'reimagine') {
       result = result.filter((u) => Number(u.reimagine_count) > 0);
     } else if (filter === 'new30d') {

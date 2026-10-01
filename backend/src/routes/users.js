@@ -251,8 +251,8 @@ router.get('/', authenticateAdmin, async (req, res) => {
       LEFT JOIN (
         SELECT 
           user_id, 
-          COUNT(*) AS order_count, 
-          SUM(CASE WHEN status NOT IN ('pending_payment', 'cancelled') THEN total ELSE 0 END) AS total_spent
+          COUNT(CASE WHEN payment_status = 'paid' OR status NOT IN ('pending_payment', 'cancelled') THEN 1 END) AS order_count, 
+          SUM(CASE WHEN payment_status = 'paid' OR status NOT IN ('pending_payment', 'cancelled') THEN total ELSE 0 END) AS total_spent
         FROM orders 
         WHERE deleted_at IS NULL
         GROUP BY user_id
@@ -280,7 +280,7 @@ router.get('/:id/admin-details', authenticateAdmin, async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     const orders = await all(
-      'SELECT id, total, status, payment_status, payment_method, items, created_at FROM orders WHERE user_id = ? AND deleted_at IS NULL ORDER BY created_at DESC',
+      "SELECT id, total, status, payment_status, payment_method, items, created_at FROM orders WHERE user_id = ? AND deleted_at IS NULL AND status != 'pending_payment' ORDER BY created_at DESC",
       [req.params.id]
     );
     const parsedOrders = await Promise.all(

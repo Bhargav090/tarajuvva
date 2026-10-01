@@ -202,3 +202,28 @@ export function useAdminContact() {
 
   return { entries, loading, updateStatus };
 }
+
+// ── Admin Users ────────────────────────────────────────────────────────────────
+export function useAdminUsers() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const authHeader = { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
+
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/users', { headers: authHeader });
+      setUsers(data.users || []);
+    } catch {
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  return { users, loading, reload: loadUsers };
+}

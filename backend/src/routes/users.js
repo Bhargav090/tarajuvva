@@ -240,8 +240,71 @@ router.delete('/me/wishlist/:productId', authenticateUser, async (req, res) => {
 
 // ── ADMIN: all users ──────────────────────────────────────────────────────────
 router.get('/', authenticateAdmin, async (req, res) => {
-  const users = await all('SELECT id,name,email,avatar,phone,role,created_at FROM users ORDER BY created_at DESC');
-  res.json({ success: true, users });
+  try {
+    const users = await all(`
+      SELECT 
+        u.id, u.name, u.email, u.avatar, u.phone, u.address, u.role, u.created_at,
+        COALESCE(o_agg.order_count, 0) AS order_count,
+        COALESCE(o_agg.total_spent, 0) AS total_spent,
+        COALESCE(r_agg.reimagine_count, 0) AS reimagine_count
+      FROM users u
+      LEFT JOIN (
+        SELECT 
+          user_id, 
+          COUNT(*) AS order_count, 
+          SUM(CASE WHEN status NOT IN ('pending_payment', 'cancelled') THEN total ELSE 0 END) AS total_spent
+        FROM orders 
+        WHERE deleted_at IS NULL
+        GROUP BY user_id
+      ) o_agg ON o_agg.user_id = u.id
+      LEFT JOIN (
+        SELECT 
+          user_id, 
+          COUNT(*) AS reimagine_count
+        FROM reimagine_requests
+        GROUP BY user_id
+      ) r_agg ON r_agg.user_id = u.id
+      ORDER BY u.created_at DESC
+    `);
+    res.json({ success: true, users });
+  } catch (err) {
+    console.error('[users] GET / failed:', err);
+    res.status(500).json({ success: false, message: 'Failed to load users' });
+  }
+});
+
+// ── ADMIN: user details ───────────────────────────────────────────────────────
+router.get('/:id/admin-details', authenticateAdmin, async (req, res) => {
+  try {
+    const user = await get('SELECT id,name,email,avatar,phone,address,role,created_at,updated_at FROM users WHERE id = ?', [req.params.id]);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const orders = await all(
+      'SELECT id, total, status, payment_status, payment_method, items, created_at FROM orders WHERE user_id = ? AND deleted_at IS NULL ORDER BY created_at DESC',
+      [req.params.id]
+    );
+    const parsedOrders = await Promise.all(
+      orders.map(async (o) => ({
+        ...o,
+        items: await enrichOrderItems(JSON.parse(o.items || '[]'), get),
+      }))
+    );
+
+    const reimagine = await all(
+      'SELECT id, garment_type, transformation, status, created_at, consultation_paid, callback_requested FROM reimagine_requests WHERE user_id = ? ORDER BY created_at DESC',
+      [req.params.id]
+    );
+
+    res.json({
+      success: true,
+      user,
+      orders: parsedOrders,
+      reimagine,
+    });
+  } catch (err) {
+    console.error('[users] GET /:id/admin-details failed:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to load user details' });
+  }
 });
 
 module.exports = router;

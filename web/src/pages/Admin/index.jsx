@@ -33,6 +33,7 @@ import ContactTab from './ContactTab';
 import OrdersTab from './OrdersTab';
 import AnalyticsTab from './AnalyticsTab';
 import PromotionsTab from './PromotionsTab';
+import UsersTab from './UsersTab';
 import { downloadCsv, flattenOrderItems } from '../../utils/exportCsv';
 import { formatConsultationSlot } from '../../utils/dates';
 import api from '../../utils/api';
@@ -57,17 +58,59 @@ function capitalize(s) {
 }
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, color, sub }) {
+function StatCard({ icon: Icon, label, value, color, sub, onClick, actionHint = 'View' }) {
+  const isClickable = typeof onClick === 'function';
   return (
-    <div className="bg-white rounded-2xl p-5 border border-[#241621]/8">
+    <div
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={`relative bg-white rounded-2xl p-5 border border-[#241621]/8 transition-all duration-200 text-left group select-none ${
+        isClickable
+          ? 'cursor-pointer hover:border-[#7A063C]/35 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-[#7A063C]/30'
+          : ''
+      }`}
+    >
       <div className="flex items-center justify-between mb-4">
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: color + '18' }}>
+        <div
+          className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105"
+          style={{ background: color + '18' }}
+        >
           <Icon size={20} style={{ color }} />
         </div>
-        {sub && <span className="text-xs text-[#a8e000] font-semibold font-display">{sub}</span>}
+        <div className="flex items-center gap-1.5">
+          {sub && (
+            <span
+              className="text-xs font-semibold font-display px-2 py-0.5 rounded-full"
+              style={{ background: color + '14', color: color === '#c8ff2e' ? '#5a8200' : color }}
+            >
+              {sub}
+            </span>
+          )}
+          {isClickable && (
+            <span className="text-xs text-[#241621]/30 group-hover:text-[#7A063C] group-hover:translate-x-0.5 transition-all font-display font-bold">
+              →
+            </span>
+          )}
+        </div>
       </div>
-      <p className="text-2xl font-black text-[#241621] font-display">{value ?? '-'}</p>
-      <p className="text-xs text-[#241621]/45 font-body mt-1">{label}</p>
+      <p className="text-2xl font-black text-[#241621] font-display group-hover:text-[#7A063C] transition-colors">
+        {value ?? '-'}
+      </p>
+      <div className="flex items-center justify-between mt-1">
+        <p className="text-xs text-[#241621]/45 font-body">{label}</p>
+        {isClickable && (
+          <span className="text-[10px] font-mono-tj uppercase tracking-wider text-[#7A063C] opacity-0 group-hover:opacity-100 transition-opacity">
+            {actionHint}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -75,6 +118,7 @@ function StatCard({ icon: Icon, label, value, color, sub }) {
 const TABS = [
   { id: 'overview',  label: 'Overview',          icon: LayoutDashboard },
   { id: 'analytics', label: 'Analytics',         icon: BarChart3       },
+  { id: 'users',     label: 'Users & Signups',   icon: Users           },
   { id: 'orders',    label: 'Orders',             icon: ShoppingBag    },
   { id: 'promotions', label: 'Coupons & Gifts',   icon: Ticket         },
   { id: 'reimagine', label: 'Reimagine Orders',   icon: Scissors       },
@@ -294,8 +338,9 @@ export default function Admin() {
         </div>
 
         <div className="p-5 sm:p-8">
-          {tab === 'overview' && <OverviewTab />}
+          {tab === 'overview' && <OverviewTab onNavigateTab={setTab} />}
           {tab === 'analytics' && <AnalyticsTab />}
+          {tab === 'users' && <UsersTab onNavigateTab={setTab} />}
           {tab === 'orders' && <OrdersTab />}
           {tab === 'promotions' && <PromotionsTab />}
           {tab === 'reimagine' && <ReimagineTab kind="orders" />}
@@ -332,35 +377,158 @@ export default function Admin() {
   );
 }
 
-function OverviewTab() {
+function OverviewTab({ onNavigateTab }) {
   const { stats, loading } = useAdminStats();
   const [funnel, setFunnel] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [recentUsers, setRecentUsers] = useState([]);
+  const [loadingPreviews, setLoadingPreviews] = useState(true);
 
   useEffect(() => {
-    api
-      .get('/analytics/dashboard?days=30', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('admin_token')}` },
-      })
-      .then(({ data }) => setFunnel(data?.funnel || null))
-      .catch(() => {});
+    const authHeader = { Authorization: `Bearer ${localStorage.getItem('admin_token')}` };
+
+    Promise.allSettled([
+      api.get('/analytics/dashboard?days=30', { headers: authHeader }),
+      api.get('/shop/orders?limit=5', { headers: authHeader }),
+      api.get('/users', { headers: authHeader }),
+    ]).then(([funnelRes, ordersRes, usersRes]) => {
+      if (funnelRes.status === 'fulfilled') {
+        setFunnel(funnelRes.value.data?.funnel || null);
+      }
+      if (ordersRes.status === 'fulfilled') {
+        setRecentOrders((ordersRes.value.data?.orders || []).slice(0, 5));
+      }
+      if (usersRes.status === 'fulfilled') {
+        setRecentUsers((usersRes.value.data?.users || []).slice(0, 5));
+      }
+      setLoadingPreviews(false);
+    });
   }, []);
 
   if (loading) return <div className="flex justify-center py-20"><Spinner size={32} /></div>;
+
   return (
-    <div>
-      <h1 className="text-2xl font-black text-[#241621] font-display mb-8">Overview</h1>
+    <div className="space-y-8">
+      {/* Overview Header & Quick Jump Shortcuts */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-[#241621] font-display">Overview</h1>
+          <p className="text-xs text-[#241621]/50 font-body mt-1">
+            Welcome to the Tarajuvva control panel. Click any metric card to jump directly to its detailed view.
+          </p>
+        </div>
+
+        {/* Quick Jump Bar */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onNavigateTab('users')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-display font-bold bg-[#7A063C]/10 text-[#7A063C] hover:bg-[#7A063C] hover:text-white transition-all shadow-2xs"
+          >
+            <Users size={13} /> Sign-ups
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigateTab('orders')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-display font-bold bg-[#241621]/8 text-[#241621] hover:bg-[#241621] hover:text-white transition-all shadow-2xs"
+          >
+            <ShoppingBag size={13} /> Orders
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigateTab('reimagine')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-display font-bold bg-[#e34334]/10 text-[#e34334] hover:bg-[#e34334] hover:text-white transition-all shadow-2xs"
+          >
+            <Scissors size={13} /> Reimagine
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigateTab('analytics')}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-display font-bold bg-[#1b4e81]/10 text-[#1b4e81] hover:bg-[#1b4e81] hover:text-white transition-all shadow-2xs"
+          >
+            <BarChart3 size={13} /> Analytics
+          </button>
+        </div>
+      </div>
+
+      {/* Primary KPI Metrics (Clickable) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={ShoppingBag} label="Total Orders" value={stats?.orders?.total ?? 0} color="#c8ff2e" sub={`${stats?.orders?.pending ?? 0} pending`} />
-        <StatCard icon={TrendingUp} label="Revenue" value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`} color="#7A063C" />
-        <StatCard icon={Scissors} label="Reimagine Orders" value={stats?.reimagine?.total ?? 0} color="#e34334" sub={`${stats?.reimagine?.pending ?? 0} pending`} />
-        <StatCard icon={Package} label="Products" value={stats?.products ?? 0} color="#1b4e81" />
+        <StatCard
+          icon={ShoppingBag}
+          label="Total Orders"
+          value={stats?.orders?.total ?? 0}
+          color="#c8ff2e"
+          sub={`${stats?.orders?.pending ?? 0} pending`}
+          onClick={() => onNavigateTab('orders')}
+          actionHint="View Orders"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Total Revenue"
+          value={`₹${Number(stats?.revenue || 0).toLocaleString('en-IN')}`}
+          color="#7A063C"
+          sub="Store Sales"
+          onClick={() => onNavigateTab('analytics')}
+          actionHint="View Analytics"
+        />
+        <StatCard
+          icon={Users}
+          label="Sign-ups & Users"
+          value={stats?.users?.total ?? 0}
+          color="#7A063C"
+          sub={`${stats?.users?.new_30d ?? 0} new (30d)`}
+          onClick={() => onNavigateTab('users')}
+          actionHint="View Users"
+        />
+        <StatCard
+          icon={Scissors}
+          label="Reimagine Orders"
+          value={stats?.reimagine?.total ?? 0}
+          color="#e34334"
+          sub={`${stats?.reimagine?.pending ?? 0} pending`}
+          onClick={() => onNavigateTab('reimagine')}
+          actionHint="View Reimagine"
+        />
       </div>
-      <div className="mt-6 grid sm:grid-cols-3 gap-4">
-        <StatCard icon={PhoneCall} label="Consultations" value={stats?.reimagine?.consultations ?? 0} color="#7A063C" />
-        <StatCard icon={Users} label="Repair Waitlist" value={stats?.waitlist?.repair ?? 0} color="#e34334" />
-        <StatCard icon={Users} label="Donate Waitlist" value={stats?.waitlist?.donate ?? 0} color="#1b4e81" />
+
+      {/* Secondary Operations Metrics (Clickable) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <StatCard
+          icon={Package}
+          label="Products Active"
+          value={stats?.products ?? 0}
+          color="#1b4e81"
+          onClick={() => onNavigateTab('products')}
+          actionHint="Manage Catalog"
+        />
+        <StatCard
+          icon={PhoneCall}
+          label="Consultations"
+          value={stats?.reimagine?.consultations ?? 0}
+          color="#7A063C"
+          onClick={() => onNavigateTab('consultations')}
+          actionHint="View Bookings"
+        />
+        <StatCard
+          icon={Users}
+          label="Repair Waitlist"
+          value={stats?.waitlist?.repair ?? 0}
+          color="#e34334"
+          onClick={() => onNavigateTab('waitlist')}
+          actionHint="View Waitlist"
+        />
+        <StatCard
+          icon={Users}
+          label="Donate Waitlist"
+          value={stats?.waitlist?.donate ?? 0}
+          color="#1b4e81"
+          onClick={() => onNavigateTab('waitlist')}
+          actionHint="View Waitlist"
+        />
       </div>
-      <div className="mt-6 grid sm:grid-cols-2 gap-4">
+
+      {/* Funnel & Conversion Rates (Clickable) */}
+      <div className="grid sm:grid-cols-2 gap-4">
         <StatCard
           icon={BarChart3}
           label="Cart abandonment (30d)"
@@ -371,6 +539,8 @@ function OverviewTab() {
               ? `${funnel.add_to_cart_sessions} carts · ${funnel.purchase_sessions} purchases`
               : 'See Analytics for detail'
           }
+          onClick={() => onNavigateTab('analytics')}
+          actionHint="Funnel Breakdown"
         />
         <StatCard
           icon={BarChart3}
@@ -382,7 +552,155 @@ function OverviewTab() {
               ? `${funnel.begin_checkout_sessions} checkouts started`
               : 'Tracking starts after deploy'
           }
+          onClick={() => onNavigateTab('analytics')}
+          actionHint="Funnel Breakdown"
         />
+      </div>
+
+      {/* Live Preview Section: Recent Orders & Recent Sign-ups */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Recent Orders Preview */}
+        <div className="bg-white rounded-3xl p-6 border border-[#241621]/8 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#c8ff2e]/25 text-[#241621] flex items-center justify-center">
+                  <ShoppingBag size={16} />
+                </div>
+                <h3 className="text-base font-black text-[#241621] font-display">Recent Orders</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('orders')}
+                className="text-xs font-display font-bold text-[#7A063C] hover:underline flex items-center gap-1"
+              >
+                View all orders →
+              </button>
+            </div>
+
+            {loadingPreviews ? (
+              <div className="py-8 flex justify-center"><Spinner size={24} /></div>
+            ) : recentOrders.length === 0 ? (
+              <p className="text-xs text-[#241621]/40 font-body py-6 text-center">No orders received yet.</p>
+            ) : (
+              <div className="divide-y divide-[#241621]/6">
+                {recentOrders.map((o) => (
+                  <div
+                    key={o.id}
+                    onClick={() => onNavigateTab('orders')}
+                    className="py-3 flex items-center justify-between gap-3 hover:bg-[#fafafa] -mx-2 px-2 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono-tj font-bold text-xs text-[#241621]">
+                          #{o.id.slice(0, 8).toUpperCase()}
+                        </span>
+                        <span className="text-xs text-[#241621]/50 font-body">
+                          {o.shipping_name || o.user_name || 'Customer'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[#241621]/40 font-body mt-0.5">
+                        {new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-display font-bold text-xs text-[#241621]">
+                        ₹{Number(o.total || 0).toLocaleString('en-IN')}
+                      </p>
+                      <Badge variant={o.status === 'delivered' ? 'green' : o.status === 'cancelled' ? 'red' : 'yellow'} className="mt-0.5">
+                        {o.status}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            fullWidth
+            onClick={() => onNavigateTab('orders')}
+            className="mt-4"
+          >
+            Manage All Store Orders
+          </Button>
+        </div>
+
+        {/* Recent Sign-ups Preview */}
+        <div className="bg-white rounded-3xl p-6 border border-[#241621]/8 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#7A063C]/10 text-[#7A063C] flex items-center justify-center">
+                  <Users size={16} />
+                </div>
+                <h3 className="text-base font-black text-[#241621] font-display">Recent Sign-ups</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigateTab('users')}
+                className="text-xs font-display font-bold text-[#7A063C] hover:underline flex items-center gap-1"
+              >
+                View all users →
+              </button>
+            </div>
+
+            {loadingPreviews ? (
+              <div className="py-8 flex justify-center"><Spinner size={24} /></div>
+            ) : recentUsers.length === 0 ? (
+              <p className="text-xs text-[#241621]/40 font-body py-6 text-center">No signed-up users found.</p>
+            ) : (
+              <div className="divide-y divide-[#241621]/6">
+                {recentUsers.map((u) => {
+                  const initials = (u.name || u.email || 'U').slice(0, 2).toUpperCase();
+                  return (
+                    <div
+                      key={u.id}
+                      onClick={() => onNavigateTab('users')}
+                      className="py-3 flex items-center justify-between gap-3 hover:bg-[#fafafa] -mx-2 px-2 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-[#7A063C]/10 text-[#7A063C] flex items-center justify-center font-display font-black text-xs shrink-0">
+                          {u.avatar ? <img src={u.avatar} alt="" className="w-full h-full rounded-xl object-cover" /> : initials}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-display font-bold text-xs text-[#241621] truncate">
+                            {u.name || 'Anonymous User'}
+                          </p>
+                          <p className="text-[11px] text-[#241621]/40 font-body truncate">
+                            {u.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[11px] text-[#241621]/40 font-mono-tj">
+                          {new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                        </p>
+                        {Number(u.order_count) > 0 && (
+                          <span className="text-[10px] font-mono-tj font-bold text-[#7A063C]">
+                            {u.order_count} order{Number(u.order_count) > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            fullWidth
+            onClick={() => onNavigateTab('users')}
+            className="mt-4"
+          >
+            View Full Customer Directory
+          </Button>
+        </div>
       </div>
     </div>
   );

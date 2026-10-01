@@ -38,6 +38,8 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
   const repairWaitlist = Number((await get("SELECT COUNT(*) AS count FROM waitlist WHERE type = 'repair'")).count);
   const donateWaitlist = Number((await get("SELECT COUNT(*) AS count FROM waitlist WHERE type = 'donate'")).count);
   const totalProducts = Number((await get('SELECT COUNT(*) AS count FROM products')).count);
+  const totalUsers = Number((await get("SELECT COUNT(*) AS count FROM users WHERE role != 'admin' OR role IS NULL")).count) || Number((await get("SELECT COUNT(*) AS count FROM users")).count) || 0;
+  const newSignups30d = Number((await get("SELECT COUNT(*) AS count FROM users WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")).count) || 0;
 
   res.json({
     success: true,
@@ -46,7 +48,8 @@ router.get('/stats', authenticateAdmin, async (req, res) => {
       revenue: totalRevenue,
       reimagine: { total: totalReimagine, pending: pendingReimagine, consultations: totalConsultations },
       waitlist: { repair: repairWaitlist, donate: donateWaitlist },
-      products: totalProducts
+      products: totalProducts,
+      users: { total: totalUsers, new_30d: newSignups30d }
     }
   });
 });

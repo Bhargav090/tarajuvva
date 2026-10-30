@@ -87,6 +87,8 @@ app.use('/api/admin/consultation-slots', consultationSlotsAdmin);
 app.use('/api/admin/promotions', require('./src/routes/promotions'));
 app.use('/api/admin',     require('./src/routes/admin'));
 
+app.use(require('./src/routes/sitemap'));
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Tarajuvva API is running 🧵', timestamp: new Date().toISOString() });

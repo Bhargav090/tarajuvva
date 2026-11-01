@@ -5,6 +5,8 @@ import { Spinner } from './Skeleton';
 
 export default function AsyncImage({
   src,
+  /** Ordered candidates tried before failing (e.g. gallery → card → original). */
+  sources,
   alt = '',
   className = '',
   imgClassName = '',
@@ -23,12 +25,19 @@ export default function AsyncImage({
   ...rest
 }) {
   const imgRef = useRef(null);
-  const { status, isLoading, isFailed, onLoad: markLoaded, onError: markError, checkComplete } =
-    useAsyncImage(src, { timeoutMs });
+  const {
+    src: activeSrc,
+    status,
+    isLoading,
+    isFailed,
+    onLoad: markLoaded,
+    onError: markError,
+    checkComplete,
+  } = useAsyncImage(src, { timeoutMs, sources });
 
   useEffect(() => {
     checkComplete(imgRef.current);
-  }, [src, checkComplete]);
+  }, [activeSrc, checkComplete]);
 
   const shellClass = fill ? 'absolute inset-0 w-full h-full' : 'relative w-full h-full';
   const imgClass = fill ? 'absolute inset-0 w-full h-full' : 'w-full h-full';
@@ -43,7 +52,7 @@ export default function AsyncImage({
     onError?.(event);
   };
 
-  const showPrimary = Boolean(src) && !isFailed;
+  const showPrimary = Boolean(activeSrc) && !isFailed;
   const showFallback = isFailed && Boolean(fallbackSrc);
 
   return (
@@ -72,7 +81,7 @@ export default function AsyncImage({
       {showPrimary && (
         <img
           ref={imgRef}
-          src={src}
+          src={activeSrc}
           alt={alt}
           width={width}
           height={height}

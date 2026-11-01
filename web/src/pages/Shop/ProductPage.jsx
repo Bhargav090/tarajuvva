@@ -7,13 +7,38 @@ import { useProduct } from '../../hooks/useProduct';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
-import { PRODUCT_IMAGE_PLACEHOLDER, resolveProductImageSrc } from '../../utils/productImage';
+import {
+  PRODUCT_IMAGE_PLACEHOLDER,
+  resolveProductCardSrc,
+  resolveProductGallerySrc,
+  resolveProductImageSrc,
+} from '../../utils/productImage';
 import Button from '../../components/ui/Button';
 import { Spinner } from '../../components/ui/Skeleton';
 import SizeChartLink from '../../components/shop/SizeChartLink';
 import AsyncImage from '../../components/ui/AsyncImage';
 import ProductCard from '../../components/ui/ProductCard';
 import HorizontalScrollRail from '../../components/ui/HorizontalScrollRail';
+
+/**
+ * Prefer already-generated card.webp first (fast), then sharper gallery.webp,
+ * then the camera original as last resort. Skips blanks/duplicates.
+ */
+function productImageSources(raw) {
+  if (typeof raw !== 'string' || !raw) return [];
+  const seen = new Set();
+  const out = [];
+  for (const url of [
+    resolveProductCardSrc(raw),
+    resolveProductGallerySrc(raw),
+    resolveProductImageSrc(raw),
+  ]) {
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    out.push(url);
+  }
+  return out;
+}
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -38,6 +63,22 @@ export default function ProductPage() {
     setCustomValues({});
     setMeasureError(false);
   }, [product?.id]);
+
+  // Preload the card WebP (already generated for most products) — not the multi‑MB original.
+  useEffect(() => {
+    const raw = product?.images?.[0];
+    if (typeof raw !== 'string' || !raw) return undefined;
+    const href = resolveProductCardSrc(raw) || resolveProductGallerySrc(raw);
+    if (!href || href.startsWith('data:')) return undefined;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = href;
+    document.head.appendChild(link);
+    return () => {
+      link.remove();
+    };
+  }, [product?.id, product?.images]);
 
   if (loading) return (
     <div className="min-h-screen bg-white flex items-center justify-center">
@@ -142,10 +183,21 @@ export default function ProductPage() {
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
 
-  const gallery =
+  const rawImages =
     Array.isArray(product.images) && product.images.length > 0
-      ? product.images.map(resolveProductImageSrc)
-      : [PRODUCT_IMAGE_PLACEHOLDER];
+      ? product.images.filter((src) => typeof src === 'string' && src.length > 0)
+      : [];
+  const gallerySources =
+    rawImages.length > 0
+      ? rawImages.map(productImageSources)
+      : [[PRODUCT_IMAGE_PLACEHOLDER]];
+  const thumbSources = rawImages.length > 0
+    ? rawImages.map((src) => {
+        const card = resolveProductCardSrc(src);
+        const original = resolveProductImageSrc(src);
+        return [card, original].filter(Boolean);
+      })
+    : gallerySources;
 
   const waysToWear = Array.isArray(product.ways_to_wear)
     ? product.ways_to_wear.map((w) => String(w).trim()).filter(Boolean)
@@ -153,13 +205,13 @@ export default function ProductPage() {
   const detailsAndCare = String(product.details_and_care || '').trim();
 
   const goPrevImg = () => {
-    if (gallery.length <= 1) return;
-    setActiveImg((i) => (i - 1 + gallery.length) % gallery.length);
+    if (gallerySources.length <= 1) return;
+    setActiveImg((i) => (i - 1 + gallerySources.length) % gallerySources.length);
   };
 
   const goNextImg = () => {
-    if (gallery.length <= 1) return;
-    setActiveImg((i) => (i + 1) % gallery.length);
+    if (gallerySources.length <= 1) return;
+    setActiveImg((i) => (i + 1) % gallerySources.length);
   };
 
   return (
@@ -175,10 +227,12 @@ export default function ProductPage() {
           <div className="min-w-0">
             <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-white relative group">
               <AsyncImage
-                src={gallery[activeImg]}
+                sources={gallerySources[activeImg]}
                 alt={`${product.name}${activeImg === 0 ? '' : ` - view ${activeImg + 1}`}`}
                 fill
                 showSpinner
+                loading="eager"
+                fetchPriority={activeImg === 0 ? 'high' : 'auto'}
                 fallbackSrc={PRODUCT_IMAGE_PLACEHOLDER}
                 imgClassName="transition-opacity duration-200"
               />
@@ -193,7 +247,7 @@ export default function ProductPage() {
                 </span>
               )}
 
-              {gallery.length > 1 && (
+              {gallerySources.length > 1 && (
                 <>
                   <button
                     type="button"
@@ -212,21 +266,21 @@ export default function ProductPage() {
                     <ChevronRight size={22} strokeWidth={2.25} />
                   </button>
                   <span className="absolute bottom-3 left-1/2 -translate-x-1/2 z-[2] bg-black/55 text-white text-[10px] font-mono-tj px-2 py-1 rounded-full tabular-nums">
-                    {activeImg + 1} / {gallery.length}
+                    {activeImg + 1} / {gallerySources.length}
                   </span>
                 </>
               )}
             </div>
 
-            {gallery.length > 1 && (
+            {gallerySources.length > 1 && (
               <div
                 className="mt-3 flex gap-2.5 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 role="listbox"
                 aria-label="Product images"
               >
-                {gallery.map((img, i) => (
+                {thumbSources.map((sources, i) => (
                   <button
-                    key={img + i}
+                    key={(sources[0] || '') + i}
                     type="button"
                     role="option"
                     aria-selected={activeImg === i}
@@ -238,9 +292,10 @@ export default function ProductPage() {
                     }`}
                   >
                     <AsyncImage
-                      src={img}
+                      sources={sources}
                       alt={`${product.name} thumbnail ${i + 1}`}
                       fill
+                      fallbackSrc={PRODUCT_IMAGE_PLACEHOLDER}
                       loadingClassName="bg-[#241621]/5 animate-pulse"
                     />
                   </button>

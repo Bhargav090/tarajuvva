@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Generate .card.webp siblings for existing product images (disk or S3).
+ * Generate .card.webp / .gallery.webp siblings for existing product images (disk or S3).
  *
  * SAFETY: Refuses MYSQL_DATABASE=tarajuvva unless --allow-production.
  *
  * Usage (from backend/):
  *   node scripts/generate-product-card-images.js --dry-run
  *   node scripts/generate-product-card-images.js
+ *   node scripts/generate-product-card-images.js --variant=gallery
  *   node scripts/generate-product-card-images.js --limit=5
  */
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
@@ -26,15 +27,33 @@ const {
   getClient,
   requireBucket,
 } = require('../src/lib/s3Storage');
-const { toCardWebp, cardSiblingPath } = require('../src/lib/imageVariants');
+const {
+  toCardWebp,
+  toGalleryWebp,
+  cardSiblingPath,
+  gallerySiblingPath,
+} = require('../src/lib/imageVariants');
 
 const UPLOADS_DIR = path.join(__dirname, '../uploads');
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const allowProduction = args.includes('--allow-production');
 const limitArg = Number((args.find((a) => a.startsWith('--limit=')) || '').split('=')[1] || 0) || null;
+const variantArg = String((args.find((a) => a.startsWith('--variant=')) || '').split('=')[1] || 'all').toLowerCase();
+
+const VARIANTS =
+  variantArg === 'card'
+    ? ['card']
+    : variantArg === 'gallery'
+      ? ['gallery']
+      : ['card', 'gallery'];
 
 const stats = { created: 0, skipped: 0, failed: 0, missing: 0 };
+
+const VARIANT_CFG = {
+  card: { encode: toCardWebp, sibling: cardSiblingPath },
+  gallery: { encode: toGalleryWebp, sibling: gallerySiblingPath },
+};
 
 function assertSafeDatabase() {
   const db = String(process.env.MYSQL_DATABASE || 'tarajuvva');
@@ -45,7 +64,7 @@ Use MYSQL_DATABASE=tarajuvva_staging, or pass --allow-production.
 `);
     process.exit(1);
   }
-  console.log(`Database: ${db}${dryRun ? ' (dry-run)' : ''}`);
+  console.log(`Database: ${db}${dryRun ? ' (dry-run)' : ''} · variants: ${VARIANTS.join(', ')}`);
 }
 
 async function streamToBuffer(body) {
@@ -113,47 +132,48 @@ async function loadBuffer(ref) {
   return null;
 }
 
-async function cardExists(originalRef) {
+async function variantExists(originalRef, siblingFn) {
   const v = String(originalRef || '').trim();
   const asS3 = isS3Ref(v) ? v : s3RefFromPublicUrl(v);
   if (asS3) {
     const key = s3Key(asS3);
-    const cardKey = cardSiblingPath(key);
-    if (!cardKey) return true;
-    return objectExists(cardKey);
+    const variantKey = siblingFn(key);
+    if (!variantKey) return true;
+    return objectExists(variantKey);
   }
   if (v.startsWith('/uploads/products/')) {
-    const cardRel = cardSiblingPath(v);
-    if (!cardRel) return true;
-    const abs = path.join(__dirname, '..', cardRel.replace(/^\//, ''));
+    const variantRel = siblingFn(v);
+    if (!variantRel) return true;
+    const abs = path.join(__dirname, '..', variantRel.replace(/^\//, ''));
     return fs.existsSync(abs);
   }
   // Unknown storage — skip
   return true;
 }
 
-async function writeCard(originalRef, buffer) {
-  const cardBuf = await toCardWebp(buffer);
+async function writeVariant(originalRef, buffer, variantName) {
+  const cfg = VARIANT_CFG[variantName];
+  const encoded = await cfg.encode(buffer);
   const v = String(originalRef || '').trim();
   const asS3 = isS3Ref(v) ? v : s3RefFromPublicUrl(v);
 
   if (asS3) {
     const key = s3Key(asS3);
-    const cardKey = cardSiblingPath(key);
-    if (!cardKey) return null;
-    if (dryRun) return `s3://${cardKey}`;
-    await uploadBufferAtKey(cardBuf, 'image/webp', cardKey);
-    return `s3://${cardKey}`;
+    const variantKey = cfg.sibling(key);
+    if (!variantKey) return null;
+    if (dryRun) return `s3://${variantKey}`;
+    await uploadBufferAtKey(encoded, 'image/webp', variantKey);
+    return `s3://${variantKey}`;
   }
 
   if (v.startsWith('/uploads/products/')) {
-    const cardRel = cardSiblingPath(v);
-    if (!cardRel) return null;
-    const abs = path.join(__dirname, '..', cardRel.replace(/^\//, ''));
-    if (dryRun) return cardRel;
+    const variantRel = cfg.sibling(v);
+    if (!variantRel) return null;
+    const abs = path.join(__dirname, '..', variantRel.replace(/^\//, ''));
+    if (dryRun) return variantRel;
     fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, cardBuf);
-    return cardRel;
+    fs.writeFileSync(abs, encoded);
+    return variantRel;
   }
 
   return null;
@@ -162,7 +182,7 @@ async function writeCard(originalRef, buffer) {
 function normalizeProductRef(raw) {
   const v = String(raw || '').trim();
   if (!v) return null;
-  if (/\.card\.webp$/i.test(v)) return null;
+  if (/\.card\.webp$/i.test(v) || /\.gallery\.webp$/i.test(v)) return null;
   if (isS3Ref(v) || isDataUrl(v) || v.startsWith('/uploads/') || /^https?:\/\//i.test(v)) {
     return v;
   }
@@ -187,23 +207,31 @@ async function main() {
   console.log(`Product image refs: ${refs.length} · processing ${work.length}`);
 
   for (const item of work) {
-    try {
-      if (await cardExists(item.ref)) {
-        stats.skipped += 1;
-        continue;
+    let buf = null;
+    for (const variantName of VARIANTS) {
+      const cfg = VARIANT_CFG[variantName];
+      try {
+        if (await variantExists(item.ref, cfg.sibling)) {
+          stats.skipped += 1;
+          continue;
+        }
+        if (!buf) {
+          buf = await loadBuffer(item.ref);
+          if (!buf?.length) {
+            console.warn(`  missing: ${item.ref}`);
+            stats.missing += 1;
+            break;
+          }
+        }
+        const out = await writeVariant(item.ref, buf, variantName);
+        console.log(
+          `  ${dryRun ? 'would create' : 'created'}: ${out} (${Math.round(buf.length / 1024)}KB → ${variantName})`
+        );
+        stats.created += 1;
+      } catch (e) {
+        console.error(`  failed (${variantName}): ${item.ref} — ${e.message}`);
+        stats.failed += 1;
       }
-      const buf = await loadBuffer(item.ref);
-      if (!buf?.length) {
-        console.warn(`  missing: ${item.ref}`);
-        stats.missing += 1;
-        continue;
-      }
-      const out = await writeCard(item.ref, buf);
-      console.log(`  ${dryRun ? 'would create' : 'created'}: ${out} (${Math.round(buf.length / 1024)}KB → card)`);
-      stats.created += 1;
-    } catch (e) {
-      console.error(`  failed: ${item.ref} — ${e.message}`);
-      stats.failed += 1;
     }
   }
 

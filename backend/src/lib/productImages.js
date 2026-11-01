@@ -4,7 +4,12 @@ const { v4: uuidv4 } = require('uuid');
 const { isDataUrl, isHttpUrl, parseDataUrl } = require('./imageDataUrl');
 const { mediaStorageIsS3, uploadBuffer, uploadBufferAtKey, isS3Ref, s3Key } = require('./s3Storage');
 const { normalizeRetainRef } = require('./persistImage');
-const { toCardWebp, cardSiblingPath } = require('./imageVariants');
+const {
+  toCardWebp,
+  toGalleryWebp,
+  cardSiblingPath,
+  gallerySiblingPath,
+} = require('./imageVariants');
 
 const EXT_BY_MIME = {
   'image/jpeg': '.jpg',
@@ -18,26 +23,37 @@ function getProductsUploadDir() {
   return path.join(__dirname, '../../uploads/products');
 }
 
+async function writeVariantFile(originalRef, variantBuf, siblingPathFn) {
+  if (isS3Ref(originalRef)) {
+    const key = s3Key(originalRef);
+    const variantKey = siblingPathFn(key);
+    if (!variantKey) return;
+    await uploadBufferAtKey(variantBuf, 'image/webp', variantKey);
+    return;
+  }
+  if (typeof originalRef === 'string' && originalRef.startsWith('/uploads/products/')) {
+    const variantRel = siblingPathFn(originalRef);
+    if (!variantRel) return;
+    const abs = path.join(__dirname, '../..', variantRel.replace(/^\//, ''));
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, variantBuf);
+  }
+}
+
+/** Write card + gallery WebP siblings for a product original. */
 async function writeCardVariantForRef(originalRef, sourceBuffer) {
   if (!sourceBuffer?.length) return;
   try {
     const cardBuf = await toCardWebp(sourceBuffer);
-    if (isS3Ref(originalRef)) {
-      const key = s3Key(originalRef);
-      const cardKey = cardSiblingPath(key);
-      if (!cardKey) return;
-      await uploadBufferAtKey(cardBuf, 'image/webp', cardKey);
-      return;
-    }
-    if (typeof originalRef === 'string' && originalRef.startsWith('/uploads/products/')) {
-      const cardRel = cardSiblingPath(originalRef);
-      if (!cardRel) return;
-      const abs = path.join(__dirname, '../..', cardRel.replace(/^\//, ''));
-      fs.mkdirSync(path.dirname(abs), { recursive: true });
-      fs.writeFileSync(abs, cardBuf);
-    }
+    await writeVariantFile(originalRef, cardBuf, cardSiblingPath);
   } catch (e) {
     console.warn('[productImages] card variant failed:', e.message);
+  }
+  try {
+    const galleryBuf = await toGalleryWebp(sourceBuffer);
+    await writeVariantFile(originalRef, galleryBuf, gallerySiblingPath);
+  } catch (e) {
+    console.warn('[productImages] gallery variant failed:', e.message);
   }
 }
 

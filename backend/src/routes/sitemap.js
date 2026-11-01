@@ -20,24 +20,32 @@ function urlEntry(loc) {
   return `  <url><loc>${xmlEscape(loc)}</loc></url>`;
 }
 
+function buildSitemapXml(productIds = []) {
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...STATIC_PATHS.map((path) => urlEntry(`${SITE}${path === '/' ? '/' : path}`)),
+    ...productIds.map((id) => urlEntry(`${SITE}/shop/${id}`)),
+    '</urlset>',
+    '',
+  ].join('\n');
+}
+
 router.get('/sitemap.xml', async (req, res) => {
+  let productIds = [];
   try {
+    // Only select columns that exist on products (id / featured / created_at).
+    // Avoid updated_at — that column is not on this table and previously 500'd the sitemap.
     const products = await all('SELECT id FROM products ORDER BY featured DESC, created_at DESC');
-    const body = [
-      '<?xml version="1.0" encoding="UTF-8"?>',
-      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-      ...STATIC_PATHS.map((path) => urlEntry(`${SITE}${path === '/' ? '/' : path}`)),
-      ...products.map((product) => urlEntry(`${SITE}/shop/${product.id}`)),
-      '</urlset>',
-      '',
-    ].join('\n');
-    res.set('Content-Type', 'application/xml; charset=utf-8');
-    res.set('Cache-Control', 'public, max-age=3600');
-    res.send(body);
+    productIds = products.map((product) => product.id).filter(Boolean);
   } catch (err) {
-    console.error(err);
-    res.status(500).type('text/plain').send('Sitemap unavailable');
+    // Crawlers should still get the public static pages even if the catalog query fails.
+    console.error('Sitemap catalog query failed; serving static paths only:', err.message || err);
   }
+
+  res.set('Content-Type', 'application/xml; charset=utf-8');
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.status(200).send(buildSitemapXml(productIds));
 });
 
 module.exports = router;

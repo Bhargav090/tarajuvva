@@ -75,6 +75,18 @@ echo "==> Smoke tests"
 curl -sf "http://localhost:4000/api/health" >/dev/null && echo "  backend: ok"
 curl -sfI "https://tarajuvva.com" | head -1 || true
 curl -sfI "https://www.tarajuvva.com" | head -1 || true
+# SEO shells: product HTML must not share the homepage canonical.
+SAMPLE_PRODUCT="$(curl -sf "http://localhost:4000/api/shop/products?limit=1" | python3 -c "import sys,json; ps=json.load(sys.stdin).get('products') or []; print(ps[0]['id'] if ps else '')" 2>/dev/null || true)"
+if [[ -n "$SAMPLE_PRODUCT" ]]; then
+  CANON="$(curl -sf "https://tarajuvva.com/shop/${SAMPLE_PRODUCT}" | python3 -c "import sys,re; m=re.search(r'rel=\"canonical\"[^>]*href=\"([^\"]+)\"', sys.stdin.read()); print(m.group(1) if m else '')" 2>/dev/null || true)"
+  if [[ "$CANON" == *"/shop/${SAMPLE_PRODUCT}"* ]]; then
+    echo "  seo product canonical: ok ($CANON)"
+  else
+    echo "  WARNING: product canonical looks wrong: ${CANON:-missing}"
+  fi
+fi
+PRODUCT_SHELLS="$(find "$WEB_OUT/shop" -mindepth 2 -maxdepth 2 -name index.html 2>/dev/null | wc -l | tr -d ' ')"
+echo "  seo product shells: ${PRODUCT_SHELLS}"
 
 echo "==> Deploy complete"
 pm2 status

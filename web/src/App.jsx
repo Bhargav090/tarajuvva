@@ -10,6 +10,7 @@ import Footer from './components/layout/Footer';
 import CartDrawer from './components/layout/CartDrawer';
 import Ticker from './components/layout/Ticker';
 import WhatsAppFloat from './components/layout/WhatsAppFloat';
+import SeoMeta from './components/seo/SeoMeta';
 
 import Home       from './pages/Home';
 import Shop       from './pages/Shop';
@@ -74,6 +75,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <SeoMeta />
       <AuthProvider>
         <WishlistProvider>
         <CartProvider>

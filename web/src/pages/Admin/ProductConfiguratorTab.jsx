@@ -381,7 +381,6 @@ const emptyForm = () => ({
   tagsRaw: '',
   image_tag: '',
   slug: '',
-  meta_description: '',
   stock: '100',
   featured: false,
   custom_sizing: true,
@@ -451,7 +450,6 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
     tags,
     image_tag: (form.image_tag || '').trim() || null,
     slug: (form.slug || '').trim() || null,
-    meta_description: (form.meta_description || '').trim() || null,
     stock: sizes.length
       ? sizes.reduce((sum, s) => sum + (Number(s.stock) || 0), 0)
       : stock || 100,
@@ -581,7 +579,6 @@ export default function ProductConfiguratorTab() {
       tagsRaw: (p.tags || []).join(', '),
       image_tag: p.image_tag || '',
       slug: p.slug || '',
-      meta_description: p.meta_description || '',
       stock: String(p.stock ?? 100),
       featured: !!p.featured,
       custom_sizing: p.custom_sizing !== false,
@@ -811,15 +808,6 @@ export default function ProductConfiguratorTab() {
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
         <fieldset className="space-y-3 border border-[#341631]/10 rounded-xl p-4">
           <legend className="px-1 text-sm font-bold text-[#341631] font-display">Search (SEO)</legend>
-          <Textarea
-            label={`Meta description (optional, ${form.meta_description.trim().length}/155)`}
-            name="meta_description"
-            rows={3}
-            value={form.meta_description}
-            onChange={onChange}
-            maxLength={300}
-            placeholder="Leave blank to build one from the name and description. Write a unique one per product."
-          />
           <Input
             label="URL slug (optional)"
             name="slug"

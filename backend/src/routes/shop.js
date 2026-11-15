@@ -355,7 +355,6 @@ const parseProduct = (p) => ({
   // Default on when column missing / null (legacy rows before ALTER).
   custom_sizing: p.custom_sizing == null ? true : Boolean(Number(p.custom_sizing)),
   slug: p.slug || null,
-  meta_description: p.meta_description || null,
   seo: productSeoSummary(p),
 });
 
@@ -372,13 +371,10 @@ function seoError(message, status = 400) {
 }
 
 /**
- * Validate the admin's SEO fields. An empty slug keeps the current one (or derives one from the name).
- * @returns {Promise<{ slug: string, metaDescription: string|null }>}
+ * Validate the admin's URL slug. An empty slug keeps the current one (or derives one from the name).
+ * @returns {Promise<{ slug: string }>}
  */
 async function resolveProductSeoFields(parsed, { productId, currentSlug, name }) {
-  const metaDescription = String(parsed.meta_description ?? '').replace(/\s+/g, ' ').trim() || null;
-  if (metaDescription && metaDescription.length > 300) throw seoError('Meta description must be 300 characters or fewer');
-
   const rawSlug = String(parsed.slug ?? '').trim();
   let slug;
   if (rawSlug) {
@@ -390,7 +386,7 @@ async function resolveProductSeoFields(parsed, { productId, currentSlug, name })
   } else {
     slug = currentSlug || (await generateSlug(name, productId));
   }
-  return { slug, metaDescription };
+  return { slug };
 }
 
 function isCustomSizeLabel(label) {
@@ -613,12 +609,11 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   );
   try {
     await run(
-      `INSERT INTO products (id,name,slug,meta_description,price,original_price,category,description,ways_to_wear,details_and_care,images,tags,image_tag,stock,sizes,size_type,garment_type,featured,custom_sizing,similar_product_ids) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO products (id,name,slug,price,original_price,category,description,ways_to_wear,details_and_care,images,tags,image_tag,stock,sizes,size_type,garment_type,featured,custom_sizing,similar_product_ids) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         id,
         String(name).trim(),
         seoFields.slug,
-        seoFields.metaDescription,
         priceNum,
         original_price == null || original_price === '' ? null : Number(original_price),
         String(category).trim(),
@@ -696,10 +691,9 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
   );
   try {
     await run(
-      `UPDATE products SET name=?,meta_description=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,details_and_care=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=?,custom_sizing=?,similar_product_ids=? WHERE id=?`,
+      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,details_and_care=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=?,custom_sizing=?,similar_product_ids=? WHERE id=?`,
       [
         String(name).trim(),
-        seoFields.metaDescription,
         priceNum,
         original_price == null || original_price === '' ? null : Number(original_price),
         String(category).trim(),

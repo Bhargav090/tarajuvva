@@ -1,6 +1,6 @@
 /**
  * Search metadata for a product: title, H1, meta description and canonical path.
- * An admin-entered meta_description wins; otherwise it is derived from the catalog.
+ * The meta description is built from the product name and its description.
  */
 const { SITE, BRAND } = require('./site');
 const { slugify } = require('./slug');
@@ -81,23 +81,15 @@ function buildProductSeo(product) {
   const title = `${name} | ${BRAND} Shop`;
   const h1 = name;
 
-  let description = clean(product?.meta_description);
-  if (!description) {
-    const lead = paragraphs[0] || '';
-    // The name leads every auto description, so products sharing copy still get unique snippets.
-    let text;
-    if (lead) {
-      text = `${name} – ${label}. ${lead}`;
-    } else {
-      text = `${name} – ${label} by ${BRAND}. Handmade in Hyderabad and delivered across India.`;
-    }
-    if (fabric && text.length + fabric.length + 10 <= META_DESCRIPTION_MAX) {
-      text = `${text.replace(/\s*$/, '')} Fabric: ${fabric}.`;
-    }
-    description = truncateText(text);
-  } else {
-    description = truncateText(description);
+  // The name leads every description, so products sharing copy still get unique snippets.
+  const lead = paragraphs[0] || '';
+  let text = lead
+    ? `${name} – ${label}. ${lead}`
+    : `${name} – ${label} by ${BRAND}. Handmade in Hyderabad and delivered across India.`;
+  if (fabric && text.length + fabric.length + 10 <= META_DESCRIPTION_MAX) {
+    text = `${text.replace(/\s*$/, '')} Fabric: ${fabric}.`;
   }
+  const description = truncateText(text);
 
   return {
     title,

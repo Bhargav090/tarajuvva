@@ -6,10 +6,28 @@ function isDupError(e, codes, errnos) {
   return codes.includes(e.code) || errnos.includes(e.errno);
 }
 
+/** products.meta_description was added and then dropped from the admin form; remove it only while it's empty. */
+async function dropUnusedMetaDescriptionColumn(pool) {
+  try {
+    const [cols] = await pool.execute("SHOW COLUMNS FROM products LIKE 'meta_description'");
+    if (!cols.length) return;
+    const [rows] = await pool.execute(
+      "SELECT COUNT(*) AS n FROM products WHERE meta_description IS NOT NULL AND TRIM(meta_description) <> ''"
+    );
+    if (Number(rows[0].n) > 0) {
+      console.warn('[db] products.meta_description has values; not dropping it');
+      return;
+    }
+    await pool.execute('ALTER TABLE products DROP COLUMN meta_description');
+    console.log('[db] dropped unused products.meta_description');
+  } catch (e) {
+    console.warn('[db] meta_description cleanup skipped:', e.message);
+  }
+}
+
 async function ensureProductSeoSchema(pool) {
   const alters = [
     'ALTER TABLE products ADD COLUMN slug VARCHAR(100) NULL AFTER name',
-    'ALTER TABLE products ADD COLUMN meta_description VARCHAR(300) NULL AFTER description',
   ];
   for (const sql of alters) {
     try {
@@ -20,6 +38,7 @@ async function ensureProductSeoSchema(pool) {
       }
     }
   }
+  await dropUnusedMetaDescriptionColumn(pool);
   try {
     await pool.execute('ALTER TABLE products ADD UNIQUE KEY uq_products_slug (slug)');
   } catch (e) {

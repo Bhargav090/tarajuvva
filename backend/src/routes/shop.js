@@ -22,13 +22,7 @@ const {
   listAvailableGiftCards,
 } = require('../lib/promotions');
 const { buildProductSeo } = require('../seo/productSeo');
-const { slugify, isValidSlug } = require('../seo/slug');
-const {
-  findProductRowByKey,
-  isSlugTaken,
-  generateSlug,
-  changeProductSlug,
-} = require('../seo/productLookup');
+const { findProductRowByKey, generateSlug } = require('../seo/productLookup');
 
 const productImageUpload = multer({
   storage: multer.memoryStorage(),
@@ -364,29 +358,12 @@ function productSeoSummary(p) {
   return { path: seo.path, title: seo.title, h1: seo.h1, description: seo.description, image_alt: seo.imageAlt };
 }
 
-function seoError(message, status = 400) {
-  const err = new Error(message);
-  err.status = status;
-  return err;
-}
-
 /**
- * Validate the admin's URL slug. An empty slug keeps the current one (or derives one from the name).
+ * URL slug for a product page: made from the name once, then kept so shared links never change.
  * @returns {Promise<{ slug: string }>}
  */
 async function resolveProductSeoFields(parsed, { productId, currentSlug, name }) {
-  const rawSlug = String(parsed.slug ?? '').trim();
-  let slug;
-  if (rawSlug) {
-    slug = slugify(rawSlug);
-    if (!isValidSlug(slug)) throw seoError('URL slug must contain letters or numbers');
-    if (slug !== currentSlug && (await isSlugTaken(slug, productId))) {
-      throw seoError(`The URL /shop/${slug} is already used by another product`, 409);
-    }
-  } else {
-    slug = currentSlug || (await generateSlug(name, productId));
-  }
-  return { slug };
+  return { slug: currentSlug || (await generateSlug(name, productId)) };
 }
 
 function isCustomSizeLabel(label) {
@@ -713,8 +690,6 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
         req.params.id,
       ]
     );
-    // Old slug becomes a 301 alias so shared links keep working.
-    await changeProductSlug(existing.id, existing.slug || null, seoFields.slug);
   } catch (err) {
     console.error('Product update failed:', err);
     return res.status(500).json({ success: false, message: productDbErrorMessage(err) });

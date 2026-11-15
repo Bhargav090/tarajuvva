@@ -63,22 +63,6 @@ async function generateSlug(name, excludeProductId = null) {
   return uniqueSlug(slugify(name), (candidate) => isSlugTaken(candidate, excludeProductId));
 }
 
-/**
- * Point a product at `newSlug`, keeping the old slug as a redirecting alias.
- * Reclaiming one of the product's own retired slugs removes that alias.
- */
-async function changeProductSlug(productId, oldSlug, newSlug) {
-  if (!newSlug || newSlug === oldSlug) return;
-  await run('DELETE FROM product_slug_aliases WHERE slug = ? AND product_id = ?', [newSlug, productId]);
-  await run('UPDATE products SET slug = ? WHERE id = ?', [newSlug, productId]);
-  if (oldSlug) {
-    await run(
-      'INSERT IGNORE INTO product_slug_aliases (slug, product_id) VALUES (?, ?)',
-      [oldSlug, productId]
-    );
-  }
-}
-
 async function listCatalog() {
   const rows = await all('SELECT * FROM products ORDER BY featured DESC, created_at DESC');
   return rows.map(parseCatalogRow);
@@ -89,6 +73,5 @@ module.exports = {
   findProductRowByKey,
   isSlugTaken,
   generateSlug,
-  changeProductSlug,
   listCatalog,
 };

@@ -380,7 +380,6 @@ const emptyForm = () => ({
   details_and_care: '',
   tagsRaw: '',
   image_tag: '',
-  slug: '',
   stock: '100',
   featured: false,
   custom_sizing: true,
@@ -449,7 +448,6 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
     details_and_care: form.details_and_care.trim() || null,
     tags,
     image_tag: (form.image_tag || '').trim() || null,
-    slug: (form.slug || '').trim() || null,
     stock: sizes.length
       ? sizes.reduce((sum, s) => sum + (Number(s.stock) || 0), 0)
       : stock || 100,
@@ -578,7 +576,6 @@ export default function ProductConfiguratorTab() {
       details_and_care: p.details_and_care || '',
       tagsRaw: (p.tags || []).join(', '),
       image_tag: p.image_tag || '',
-      slug: p.slug || '',
       stock: String(p.stock ?? 100),
       featured: !!p.featured,
       custom_sizing: p.custom_sizing !== false,
@@ -806,21 +803,6 @@ export default function ProductConfiguratorTab() {
           placeholder={'Fabric: 100% cotton\nWash cold, gentle cycle\nLine dry, warm iron'}
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
-        <fieldset className="space-y-3 border border-[#341631]/10 rounded-xl p-4">
-          <legend className="px-1 text-sm font-bold text-[#341631] font-display">Search (SEO)</legend>
-          <Input
-            label="URL slug (optional)"
-            name="slug"
-            value={form.slug}
-            onChange={onChange}
-            maxLength={80}
-            placeholder={editingId ? '' : 'Generated from the name'}
-          />
-          <p className="text-xs text-[#341631]/50 font-body -mt-1">
-            tarajuvva.com/shop/{(form.category || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}/{form.slug.trim() || '<from-the-name>'}
-            {' '}· Changing it later keeps the old link working (it redirects).
-          </p>
-        </fieldset>
         <SimilarProductsPicker
           products={products}
           selectedIds={form.similar_product_ids || []}

@@ -7,5 +7,7 @@ Disallow: /register
 Disallow: /profile
 Disallow: /checkout
 Disallow: /api/
+# Product link-preview images (og:image) must stay fetchable for X/Facebook/WhatsApp.
+Allow: /api/seo/share/
 
 Sitemap: https://tarajuvva.com/sitemap.xml

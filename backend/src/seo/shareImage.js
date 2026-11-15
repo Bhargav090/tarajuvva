@@ -8,6 +8,7 @@ const path = require('path');
 const crypto = require('crypto');
 const sharp = require('sharp');
 const { SITE } = require('./site');
+const { cardSiblingPath } = require('../lib/imageVariants');
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -30,13 +31,26 @@ function shareImageUrl(product) {
   return `${SITE}/api/seo/share/${encodeURIComponent(product.id)}.jpg?v=${imageVersion(src)}`;
 }
 
+/** Prefer the small card WebP the shop grid already uses (~30-80 KB); fall back to the original. */
 async function loadSource(src) {
+  const card = cardSiblingPath(src);
+  if (card && card !== src) {
+    try {
+      return await loadFile(card);
+    } catch {
+      // No card variant for this image (older upload): use the original.
+    }
+  }
+  return loadFile(src);
+}
+
+async function loadFile(src) {
   if (src.startsWith('/uploads/')) {
     const local = path.join(UPLOADS_DIR, path.normalize(src.slice('/uploads/'.length)).replace(/^(\.\.[/\\])+/, ''));
     if (local.startsWith(UPLOADS_DIR) && fs.existsSync(local)) return fs.promises.readFile(local);
   }
   const url = /^https?:\/\//i.test(src) ? src : `${SITE}${src.startsWith('/') ? '' : '/'}${src}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(15000), redirect: 'manual' });
   if (!res.ok) throw new Error(`share image source ${res.status}: ${url}`);
   return Buffer.from(await res.arrayBuffer());
 }

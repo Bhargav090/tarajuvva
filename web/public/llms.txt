@@ -1,0 +1,27 @@
+# Tarajuvva
+
+> Tarajuvva is a circular fashion brand from Sainikpuri, Hyderabad, India. It makes handmade, reversible and adjustable clothing in handloom fabrics such as Pochampally Ikat and Mangalagiri cotton, and runs services that keep clothes in use: Reimagine (upcycling garments customers already own), Repair (coming soon) and Donate (coming soon).
+
+Every Tarajuvva garment is handmade, and many pieces are made to order to reduce waste. Ready-to-ship products are processed in 2-4 business days and made-to-order garments in 7-14 business days. Tarajuvva delivers across India. Every item purchased includes 2 complimentary repairs.
+
+## Shop
+
+- [Shop all products](https://tarajuvva.com/shop): handmade tops, bottoms, jackets and upcycled accessories, with prices in INR
+- [HTML sitemap](https://tarajuvva.com/sitemap.html): every product page, grouped by category
+
+## Services
+
+- [Reimagine](https://tarajuvva.com/reimagine): design-led upcycling that turns garments customers already own into something new
+- [Repair](https://tarajuvva.com/repair): clothing repair service, launching soon
+- [Donate](https://tarajuvva.com/donate): garment donation routed to reuse, repair or recycling, launching soon
+
+## About and help
+
+- [About Tarajuvva](https://tarajuvva.com/about): the founder story, design philosophy and manifesto
+- [Help centre](https://tarajuvva.com/help): shipping, returns and exchanges, payments and FAQs
+
+## Contact
+
+- Email: contact@tarajuvva.com
+- WhatsApp: +91 75699 30438
+- Instagram: https://www.instagram.com/tarajuvvaaa/

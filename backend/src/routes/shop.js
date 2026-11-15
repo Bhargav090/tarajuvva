@@ -21,6 +21,14 @@ const {
   deleteRedemptionsForOrder,
   listAvailableGiftCards,
 } = require('../lib/promotions');
+const { buildProductSeo } = require('../seo/productSeo');
+const { slugify, isValidSlug } = require('../seo/slug');
+const {
+  findProductRowByKey,
+  isSlugTaken,
+  generateSlug,
+  changeProductSlug,
+} = require('../seo/productLookup');
 
 const productImageUpload = multer({
   storage: multer.memoryStorage(),
@@ -346,7 +354,44 @@ const parseProduct = (p) => ({
   details_and_care: (p.details_and_care && String(p.details_and_care).trim()) || null,
   // Default on when column missing / null (legacy rows before ALTER).
   custom_sizing: p.custom_sizing == null ? true : Boolean(Number(p.custom_sizing)),
+  slug: p.slug || null,
+  meta_description: p.meta_description || null,
+  seo: productSeoSummary(p),
 });
+
+/** What the storefront needs to link to and title a product page. */
+function productSeoSummary(p) {
+  const seo = buildProductSeo(p);
+  return { path: seo.path, title: seo.title, h1: seo.h1, description: seo.description, image_alt: seo.imageAlt };
+}
+
+function seoError(message, status = 400) {
+  const err = new Error(message);
+  err.status = status;
+  return err;
+}
+
+/**
+ * Validate the admin's SEO fields. An empty slug keeps the current one (or derives one from the name).
+ * @returns {Promise<{ slug: string, metaDescription: string|null }>}
+ */
+async function resolveProductSeoFields(parsed, { productId, currentSlug, name }) {
+  const metaDescription = String(parsed.meta_description ?? '').replace(/\s+/g, ' ').trim() || null;
+  if (metaDescription && metaDescription.length > 300) throw seoError('Meta description must be 300 characters or fewer');
+
+  const rawSlug = String(parsed.slug ?? '').trim();
+  let slug;
+  if (rawSlug) {
+    slug = slugify(rawSlug);
+    if (!isValidSlug(slug)) throw seoError('URL slug must contain letters or numbers');
+    if (slug !== currentSlug && (await isSlugTaken(slug, productId))) {
+      throw seoError(`The URL /shop/${slug} is already used by another product`, 409);
+    }
+  } else {
+    slug = currentSlug || (await generateSlug(name, productId));
+  }
+  return { slug, metaDescription };
+}
 
 function isCustomSizeLabel(label) {
   return String(label || '').trim().toLowerCase() === 'custom';
@@ -507,10 +552,11 @@ router.get('/products', async (req, res) => {
   res.json({ success: true, products: rows.map(parseProduct) });
 });
 
+// :id may be the product id, its URL slug, or a retired slug.
 router.get('/products/:id', async (req, res) => {
-  const p = await get('SELECT * FROM products WHERE id = ?', [req.params.id]);
-  if (!p) return res.status(404).json({ success: false, message: 'Not found' });
-  const product = parseProduct(p);
+  const found = await findProductRowByKey(req.params.id);
+  if (!found) return res.status(404).json({ success: false, message: 'Not found' });
+  const product = parseProduct(found.row);
   const chartKey = chartKeyForProduct(product.size_type, product.garment_type);
   let size_chart = null;
   if (chartKey) {
@@ -556,15 +602,23 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
   }
   const stockNum = totalStockFromSizes(sizeList, stock);
   const id = uuidv4();
+  let seoFields;
+  try {
+    seoFields = await resolveProductSeoFields(parsed, { productId: id, currentSlug: null, name: String(name).trim() });
+  } catch (e) {
+    return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
   const similarIds = await filterExistingProductIds(
     normalizeSimilarProductIds(parsed.similar_product_ids, id)
   );
   try {
     await run(
-      `INSERT INTO products (id,name,price,original_price,category,description,ways_to_wear,details_and_care,images,tags,image_tag,stock,sizes,size_type,garment_type,featured,custom_sizing,similar_product_ids) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO products (id,name,slug,meta_description,price,original_price,category,description,ways_to_wear,details_and_care,images,tags,image_tag,stock,sizes,size_type,garment_type,featured,custom_sizing,similar_product_ids) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         id,
         String(name).trim(),
+        seoFields.slug,
+        seoFields.metaDescription,
         priceNum,
         original_price == null || original_price === '' ? null : Number(original_price),
         String(category).trim(),
@@ -587,7 +641,7 @@ router.post('/products', maybeProductUpload, authenticateAdmin, async (req, res)
     console.error('Product create failed:', err);
     return res.status(500).json({ success: false, message: productDbErrorMessage(err) });
   }
-  res.status(201).json({ success: true, id });
+  res.status(201).json({ success: true, id, slug: seoFields.slug });
 });
 
 router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, res) => {
@@ -625,14 +679,27 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
     return res.status(e.status || 400).json({ success: false, message: e.message });
   }
   const stockNum = totalStockFromSizes(sizeList, stock);
+  const existing = await get('SELECT id, slug FROM products WHERE id = ?', [req.params.id]);
+  if (!existing) return res.status(404).json({ success: false, message: 'Product not found' });
+  let seoFields;
+  try {
+    seoFields = await resolveProductSeoFields(parsed, {
+      productId: existing.id,
+      currentSlug: existing.slug || null,
+      name: String(name).trim(),
+    });
+  } catch (e) {
+    return res.status(e.status || 400).json({ success: false, message: e.message });
+  }
   const similarIds = await filterExistingProductIds(
     normalizeSimilarProductIds(parsed.similar_product_ids, req.params.id)
   );
   try {
     await run(
-      `UPDATE products SET name=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,details_and_care=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=?,custom_sizing=?,similar_product_ids=? WHERE id=?`,
+      `UPDATE products SET name=?,meta_description=?,price=?,original_price=?,category=?,description=?,ways_to_wear=?,details_and_care=?,images=?,tags=?,image_tag=?,stock=?,sizes=?,size_type=?,garment_type=?,featured=?,custom_sizing=?,similar_product_ids=? WHERE id=?`,
       [
         String(name).trim(),
+        seoFields.metaDescription,
         priceNum,
         original_price == null || original_price === '' ? null : Number(original_price),
         String(category).trim(),
@@ -652,11 +719,13 @@ router.put('/products/:id', maybeProductUpload, authenticateAdmin, async (req, r
         req.params.id,
       ]
     );
+    // Old slug becomes a 301 alias so shared links keep working.
+    await changeProductSlug(existing.id, existing.slug || null, seoFields.slug);
   } catch (err) {
     console.error('Product update failed:', err);
     return res.status(500).json({ success: false, message: productDbErrorMessage(err) });
   }
-  res.json({ success: true });
+  res.json({ success: true, slug: seoFields.slug });
 });
 
 router.delete('/products/:id', authenticateAdmin, async (req, res) => {

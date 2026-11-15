@@ -8,6 +8,7 @@ import Button from '../../components/ui/Button';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Spinner } from '../../components/ui/Skeleton';
 import { SHOP_CATEGORIES } from '../../utils/constants';
+import { productPath } from '../../utils/productPath';
 import { productHeroImage, resolveProductImageSrc } from '../../utils/productImage';
 import { LETTER_SIZES, NUMERIC_SIZES, inferGarmentType } from '../../utils/sizeConstants';
 import ZoomableImage from '../../components/ui/ZoomableImage';
@@ -379,6 +380,8 @@ const emptyForm = () => ({
   details_and_care: '',
   tagsRaw: '',
   image_tag: '',
+  slug: '',
+  meta_description: '',
   stock: '100',
   featured: false,
   custom_sizing: true,
@@ -447,6 +450,8 @@ function buildProductFormData(form, sizes, sizeType, garmentType, imageSlots) {
     details_and_care: form.details_and_care.trim() || null,
     tags,
     image_tag: (form.image_tag || '').trim() || null,
+    slug: (form.slug || '').trim() || null,
+    meta_description: (form.meta_description || '').trim() || null,
     stock: sizes.length
       ? sizes.reduce((sum, s) => sum + (Number(s.stock) || 0), 0)
       : stock || 100,
@@ -575,6 +580,8 @@ export default function ProductConfiguratorTab() {
       details_and_care: p.details_and_care || '',
       tagsRaw: (p.tags || []).join(', '),
       image_tag: p.image_tag || '',
+      slug: p.slug || '',
+      meta_description: p.meta_description || '',
       stock: String(p.stock ?? 100),
       featured: !!p.featured,
       custom_sizing: p.custom_sizing !== false,
@@ -802,6 +809,30 @@ export default function ProductConfiguratorTab() {
           placeholder={'Fabric: 100% cotton\nWash cold, gentle cycle\nLine dry, warm iron'}
         />
         <Input label="Tags (optional, comma-separated)" name="tagsRaw" value={form.tagsRaw} onChange={onChange} placeholder="cotton, handcrafted, sustainable" />
+        <fieldset className="space-y-3 border border-[#341631]/10 rounded-xl p-4">
+          <legend className="px-1 text-sm font-bold text-[#341631] font-display">Search (SEO)</legend>
+          <Textarea
+            label={`Meta description (optional, ${form.meta_description.trim().length}/155)`}
+            name="meta_description"
+            rows={3}
+            value={form.meta_description}
+            onChange={onChange}
+            maxLength={300}
+            placeholder="Leave blank to build one from the name and description. Write a unique one per product."
+          />
+          <Input
+            label="URL slug (optional)"
+            name="slug"
+            value={form.slug}
+            onChange={onChange}
+            maxLength={80}
+            placeholder={editingId ? '' : 'Generated from the name'}
+          />
+          <p className="text-xs text-[#341631]/50 font-body -mt-1">
+            tarajuvva.com/shop/{(form.category || 'products').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}/{form.slug.trim() || '<from-the-name>'}
+            {' '}· Changing it later keeps the old link working (it redirects).
+          </p>
+        </fieldset>
         <SimilarProductsPicker
           products={products}
           selectedIds={form.similar_product_ids || []}
@@ -882,7 +913,7 @@ export default function ProductConfiguratorTab() {
                     <Pencil size={15} />
                   </button>
                   <Link
-                    to={`/shop/${p.id}`}
+                    to={productPath(p)}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-[#a8e000] font-display hover:underline"

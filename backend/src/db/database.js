@@ -731,6 +731,15 @@ async function initializeDatabase() {
   const row = await get('SELECT COUNT(*) AS count FROM products');
   const productCount = Number(row.count);
   if (productCount === 0) await seedProducts();
+
+  // Product URL slugs, meta description column and slug redirects (after seeding so seeds get slugs).
+  // Never block boot on this: without slugs, product URLs fall back to /shop/<type>/<id>.
+  try {
+    const { runProductSeoMigrations } = require('../seo/migrations');
+    await runProductSeoMigrations(pool);
+  } catch (err) {
+    console.error('[db] product SEO migration failed (continuing):', err.message || err);
+  }
 }
 
 const DEFAULT_TESTIMONIALS = [

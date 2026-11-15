@@ -65,7 +65,9 @@ sudo cp -r dist/* "$WEB_OUT"/
 sudo chown -R www-data:www-data "$WEB_OUT" 2>/dev/null || sudo chown -R root:root "$WEB_OUT"
 
 if [[ -f "$REPO_ROOT/deploy/nginx/tarajuvva.conf" ]]; then
-  echo "==> Nginx: sync site config (www → apex redirect, uploads, api)"
+  echo "==> Nginx: sync site config (www → apex redirect, uploads, api, SEO pages)"
+  sudo mkdir -p /etc/nginx/snippets
+  sudo cp "$REPO_ROOT/deploy/nginx/tarajuvva-seo-proxy.conf" /etc/nginx/snippets/tarajuvva-seo-proxy.conf
   sudo cp "$REPO_ROOT/deploy/nginx/tarajuvva.conf" "$NGINX_SITE"
   sudo nginx -t
   sudo systemctl reload nginx
@@ -75,18 +77,25 @@ echo "==> Smoke tests"
 curl -sf "http://localhost:4000/api/health" >/dev/null && echo "  backend: ok"
 curl -sfI "https://tarajuvva.com" | head -1 || true
 curl -sfI "https://www.tarajuvva.com" | head -1 || true
-# SEO shells: product HTML must not share the homepage canonical.
-SAMPLE_PRODUCT="$(curl -sf "http://localhost:4000/api/shop/products?limit=1" | python3 -c "import sys,json; ps=json.load(sys.stdin).get('products') or []; print(ps[0]['id'] if ps else '')" 2>/dev/null || true)"
-if [[ -n "$SAMPLE_PRODUCT" ]]; then
-  CANON="$(curl -sf "https://tarajuvva.com/shop/${SAMPLE_PRODUCT}" | python3 -c "import sys,re; m=re.search(r'rel=\"canonical\"[^>]*href=\"([^\"]+)\"', sys.stdin.read()); print(m.group(1) if m else '')" 2>/dev/null || true)"
-  if [[ "$CANON" == *"/shop/${SAMPLE_PRODUCT}"* ]]; then
-    echo "  seo product canonical: ok ($CANON)"
+# SEO pages: product HTML is rendered by the backend with its own canonical, H1 and slug URL.
+SAMPLE_PRODUCT_JSON="$(curl -sf "http://localhost:4000/api/shop/products?limit=1" || true)"
+SAMPLE_ID="$(printf '%s' "$SAMPLE_PRODUCT_JSON" | python3 -c "import sys,json; ps=json.load(sys.stdin).get('products') or []; print(ps[0]['id'] if ps else '')" 2>/dev/null || true)"
+SAMPLE_PATH="$(printf '%s' "$SAMPLE_PRODUCT_JSON" | python3 -c "import sys,json; ps=json.load(sys.stdin).get('products') or []; print(ps[0]['seo']['path'] if ps else '')" 2>/dev/null || true)"
+if [[ -n "$SAMPLE_PATH" ]]; then
+  PAGE="$(curl -sf "https://tarajuvva.com${SAMPLE_PATH}" || true)"
+  if [[ "$PAGE" == *"rel=\"canonical\" href=\"https://tarajuvva.com${SAMPLE_PATH}\""* && "$PAGE" == *"<h1>"* ]]; then
+    echo "  seo product page: ok (${SAMPLE_PATH})"
   else
-    echo "  WARNING: product canonical looks wrong: ${CANON:-missing}"
+    echo "  WARNING: product page ${SAMPLE_PATH} is missing its canonical or H1 (is nginx proxying it to the backend?)"
+  fi
+  LEGACY_LOCATION="$(curl -s -o /dev/null -w '%{redirect_url}' "https://tarajuvva.com/shop/${SAMPLE_ID}")"
+  if [[ "$LEGACY_LOCATION" == *"${SAMPLE_PATH}" ]]; then
+    echo "  legacy /shop/<id> redirect: ok"
+  else
+    echo "  WARNING: /shop/${SAMPLE_ID} did not 301 to ${SAMPLE_PATH} (got: ${LEGACY_LOCATION:-none})"
   fi
 fi
-PRODUCT_SHELLS="$(find "$WEB_OUT/shop" -mindepth 2 -maxdepth 2 -name index.html 2>/dev/null | wc -l | tr -d ' ')"
-echo "  seo product shells: ${PRODUCT_SHELLS}"
+curl -sfI -H 'Accept-Encoding: gzip' "https://tarajuvva.com/" | grep -iE '^(content-encoding|strict-transport-security):' | sed 's/^/  /' || true
 
 echo "==> Deploy complete"
 pm2 status

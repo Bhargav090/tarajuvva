@@ -12,6 +12,13 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+app.use(compression());
+
+// Public SEO HTML pages (/, /shop, /shop/:slug…). Mounted before helmet on purpose: these are
+// the SPA shell, which loads gtag, Google sign-in and Fontshare — helmet's API-oriented CSP/COOP
+// headers would break them. nginx serves the same shell statically without those headers too.
+app.use(require('./src/routes/seoPages'));
+
 // Security & performance middleware
 app.use(
   helmet({
@@ -25,7 +32,6 @@ app.use(
     },
   })
 );
-app.use(compression());
 app.use(morgan('dev'));
 const allowedOrigins = new Set([
   process.env.FRONTEND_URL,

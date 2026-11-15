@@ -14,6 +14,7 @@ import {
 } from '../../utils/productImage';
 import { productDiscountPercent } from '../../utils/productSale';
 import AsyncImage from './AsyncImage';
+import { productPath } from '../../utils/productPath';
 
 const HOVER_CYCLE_MS = 2500;
 const SWIPE_THRESHOLD_PX = 40;
@@ -110,7 +111,7 @@ export default function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     if (!user) {
-      navigate('/login', { state: { from: `/shop/${product.id}` } });
+      navigate('/login', { state: { from: productPath(product) } });
       toast.error('Sign in to save favourites');
       return;
     }
@@ -183,7 +184,7 @@ export default function ProductCard({
             key={`${product.id}-${activeIndex}-${cardSrc}`}
             src={cardSrc}
             fallbackSrc={activeSrc}
-            alt={product.name}
+            alt={product.seo?.image_alt || product.name}
             fill
             loading={imageLoading}
           />
@@ -229,7 +230,7 @@ export default function ProductCard({
     );
     if (!linkWhole) return media;
     return (
-      <Link to={`/shop/${product.id}`} className="block" onClick={onMediaClick}>
+      <Link to={productPath(product)} className="block" onClick={onMediaClick}>
         {media}
       </Link>
     );
@@ -239,7 +240,7 @@ export default function ProductCard({
     const homeCard = (
       <div className="flex flex-col h-full bg-white">
         {imageBlock('aspect-[3/4]')}
-        <Link to={`/shop/${product.id}`} className="pt-3 px-1.5 pb-2 block">
+        <Link to={productPath(product)} className="pt-3 px-1.5 pb-2 block">
           <p className="font-display font-bold text-[11px] sm:text-xs uppercase tracking-[0.06em] text-[#0a0a0a] leading-snug line-clamp-2">
             {product.name}
           </p>
@@ -278,7 +279,7 @@ export default function ProductCard({
         <div className="pt-2.5 sm:pt-3 md:pt-4 flex-1 flex flex-col min-h-0">
           <div className="flex items-start justify-between gap-1.5 sm:gap-2">
             <div className="min-w-0">
-              <Link to={`/shop/${product.id}`}>
+              <Link to={productPath(product)}>
                 <p className="font-display font-bold text-[13px] sm:text-base md:text-lg leading-tight text-[#0a0a0a] hover:opacity-70 transition-opacity line-clamp-2">
                   {product.name}
                 </p>

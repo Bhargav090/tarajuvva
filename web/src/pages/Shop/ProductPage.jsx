@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingBag, ArrowLeft, Tag, ChevronLeft, ChevronRight, ChevronDown, Heart, ShieldCheck, RefreshCw, Hand } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -19,6 +19,7 @@ import SizeChartLink from '../../components/shop/SizeChartLink';
 import AsyncImage from '../../components/ui/AsyncImage';
 import ProductCard from '../../components/ui/ProductCard';
 import HorizontalScrollRail from '../../components/ui/HorizontalScrollRail';
+import { productPath } from '../../utils/productPath';
 
 /**
  * Prefer already-generated card.webp first (fast), then sharper gallery.webp,
@@ -43,6 +44,7 @@ function productImageSources(raw) {
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { product, sizeChart, recommended, loading } = useProduct(id);
   const { addItem } = useCart();
   const { user } = useAuth();
@@ -54,6 +56,15 @@ export default function ProductPage() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [customValues, setCustomValues] = useState({});
   const [measureError, setMeasureError] = useState(false);
+
+  // Old /shop/<uuid> links: swap the address bar to the product's slug URL.
+  useEffect(() => {
+    if (!product) return;
+    const canonicalPath = productPath(product);
+    if (canonicalPath !== location.pathname) {
+      navigate(`${canonicalPath}${location.search}${location.hash}`, { replace: true });
+    }
+  }, [product, location.pathname, location.search, location.hash, navigate]);
 
   useEffect(() => {
     setActiveImg(0);
@@ -167,7 +178,7 @@ export default function ProductPage() {
   const wishlisted = product ? isWishlisted(product.id) : false;
   const handleWishlist = async () => {
     if (!user) {
-      navigate('/login', { state: { from: `/shop/${id}` } });
+      navigate('/login', { state: { from: productPath(product) } });
       toast.error('Sign in to save favourites');
       return;
     }
@@ -204,6 +215,8 @@ export default function ProductPage() {
     : [];
   const detailsAndCare = String(product.details_and_care || '').trim();
 
+  const imageAlt = product.seo?.image_alt || product.name;
+
   const goPrevImg = () => {
     if (gallerySources.length <= 1) return;
     setActiveImg((i) => (i - 1 + gallerySources.length) % gallerySources.length);
@@ -228,7 +241,7 @@ export default function ProductPage() {
             <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-white relative group">
               <AsyncImage
                 sources={gallerySources[activeImg]}
-                alt={`${product.name}${activeImg === 0 ? '' : ` - view ${activeImg + 1}`}`}
+                alt={`${imageAlt}${activeImg === 0 ? '' : ` - view ${activeImg + 1}`}`}
                 fill
                 showSpinner
                 loading="eager"
@@ -547,6 +560,16 @@ export default function ProductPage() {
                 </div>
               ))}
             </div>
+
+            {/* Circular services: give shoppers (and crawlers) a path to the rest of the loop */}
+            <p className="mt-5 text-xs text-[#241621]/60 font-body leading-relaxed">
+              Keep it in the loop:{' '}
+              <Link to="/repair" className="font-semibold underline underline-offset-2 hover:text-[#241621]">Repair</Link>
+              {' · '}
+              <Link to="/reimagine" className="font-semibold underline underline-offset-2 hover:text-[#241621]">Reimagine</Link>
+              {' · '}
+              <Link to="/donate" className="font-semibold underline underline-offset-2 hover:text-[#241621]">Donate</Link>
+            </p>
           </motion.div>
         </div>
 

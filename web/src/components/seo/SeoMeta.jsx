@@ -4,38 +4,17 @@ import api from '../../utils/api';
 
 const SITE = 'https://tarajuvva.com';
 
-const STATIC_META = {
-  '/': {
-    title: 'Tarajuvva - Circular Fashion OS',
-    description:
-      'Tarajuvva - A circular fashion system built around your wardrobe. Shop, Reimagine, Repair, Donate.',
-  },
-  '/shop': {
-    title: 'Shop | Tarajuvva',
-    description:
-      'Shop circular fashion pieces from Tarajuvva — designed to be worn, repaired, reimagined, and donated.',
-  },
-  '/reimagine': {
-    title: 'Reimagine | Tarajuvva',
-    description: 'Reimagine old garments into something new with Tarajuvva’s circular fashion studio.',
-  },
-  '/repair': {
-    title: 'Repair | Tarajuvva',
-    description: 'Repair and mend clothing with Tarajuvva — keep pieces in circulation longer.',
-  },
-  '/donate': {
-    title: 'Donate | Tarajuvva',
-    description: 'Donate garments through Tarajuvva and keep textiles out of landfill.',
-  },
-  '/about': {
-    title: 'About Us | Tarajuvva',
-    description: 'About Tarajuvva — a circular fashion operating system built in India.',
-  },
-  '/help': {
-    title: 'Help Centre | Tarajuvva',
-    description: 'Help and FAQs for shopping, reimagining, repairing, and donating with Tarajuvva.',
-  },
+/** Used for private pages (cart, profile…) and when the meta lookup fails. */
+const DEFAULT_META = {
+  title: 'Tarajuvva - Circular Fashion OS',
+  description:
+    'Tarajuvva - A circular fashion system built around your wardrobe. Shop, Reimagine, Repair, Donate.',
 };
+
+/** Only these paths have server-rendered SEO pages (backend/src/routes/seoPages.js). */
+const PUBLIC_PATH_RE = /^\/(?:shop(?:\/[^/]+){0,2}|reimagine|repair|donate|about|help)?$/;
+
+const metaCache = new Map();
 
 function upsertMeta(selector, attr, key, value) {
   if (!value) return;
@@ -59,15 +38,15 @@ function setCanonical(url) {
 }
 
 function applyMeta({ title, description, canonical }) {
-  if (title) document.title = title;
+  if (title) {
+    document.title = title;
+    upsertMeta('meta[property="og:title"]', 'property', 'og:title', title);
+    upsertMeta('meta[name="twitter:title"]', 'name', 'twitter:title', title);
+  }
   if (description) {
     upsertMeta('meta[name="description"]', 'name', 'description', description);
     upsertMeta('meta[property="og:description"]', 'property', 'og:description', description);
     upsertMeta('meta[name="twitter:description"]', 'name', 'twitter:description', description);
-  }
-  if (title) {
-    upsertMeta('meta[property="og:title"]', 'property', 'og:title', title);
-    upsertMeta('meta[name="twitter:title"]', 'name', 'twitter:title', title);
   }
   if (canonical) {
     setCanonical(canonical);
@@ -76,57 +55,38 @@ function applyMeta({ title, description, canonical }) {
 }
 
 /**
- * Keeps title/canonical in sync for JS-capable crawlers and in-app navigations.
- * Static HTML shells from generate-seo-pages.mjs cover non-JS crawlers.
+ * Keeps title/description/canonical in sync on in-app navigations, using the same values the
+ * backend renders into the HTML for crawlers (GET /api/seo/meta).
  */
 export default function SeoMeta() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const canonical = pathname === '/' ? `${SITE}/` : `${SITE}${pathname}`;
-    const staticMeta = STATIC_META[pathname];
+    const path = pathname.replace(/\/+$/, '') || '/';
+    const fallbackCanonical = path === '/' ? `${SITE}/` : `${SITE}${path}`;
 
-    if (staticMeta) {
-      applyMeta({ ...staticMeta, canonical });
+    if (!PUBLIC_PATH_RE.test(path)) {
+      applyMeta({ ...DEFAULT_META, canonical: fallbackCanonical });
       return undefined;
     }
 
-    const productMatch = pathname.match(/^\/shop\/([^/]+)$/);
-    if (!productMatch) {
-      applyMeta({
-        title: 'Tarajuvva - Circular Fashion OS',
-        description:
-          'Tarajuvva - A circular fashion system built around your wardrobe. Shop, Reimagine, Repair, Donate.',
-        canonical,
-      });
+    if (metaCache.has(path)) {
+      applyMeta(metaCache.get(path));
       return undefined;
     }
 
-    const productId = productMatch[1];
     let cancelled = false;
-    applyMeta({
-      title: 'Shop | Tarajuvva',
-      description: 'Shop circular fashion at Tarajuvva.',
-      canonical,
-    });
-
     api
-      .get(`/shop/products/${productId}`)
+      .get('/seo/meta', { params: { path } })
       .then((res) => {
-        if (cancelled) return;
-        const product = res.data?.product;
-        if (!product?.name) return;
-        const description = String(product.description || '')
-          .replace(/\s+/g, ' ')
-          .trim()
-          .slice(0, 160);
-        applyMeta({
-          title: `${product.name} | Tarajuvva Shop`,
-          description: description || `${product.name} — shop circular fashion at Tarajuvva.`,
-          canonical,
-        });
+        const { title, description, canonical } = res.data || {};
+        const meta = { title, description, canonical: canonical || fallbackCanonical };
+        metaCache.set(path, meta);
+        if (!cancelled) applyMeta(meta);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) applyMeta({ ...DEFAULT_META, canonical: fallbackCanonical });
+      });
 
     return () => {
       cancelled = true;

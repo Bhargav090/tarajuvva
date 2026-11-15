@@ -18,6 +18,7 @@ const {
   FAQ,
 } = require('./site');
 const { buildProductSeo, categoryLabel } = require('./productSeo');
+const { shareImageUrl, SHARE_WIDTH, SHARE_HEIGHT } = require('./shareImage');
 
 const HEAD_RE = /<!--seo-head-->[\s\S]*?<!--\/seo-head-->/;
 const BODY_MARKER = '<!--seo-body-->';
@@ -410,7 +411,8 @@ function renderProductPage(template, product, related = []) {
     description: seo.description,
     canonical: seo.canonical,
     ogType: 'product',
-    image: image ? { url: image, alt: seo.imageAlt } : null,
+    // Small 1200x630 JPEG (shareImage.js): full-size originals are too heavy for WhatsApp previews.
+    image: image ? { url: shareImageUrl(product), width: SHARE_WIDTH, height: SHARE_HEIGHT, alt: seo.imageAlt } : null,
     jsonLd: [productLd, breadcrumbJsonLd(trail)],
   });
   return fill(template, head, wrapBody(parts.join('\n')));

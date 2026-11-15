@@ -3,7 +3,8 @@
  * Any failure answers 503 so nginx falls back to the plain SPA shell instead of an error page.
  */
 const express = require('express');
-const { STATIC_PAGES, STATIC_PATHS } = require('../seo/site');
+const { STATIC_PAGES, STATIC_PATHS, DEFAULT_OG_IMAGE } = require('../seo/site');
+const { getShareImage } = require('../seo/shareImage');
 const { buildProductSeo, categorySlug } = require('../seo/productSeo');
 const { findProductRowByKey, parseCatalogRow, listCatalog } = require('../seo/productLookup');
 const {
@@ -113,6 +114,19 @@ router.get('/sitemap.html', async (req, res) => {
   } catch (err) {
     console.error('SEO sitemap render failed:', err.message || err);
     return res.sendStatus(503);
+  }
+});
+
+/** 1200x630 JPEG link-preview image for a product (og:image). Falls back to the brand image. */
+router.get('/api/seo/share/:id.jpg', async (req, res) => {
+  try {
+    const found = await findProductRowByKey(req.params.id);
+    const jpeg = found ? await getShareImage(parseCatalogRow(found.row)) : null;
+    if (!jpeg) return res.redirect(302, DEFAULT_OG_IMAGE.url);
+    return res.set('Cache-Control', 'public, max-age=86400').type('image/jpeg').send(jpeg);
+  } catch (err) {
+    console.error('SEO share image failed:', req.params.id, err.message || err);
+    return res.redirect(302, DEFAULT_OG_IMAGE.url);
   }
 });
 

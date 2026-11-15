@@ -118,6 +118,11 @@ async function start() {
     await loadLegacyMap();
     console.log('📷 MEDIA_READ=legacy (serving pre-S3 image refs from journal)');
   }
+  // Not awaited: boot never waits on (or fails because of) link-preview images.
+  require('./src/seo/productLookup')
+    .listCatalog()
+    .then((products) => require('./src/seo/shareImage').warmShareImages(products))
+    .catch((err) => console.warn('[seo] share image warm-up failed:', err.message || err));
   app.listen(PORT, () => {
     console.log(`\n🧵 Tarajuvva API Server`);
     console.log(`✅ Running on http://localhost:${PORT}`);

@@ -1,26 +1,12 @@
 const express = require('express');
 const router  = express.Router();
-const { authenticateAdmin } = require('../middleware/auth');
+const { authenticateAdmin, authenticateUser } = require('../middleware/auth');
 const { get, run, all } = require('../db/database');
 const { enrichOrderItems } = require('../lib/orderItems');
 const { normalizeReimagineRequest } = require('../utils/consultationSlots');
 const { parsePagination, paginationMeta } = require('../lib/pagination');
 const { mapImageList, loadLegacyMap } = require('../lib/publicImageUrl');
 const { mediaReadMode } = require('../lib/s3Storage');
-
-// ── AUTH MIDDLEWARE (user-level) ──────────────────────────────────────────────
-const jwt = require('jsonwebtoken');
-
-const authenticateUser = (req, res, next) => {
-  const token = req.headers['authorization']?.split(' ')[1];
-  if (!token) return res.status(401).json({ success: false, message: 'Login required' });
-  try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
-    next();
-  } catch {
-    res.status(403).json({ success: false, message: 'Invalid token' });
-  }
-};
 
 // ── GET MY PROFILE ────────────────────────────────────────────────────────────
 router.get('/me', authenticateUser, async (req, res) => {

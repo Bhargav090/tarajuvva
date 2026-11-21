@@ -1,22 +1,80 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../utils/api';
+import {
+  SESSION_EXPIRED_EVENT,
+  isTokenExpired,
+  notifySessionExpired,
+  scheduleTokenExpiry,
+} from '../utils/session';
 
 // ── Admin Auth ─────────────────────────────────────────────────────────────────
 export function useAdminAuth() {
-  const [token, setToken]   = useState(localStorage.getItem('admin_token'));
+  const [token, setToken]   = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const sessionReady = useRef(false);
+
+  const endSession = useCallback((notify) => {
+    localStorage.removeItem('admin_token');
+    sessionReady.current = false;
+    setToken(null);
+    if (notify) notifySessionExpired();
+  }, []);
 
   useEffect(() => {
-    const t = localStorage.getItem('admin_token');
-    setToken(t);
-    setIsLoaded(true);
+    const stored = localStorage.getItem('admin_token');
+    if (!stored || isTokenExpired(stored)) {
+      if (stored) localStorage.removeItem('admin_token');
+      setToken(null);
+      setIsLoaded(true);
+      return;
+    }
+    let cancelled = false;
+    api.get('/auth/verify', { headers: { Authorization: `Bearer ${stored}` } })
+      .then((r) => {
+        if (cancelled) return;
+        if (r.data?.admin) {
+          sessionReady.current = true;
+          setToken(stored);
+        } else {
+          localStorage.removeItem('admin_token');
+          setToken(null);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        localStorage.removeItem('admin_token');
+        setToken(null);
+      })
+      .finally(() => { if (!cancelled) setIsLoaded(true); });
+    return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (!token) return undefined;
+    const stop = scheduleTokenExpiry(token, () => endSession(true));
+    const onExpired = (event) => {
+      if (event.detail?.kind === 'admin') endSession(sessionReady.current);
+    };
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      const current = localStorage.getItem('admin_token');
+      if (current && isTokenExpired(current)) endSession(sessionReady.current);
+    };
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      stop();
+      window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [token, endSession]);
 
   const login = async (username, password) => {
     try {
       const { data } = await api.post('/auth/login', { username, password });
       if (data.success && data.admin) {
         localStorage.setItem('admin_token', data.token);
+        sessionReady.current = true;
         setToken(data.token);
         return null;
       }
@@ -27,6 +85,7 @@ export function useAdminAuth() {
   };
 
   const logout = () => {
+    sessionReady.current = false;
     localStorage.removeItem('admin_token');
     setToken(null);
   };

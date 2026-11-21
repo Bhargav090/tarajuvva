@@ -1,5 +1,14 @@
 const jwt = require('jsonwebtoken');
 
+function invalidTokenResponse(res, err) {
+  const expired = err?.name === 'TokenExpiredError';
+  return res.status(401).json({
+    success: false,
+    code: expired ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID',
+    message: expired ? 'Session expired' : 'Invalid token',
+  });
+}
+
 const authenticateAdmin = (req, res, next) => {
   const token = req.headers['authorization']?.split(' ')[1];
   if (!token) return res.status(401).json({ success: false, message: 'Access denied' });
@@ -8,8 +17,8 @@ const authenticateAdmin = (req, res, next) => {
     if (decoded.role !== 'admin') return res.status(403).json({ success: false, message: 'Admin access required' });
     req.admin = decoded;
     next();
-  } catch {
-    res.status(403).json({ success: false, message: 'Invalid token' });
+  } catch (err) {
+    invalidTokenResponse(res, err);
   }
 };
 
@@ -19,8 +28,8 @@ const authenticateUser = (req, res, next) => {
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
-  } catch {
-    res.status(403).json({ success: false, message: 'Invalid token' });
+  } catch (err) {
+    invalidTokenResponse(res, err);
   }
 };
 
@@ -33,4 +42,4 @@ const optionalAuth = (req, res, next) => {
   next();
 };
 
-module.exports = { authenticateAdmin, authenticateUser, optionalAuth };
+module.exports = { authenticateAdmin, authenticateUser, optionalAuth, invalidTokenResponse };

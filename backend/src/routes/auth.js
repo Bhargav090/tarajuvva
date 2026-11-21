@@ -5,7 +5,7 @@ const jwt     = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { OAuth2Client } = require('google-auth-library');
 const { get, run } = require('../db/database');
-const { authenticateAdmin } = require('../middleware/auth');
+const { authenticateAdmin, invalidTokenResponse } = require('../middleware/auth');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -144,8 +144,8 @@ router.get('/verify', async (req, res) => {
     const user = await get('SELECT * FROM users WHERE id = ?', [decoded.id]);
     if (!user) return res.status(404).json({ success: false });
     res.json({ success: true, user: safeUser(user) });
-  } catch {
-    res.status(403).json({ success: false });
+  } catch (err) {
+    invalidTokenResponse(res, err);
   }
 });
 
